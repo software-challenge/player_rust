@@ -1,26 +1,25 @@
 use xml::{EventReader, reader::XmlEvent};
 
-use crate::connection::parser::message::Message;
+use crate::connection::parser::{message::Message, parse_memento::parse_memento};
 
-pub fn parse_message(parser: EventReader<&[u8]>) -> Result<Box<Message>, Box<dyn std::error::Error>> {
-    for e in parser {
-        match e {
+pub fn parse_message(mut parser: EventReader<&[u8]>) -> Result<Box<Message>, Box<dyn std::error::Error>> {
+    loop {
+        match parser.next() {
             Ok(XmlEvent::StartElement { name, attributes, .. }) => {
+                // Search for the data element
                 if name.local_name == "data" {
                     for attr in attributes {
                         if attr.name.local_name == "class" {
                             match attr.value.as_str() {
                                 "memento" => {
-                                    return Ok(Box::new(Message {
-                                        message_type: crate::connection::parser::message::MessageType::Memento,
-                                        game_state: None, // TODO parse game state from XML
-                                        result: None,
-                                    }));
+                                    println!("Parsing memento message...");
+                                    return Ok(parse_memento(parser))
                                 },
                                 "moveRequest" => {
                                     return Ok(Box::new(Message {
                                         message_type: crate::connection::parser::message::MessageType::MoveRequest,
                                         game_state: None,
+                                        last_move: None,
                                         result: None,
                                     }));
                                 },
@@ -28,6 +27,7 @@ pub fn parse_message(parser: EventReader<&[u8]>) -> Result<Box<Message>, Box<dyn
                                     return Ok(Box::new(Message {
                                         message_type: crate::connection::parser::message::MessageType::Result,
                                         game_state: None,
+                                        last_move: None,
                                         result: None, // TODO parse result from XML
                                     }));
                                 },
@@ -39,12 +39,14 @@ pub fn parse_message(parser: EventReader<&[u8]>) -> Result<Box<Message>, Box<dyn
                     }
                 }
             }
-            Err(e) => {
-                eprintln!("Error: {e}");
-                continue;
+            Ok(XmlEvent::EndDocument) => {
+                //If reached then the document ended without finding a data element, which is unexpected
+                return Err("Error while parsing message: Unexpected end of document".into());
             }
-            _ => {}
+            Err(e) => {
+                return Err(format!("Error while parsing message: {e}").into());
+            }
+            Ok(_) => {}
         }
     }
-    Err("Failed to parse message".into())
 }

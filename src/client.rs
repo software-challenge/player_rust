@@ -15,17 +15,20 @@ pub fn start_client_from_commandline_args<C: Client>(mut client: C) -> Result<()
         let message = connection.get_new_message()?;
 
         match message.message_type {
-            MessageType::Memento => {
+            MessageType::MementoInitial => {
                 if let Some(game_state) = message.game_state {
                     client.on_game_state_updated(game_state);
                 } else {
                     eprintln!("Received Memento message without game state!");
                 }
             },
-            crate::connection::parser::message::MessageType::MoveRequest => {
+            MessageType::MementoLastMove => {
+                // TODO: Apply the last move to the game state and call on_game_state_updated
+            },
+            MessageType::MoveRequest => {
                 client.on_move_request();
             },
-            crate::connection::parser::message::MessageType::Result => {
+            MessageType::Result => {
                 client.on_game_over();
                 break;
             },

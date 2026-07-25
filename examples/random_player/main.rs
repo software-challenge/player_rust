@@ -17,6 +17,11 @@ impl Client for RandomPlayerClient {
 
     fn on_game_state_updated(&mut self, game_state: GameState ) {
         self.game_state = Some(game_state);
+
+        for piece in &self.game_state.as_ref().unwrap().blue_pieces {
+            println!("Blue piece: {}", piece.to_string());
+        }
+
         println!("Game state updated!");
     }
 }
