@@ -11,19 +11,31 @@ pub trait Client {
 pub fn start_client_from_commandline_args<C: Client>(mut client: C) -> Result<(), Box<dyn std::error::Error>> {
     let mut connection = ConnectionHandler::new_from_commandline_args()?;
 
+    let mut local_game_state: Option<GameState> = None;
+
     loop {
         let message = connection.get_new_message()?;
 
         match message.message_type {
             MessageType::MementoInitial => {
                 if let Some(game_state) = message.game_state {
-                    client.on_game_state_updated(game_state);
+                    local_game_state = Some(game_state);
+                    client.on_game_state_updated(local_game_state.as_ref().unwrap().clone());
                 } else {
                     eprintln!("Received Memento message without game state!");
                 }
             },
             MessageType::MementoLastMove => {
-                // TODO: Apply the last move to the game state and call on_game_state_updated
+                if let Some(last_move) = message.last_move {
+                    if let Some(game_state) = &mut local_game_state {
+                        game_state.apply_move_unchecked(&last_move);
+                        client.on_game_state_updated(game_state.clone());
+                    } else {
+                        eprintln!("Received LastMove message without existing game state!");
+                    }
+                } else {
+                    eprintln!("Received LastMove message without last move data!");
+                }
             },
             MessageType::MoveRequest => {
                 client.on_move_request();

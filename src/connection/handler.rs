@@ -2,15 +2,13 @@ use std::{fs::OpenOptions, io::{Read, Write}, net::TcpStream};
 
 use xml::EventReader;
 
-use crate::{connection::parser::{parse_joined::parse_joined, parse_message::parse_message, message::Message}, game::{board::Board, gamestate::GameState}};
+use crate::connection::parser::{parse_joined::parse_joined, parse_message::parse_message, message::Message};
 
 pub struct ConnectionHandler {
     pub connected: bool,
     pub connection: TcpStream,
     log_file: std::fs::File,
     pub room_id: Option<Box<str>>,
-    pub board:Option<Board>,
-    pub game_state: Option<GameState>,
 }
 
 impl ConnectionHandler {
@@ -40,8 +38,6 @@ impl ConnectionHandler {
             connected: false,
             connection: TcpStream::connect(address)?,
             room_id: None,
-            board: None,
-            game_state: None,
             // Debugging
             log_file: OpenOptions::new()
                 .create(true)

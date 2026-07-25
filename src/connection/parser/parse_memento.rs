@@ -1,7 +1,7 @@
 use xml::EventReader;
 use xml::reader::XmlEvent;
 
-use crate::{connection::parser::message::Message, game::{board::Board, gamestate::GameState, pieces::Pieces}};
+use crate::{connection::parser::message::Message, game::{board::{Board, Team}, gamestate::GameState, r#move::Move, pieces::Pieces}};
 
 pub fn parse_memento(mut parser: EventReader<&[u8]>) -> Box<Message> {
     loop {
@@ -17,7 +17,7 @@ pub fn parse_memento(mut parser: EventReader<&[u8]>) -> Box<Message> {
                             if turn_value == 0 {
                                 // Extract all information for the initial state
                                 
-                                print!("Extracting initial game state from memento message...");
+                                println!("Extracting initial game state from memento message...");
 
                                 let mut game_state = GameState {
                                     board: Board::new(),
@@ -68,6 +68,60 @@ pub fn parse_memento(mut parser: EventReader<&[u8]>) -> Box<Message> {
 
                             } else {
                                 // Extract last move
+
+                                println!("Extracting last move from memento message...");
+
+                                let mut team: Option<Team> = None;
+                                let mut piece: Option<Pieces> = None;
+                                let mut x: Option<usize> = None;
+                                let mut y: Option<usize> = None;
+
+                                loop {
+                                    match parser.next() {
+                                        Ok(XmlEvent::StartElement { name, attributes, .. }) => {
+                                            if name.local_name == "piece" {
+                                                for attr in attributes {
+                                                    match attr.name.local_name.as_str() {
+                                                        "color" => team = Some(Team::from_string(&attr.value)),
+                                                        "kind" => piece = Some(Pieces::from_string(&attr.value)),
+                                                        _ => {}
+                                                    }
+                                                }
+                                            } else if name.local_name == "position" {
+                                                for attr in attributes {
+                                                    match attr.name.local_name.as_str() {
+                                                        "x" => x = Some(attr.value.parse::<usize>().unwrap()),
+                                                        "y" => y = Some(attr.value.parse::<usize>().unwrap()),
+                                                        _ => {}
+                                                    }
+                                                }
+                                            }
+                                        }
+                                        Ok(XmlEvent::EndElement { name }) => {
+                                            if name.local_name == "lastMove" {
+                                                return Box::new(Message {
+                                                    message_type: crate::connection::parser::message::MessageType::MementoLastMove,
+                                                    game_state: None,
+                                                    last_move: Some(Box::new(Move { team: team.unwrap(), piece: piece.unwrap(), x: x.unwrap(), y: y.unwrap() })),
+                                                    result: None,
+                                                });
+                                            }
+                                        }
+                                        Ok(XmlEvent::EndDocument) => {
+                                            return Box::new(Message {
+                                                message_type: crate::connection::parser::message::MessageType::MementoLastMove,
+                                                game_state: None,
+                                                last_move: None,
+                                                result: None,
+                                            });
+                                        }
+                                        Ok(_) => {}
+                                        Err(e) => {
+                                            eprintln!("Error while parsing memento: {e}");
+                                            continue;
+                                        }
+                                    }
+                                }
                             }
                         }
                     }

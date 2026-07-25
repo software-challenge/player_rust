@@ -22,6 +22,8 @@ impl Client for RandomPlayerClient {
             println!("Blue piece: {}", piece.to_string());
         }
 
+        self.game_state.as_ref().unwrap().board.print_board();
+
         println!("Game state updated!");
     }
 }
