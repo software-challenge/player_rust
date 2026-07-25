@@ -3,6 +3,7 @@ use std::{fs::OpenOptions, io::{Read, Write}, net::TcpStream};
 use xml::EventReader;
 
 use crate::connection::parser::{parse_joined::parse_joined, parse_message::parse_message, message::Message};
+use crate::game::r#move::Move;
 
 pub struct ConnectionHandler {
     pub connected: bool,
@@ -52,16 +53,13 @@ impl ConnectionHandler {
 
     /// Joins a game, optionally using a reservation code if provided.
     pub fn join(&mut self, reservation_code: Option<&str>) -> Result<(), Box<dyn std::error::Error>> {
-        
-        let mut buffer: [u8; 200] = [0; 200];
-
         match reservation_code {
             Some(rc) => self.connection.write(format!("<protocol><joinPrepared reservationCode=\"{}\"/>", rc).as_bytes())?,
             None => self.connection.write(b"<protocol><join/>")?
         };
         
         // Receive the welcome message from the server and read it into the buffer
-        let last_index: usize = self.read_message_to_buffer(&mut buffer)? -1;
+        let buffer = self.read_message_to_buffer()?;
 
         if buffer.is_empty() {
             return Err("No bytes received by the server".into()); //Err(ConnectionHandlerError::ZeroBytesReadToBuffer);
@@ -70,7 +68,7 @@ impl ConnectionHandler {
         if !buffer.starts_with(b"<protocol>"){return Err("Invalid XML format".into());}
 
         // Parse the welcome message to extract the roomId
-        let raw_xml = Self::xml_payload_from_buffer(&buffer, last_index);
+        let raw_xml = Self::xml_payload_from_buffer(&buffer);
         let parser: EventReader<&[u8]> = EventReader::new(raw_xml);
         self.room_id = Some(parse_joined(parser)?);
     
@@ -78,7 +76,8 @@ impl ConnectionHandler {
         return Ok(());
     }
 
-    pub fn send_move(&mut self, m: &crate::game::r#move::Move) -> Result<(), Box<dyn std::error::Error>> {
+    /// Sends a move to the server in XML format.
+    pub fn send_move(&mut self, m: &Move) -> Result<(), Box<dyn std::error::Error>> {
         let move_xml = format!(
             //"<room roomId=\"{}\"><data class=\"move\"><piece color=\"{}\" kind=\"{}\" rotation=\"NONE\" isFlipped=\"false\"><position x=\"{}\" y=\"{}\"/></piece></data></room>",
             "<room roomId=\"{}\"><data class=\"sc.plugin2027.SetMove\"><piece color=\"{}\" kind=\"{}\" rotation=\"NONE\" isFlipped=\"false\"><position x=\"{}\" y=\"{}\"/></piece></data></room>",
@@ -97,55 +96,67 @@ impl ConnectionHandler {
 
     /// Reads a new message from the server, parses it, and returns the parsed message
     pub fn get_new_message(&mut self) -> Result<Box<Message>, Box<dyn std::error::Error>> {
-        let mut buffer = [0; 4096];
-        let last_index: usize = self.read_message_to_buffer(&mut buffer)? -1;
+        let buffer: Vec<u8> = self.read_message_to_buffer()?;
 
         if buffer.is_empty() {
             return Err("No bytes received by the server".into()); //Err(ConnectionHandlerError::ZeroBytesReadToBuffer);
         }
 
-        let raw_xml = Self::xml_payload_from_buffer(&buffer, last_index);
+        let raw_xml: &[u8] = Self::xml_payload_from_buffer(&buffer);
         let parser: EventReader<&[u8]> = EventReader::new(raw_xml);
         let message: Box<Message> = parse_message(parser)?;
 
         return Ok(message);
     }
 
-    fn xml_payload_from_buffer(buffer: &[u8], last_index: usize) -> &[u8] {
+    fn xml_payload_from_buffer(buffer: &[u8]) -> &[u8] {
         let start = buffer.iter().position(|&b| b == b'<').unwrap_or(0);
-        &buffer[start..=last_index]
+        &buffer[start..]
     }
 
-    fn read_message_to_buffer(&mut self, buffer: &mut [u8]) -> Result<usize, Box<dyn std::error::Error>> {
+    fn read_message_to_buffer(&mut self) -> Result<Vec<u8>, Box<dyn std::error::Error>> {
+        let mut buffer = Vec::new();
 
-        let mut buffer_index: usize = self.read_to_buffer(buffer)?;
+        loop {
+            let number_of_new_bytes = self.read_to_buffer(&mut buffer)?;
 
-        while !Self::buffer_ends_with_room_tag(buffer, buffer_index) {
-            let number_of_new_bytes: usize = self.read_to_buffer(&mut buffer[buffer_index..])?;
-            buffer_index += number_of_new_bytes;
+            if number_of_new_bytes == 0 {
+                return Err("Zero Bytes Read To Buffer".into()); //Err(ConnectionHandlerError::ZeroBytesReadToBuffer);
+            }
+
+            if Self::buffer_ends_with_room_tag(&buffer) {
+                return Ok(buffer);
+            }
         }
-
-        Ok(buffer_index)
     }
 
-    fn buffer_ends_with_room_tag(buffer: &[u8], bytes_in_buffer: usize) -> bool {
-        buffer[..bytes_in_buffer].ends_with(b"</room>")
+    fn buffer_ends_with_room_tag(buffer: &[u8]) -> bool {
+        buffer.ends_with(b"</room>")
     }
 
-    fn read_to_buffer(&mut self, buffer: &mut [u8]) -> Result<usize, Box<dyn std::error::Error>> {
-        match self.connection.read(buffer){
+    fn read_to_buffer(&mut self, buffer: &mut Vec<u8>) -> Result<usize, Box<dyn std::error::Error>> {
+        let start_len = buffer.len();
+        buffer.resize(start_len + 4096, 0);
+
+        match self.connection.read(&mut buffer[start_len..]){
             Ok(0) => {
+                buffer.truncate(start_len);
                 return Err("Zero Bytes Read To Buffer".into()); //Err(ConnectionHandlerError::ZeroBytesReadToBuffer);
             },
             Ok(b) => {
+                buffer.truncate(start_len + b);
+
                 // Debugging
-                self.log_file.write_all(&buffer[..b])?;
+                self.log_file.write_all(&buffer[start_len..start_len + b])?;
                 self.log_file.write_all(b"\n")?;
                 self.log_file.flush()?;
 
                 return Ok(b)
             },
-            Err(e) => return Err(format!("Error reading to buffer: {}", e).into()), //Err(ConnectionHandlerError::Io(e)),
+            Err(e) => {
+                buffer.truncate(start_len);
+                return Err(format!("Error reading to buffer: {}", e).into()); //Err(ConnectionHandlerError::Io(e))
+            },
         }
     }
 }
@@ -157,26 +168,28 @@ mod tests {
     #[test]
     fn extracts_xml_payload_from_room_message() {
         let buffer = b"<room roomId=\"abc\"><data/></room>";
-        let payload = ConnectionHandler::xml_payload_from_buffer(buffer, buffer.len() - 1);
+        let payload = ConnectionHandler::xml_payload_from_buffer(buffer);
 
         assert_eq!(payload, b"<room roomId=\"abc\"><data/></room>");
     }
 
     #[test]
     fn detects_completed_room_message_without_zero_padding() {
-        let mut buffer = [0u8; 64];
+        let mut buffer = vec![0u8; 64];
         let payload = b"<room roomId=\"abc\"><data/></room>";
         buffer[..payload.len()].copy_from_slice(payload);
+        buffer.truncate(payload.len());
 
-        assert!(ConnectionHandler::buffer_ends_with_room_tag(&buffer, payload.len()));
+        assert!(ConnectionHandler::buffer_ends_with_room_tag(&buffer));
     }
 
     #[test]
-    fn does_not_treat_zero_padding_as_completed_message() {
-        let mut buffer = [0u8; 64];
+    fn does_not_treat_incomplete_message_as_completed_message() {
+        let mut buffer = vec![0u8; 64];
         let payload = b"<room roomId=\"abc\"><data/>";
         buffer[..payload.len()].copy_from_slice(payload);
+        buffer.truncate(payload.len());
 
-        assert!(!ConnectionHandler::buffer_ends_with_room_tag(&buffer, payload.len()));
+        assert!(!ConnectionHandler::buffer_ends_with_room_tag(&buffer));
     }
 }
