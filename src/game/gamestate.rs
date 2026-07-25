@@ -4,6 +4,7 @@ use crate::game::r#move::Move;
 
 #[derive(Clone)]
 pub struct GameState {
+    pub starting_piece: Pieces,
     pub board: Board,
     pub turn: u8,
     pub blue_pieces: Vec<Pieces>,

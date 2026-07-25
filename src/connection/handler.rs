@@ -78,6 +78,23 @@ impl ConnectionHandler {
         return Ok(());
     }
 
+    pub fn send_move(&mut self, m: &crate::game::r#move::Move) -> Result<(), Box<dyn std::error::Error>> {
+        let move_xml = format!(
+            //"<room roomId=\"{}\"><data class=\"move\"><piece color=\"{}\" kind=\"{}\" rotation=\"NONE\" isFlipped=\"false\"><position x=\"{}\" y=\"{}\"/></piece></data></room>",
+            "<room roomId=\"{}\"><data class=\"sc.plugin2027.SetMove\"><piece color=\"{}\" kind=\"{}\" rotation=\"NONE\" isFlipped=\"false\"><position x=\"{}\" y=\"{}\"/></piece></data></room>",
+            self.room_id.as_ref().unwrap_or(&Box::from("")),
+            m.team.to_string(),
+            m.piece.to_string(),
+            m.x,
+            m.y
+        );
+
+        self.connection.write_all(move_xml.as_bytes())?;
+        self.connection.flush()?;
+
+        Ok(())
+    }
+
     /// Reads a new message from the server, parses it, and returns the parsed message
     pub fn get_new_message(&mut self) -> Result<Box<Message>, Box<dyn std::error::Error>> {
         let mut buffer = [0; 4096];

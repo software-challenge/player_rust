@@ -189,4 +189,13 @@ impl Team {
             _ => panic!("Unknown team color: {}", s),
         }
     }
+
+    pub fn to_string(&self) -> String {
+        match self {
+            Team::Blue => "BLUE".to_string(),
+            Team::Yellow => "YELLOW".to_string(),
+            Team::Red => "RED".to_string(),
+            Team::Green => "GREEN".to_string(),
+        }
+    }
 }

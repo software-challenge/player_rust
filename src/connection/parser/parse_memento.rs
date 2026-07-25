@@ -10,7 +10,7 @@ pub fn parse_memento(mut parser: EventReader<&[u8]>) -> Box<Message> {
                 // Search for the state element
                 if name.local_name == "state" {
                     // Extract the turn and then decide what to do based on the turn value
-                    for attr in attributes {
+                    for attr in attributes.clone() {
                         if attr.name.local_name == "turn" {
                             let turn_value = attr.value.parse::<u32>().unwrap_or(0);
                             
@@ -19,7 +19,16 @@ pub fn parse_memento(mut parser: EventReader<&[u8]>) -> Box<Message> {
                                 
                                 println!("Extracting initial game state from memento message...");
 
+                                let mut starting_piece = Pieces::Mono; // Default value, will be overwritten if found 
+
+                                for attr in attributes {
+                                    if attr.name.local_name == "startPiece" {
+                                        starting_piece = Pieces::from_string(&attr.value);
+                                    }
+                                }
+
                                 let mut game_state = GameState {
+                                    starting_piece: starting_piece,
                                     board: Board::new(),
                                     turn: 0,
                                     blue_pieces: Vec::new(),

@@ -1,14 +1,22 @@
 use socha::game::gamestate::GameState;
 use socha::client::{Client, start_client_from_commandline_args};
+use socha::game::r#move::Move;
 
 struct RandomPlayerClient {
     game_state: Option<socha::game::gamestate::GameState>,
 }
 
 impl Client for RandomPlayerClient {
-    fn on_move_request(&mut self) {
+    fn on_move_request(&mut self) -> Option<Move> {
         // Implement your logic for handling move requests here
         println!("Received a move request!");
+        
+        Some(Move {
+            x: 0,
+            y: 0,
+            team: socha::game::board::Team::Yellow,
+            piece: self.game_state.as_ref().unwrap().starting_piece,
+        })
     }
 
     fn on_game_over(&mut self) {

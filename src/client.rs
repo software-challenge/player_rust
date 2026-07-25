@@ -1,9 +1,10 @@
 use crate::connection::handler::ConnectionHandler;
 use crate::game::gamestate::GameState;
 use crate::connection::parser::message::MessageType;
+use crate::game::r#move::Move;
 
 pub trait Client {
-    fn on_move_request(&mut self);
+    fn on_move_request(&mut self) -> Option<Move>;
     fn on_game_over(&mut self);
     fn on_game_state_updated(&mut self, gamestate: GameState);
 }
@@ -38,7 +39,12 @@ pub fn start_client_from_commandline_args<C: Client>(mut client: C) -> Result<()
                 }
             },
             MessageType::MoveRequest => {
-                client.on_move_request();
+                let m = client.on_move_request();
+                if let Some(mv) = m {
+                    connection.send_move(&mv)?;
+                } else {
+                    eprintln!("Client did not provide a move in response to MoveRequest!");
+                }
             },
             MessageType::Result => {
                 client.on_game_over();
