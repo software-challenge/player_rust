@@ -2,7 +2,7 @@ use std::{fs::OpenOptions, io::{Read, Write}, net::TcpStream};
 
 use xml::EventReader;
 
-use crate::{connection::parser::{parse_joined::parse_joined, parse_message::parse_message}, game::{board::Board, gamestate::GameState}};
+use crate::{connection::parser::{parse_joined::parse_joined, parse_message::parse_message, message::Message}, game::{board::Board, gamestate::GameState}};
 
 pub struct ConnectionHandler {
     pub connected: bool,
@@ -83,7 +83,7 @@ impl ConnectionHandler {
     }
 
     /// Reads a new message from the server, parses it, and returns the parsed message
-    pub fn get_new_message(&mut self) -> Result<Box<str>, Box<dyn std::error::Error>> {
+    pub fn get_new_message(&mut self) -> Result<Box<Message>, Box<dyn std::error::Error>> {
         let mut buffer = [0; 4096];
         let last_index: usize = self.read_message_to_buffer(&mut buffer)? -1;
 
@@ -93,9 +93,7 @@ impl ConnectionHandler {
 
         let raw_xml = Self::xml_payload_from_buffer(&buffer, last_index);
         let parser: EventReader<&[u8]> = EventReader::new(raw_xml);
-        let message: Box<str> = parse_message(parser)?;
-
-        println!("Received message: {}", message);
+        let message: Box<Message> = parse_message(parser)?;
 
         return Ok(message);
     }

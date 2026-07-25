@@ -2,12 +2,13 @@ use socha::game::gamestate::GameState;
 use socha::client::{Client, start_client_from_commandline_args};
 
 struct RandomPlayerClient {
-    GameState: Option<socha::game::gamestate::GameState>,
+    game_state: Option<socha::game::gamestate::GameState>,
 }
 
 impl Client for RandomPlayerClient {
     fn on_move_request(&mut self) {
         // Implement your logic for handling move requests here
+        println!("Received a move request!");
     }
 
     fn on_game_over(&mut self) {
@@ -15,11 +16,12 @@ impl Client for RandomPlayerClient {
     }
 
     fn on_game_state_updated(&mut self, game_state: GameState ) {
+        self.game_state = Some(game_state);
         println!("Game state updated!");
     }
 }
 
 fn main() {
-    let client = RandomPlayerClient { GameState: None };
+    let client = RandomPlayerClient { game_state: None };
     start_client_from_commandline_args(client).unwrap();
 }

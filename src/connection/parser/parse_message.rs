@@ -1,6 +1,8 @@
 use xml::{EventReader, reader::XmlEvent};
 
-pub fn parse_message(parser: EventReader<&[u8]>) -> Result<Box<str>, Box<dyn std::error::Error>> {
+use crate::connection::parser::message::Message;
+
+pub fn parse_message(parser: EventReader<&[u8]>) -> Result<Box<Message>, Box<dyn std::error::Error>> {
     for e in parser {
         match e {
             Ok(XmlEvent::StartElement { name, attributes, .. }) => {
@@ -9,13 +11,25 @@ pub fn parse_message(parser: EventReader<&[u8]>) -> Result<Box<str>, Box<dyn std
                         if attr.name.local_name == "class" {
                             match attr.value.as_str() {
                                 "memento" => {
-                                    return Ok("memento".into());
+                                    return Ok(Box::new(Message {
+                                        message_type: crate::connection::parser::message::MessageType::Memento,
+                                        game_state: None, // TODO parse game state from XML
+                                        result: None,
+                                    }));
                                 },
                                 "moveRequest" => {
-                                    return Ok("moveRequest".into());
+                                    return Ok(Box::new(Message {
+                                        message_type: crate::connection::parser::message::MessageType::MoveRequest,
+                                        game_state: None,
+                                        result: None,
+                                    }));
                                 },
                                 "result" => {
-                                    return Ok("result".into());
+                                    return Ok(Box::new(Message {
+                                        message_type: crate::connection::parser::message::MessageType::Result,
+                                        game_state: None,
+                                        result: None, // TODO parse result from XML
+                                    }));
                                 },
                                 _ => {
                                     return Err(format!("Unknown class attribute value: {}", attr.value).into());
