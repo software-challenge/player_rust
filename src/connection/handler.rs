@@ -79,10 +79,12 @@ impl ConnectionHandler {
     /// Sends a move to the server in XML format.
     pub fn send_move(&mut self, m: &Move) -> Result<(), Box<dyn std::error::Error>> {
         let move_xml = format!(
-            "<room roomId=\"{}\"><data class=\"sc.plugin2027.SetMove\"><piece color=\"{}\" kind=\"{}\" rotation=\"NONE\" isFlipped=\"false\"><position x=\"{}\" y=\"{}\"/></piece></data></room>",
+            "<room roomId=\"{}\"><data class=\"sc.plugin2027.SetMove\"><piece color=\"{}\" kind=\"{}\" rotation=\"{}\" isFlipped=\"{}\"><position x=\"{}\" y=\"{}\"/></piece></data></room>",
             self.room_id.as_ref().unwrap_or(&Box::from("")),
             m.team.to_string(),
             m.piece.to_string(),
+            m.rotation.to_string(),
+            m.is_flipped,
             m.x,
             m.y
         );

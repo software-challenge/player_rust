@@ -1,7 +1,7 @@
 use xml::EventReader;
 use xml::reader::XmlEvent;
 
-use crate::{connection::parser::message::Message, game::{board::{Board, Team}, gamestate::GameState, r#move::Move, pieces::Pieces}};
+use crate::{connection::parser::message::Message, game::{board::{Board, Team}, gamestate::GameState, r#move::{Move, Rotation}, pieces::Pieces}};
 
 pub fn parse_memento(mut parser: EventReader<&[u8]>) -> Box<Message> {
     loop {
@@ -84,6 +84,8 @@ pub fn parse_memento(mut parser: EventReader<&[u8]>) -> Box<Message> {
                                 let mut piece: Option<Pieces> = None;
                                 let mut x: Option<usize> = None;
                                 let mut y: Option<usize> = None;
+                                let mut is_flipped: Option<bool> = None;
+                                let mut rotation: Option<Rotation> = None;
 
                                 loop {
                                     match parser.next() {
@@ -93,6 +95,8 @@ pub fn parse_memento(mut parser: EventReader<&[u8]>) -> Box<Message> {
                                                     match attr.name.local_name.as_str() {
                                                         "color" => team = Some(Team::from_string(&attr.value)),
                                                         "kind" => piece = Some(Pieces::from_string(&attr.value)),
+                                                        "isFlipped" => is_flipped = Some(attr.value.parse::<bool>().unwrap()),
+                                                        "rotation" => rotation = Some(Rotation::from_string(&attr.value).unwrap()),
                                                         _ => {}
                                                     }
                                                 }
@@ -111,7 +115,7 @@ pub fn parse_memento(mut parser: EventReader<&[u8]>) -> Box<Message> {
                                                 return Box::new(Message {
                                                     message_type: crate::connection::parser::message::MessageType::MementoLastMove,
                                                     game_state: None,
-                                                    last_move: Some(Box::new(Move { team: team.unwrap(), piece: piece.unwrap(), x: x.unwrap(), y: y.unwrap() })),
+                                                    last_move: Some(Box::new(Move { team: team.unwrap(), piece: piece.unwrap(), x: x.unwrap(), y: y.unwrap(), is_flipped: is_flipped.unwrap(), rotation: rotation.unwrap() })),
                                                     result: None,
                                                 });
                                             }

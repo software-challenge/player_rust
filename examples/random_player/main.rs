@@ -8,7 +8,6 @@ struct RandomPlayerClient {
 
 impl Client for RandomPlayerClient {
     fn on_move_request(&mut self) -> Option<Move> {
-        // Implement your logic for handling move requests here
         println!("Received a move request!");
         
         Some(Move {
@@ -16,6 +15,8 @@ impl Client for RandomPlayerClient {
             y: 0,
             team: socha::game::board::Team::Yellow,
             piece: self.game_state.as_ref().unwrap().starting_piece,
+            is_flipped: true,
+            rotation: socha::game::r#move::Rotation::None,
         })
     }
 
