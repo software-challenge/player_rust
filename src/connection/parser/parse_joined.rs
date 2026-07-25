@@ -12,7 +12,7 @@ pub fn parse_joined(parser: EventReader<&[u8]>) -> Result<Box<str>, Box<dyn std:
                     }
                 }
             },
-            Err(e) => return Err("Error parsing XML".into()), //Err(ConnectionHandlerError::Xml(e)),
+            Err(e) => return Err(format!("Error parsing XML: {}", e).into()), //Err(ConnectionHandlerError::Xml(e)),
             _ => {}
         }
     }

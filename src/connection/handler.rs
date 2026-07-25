@@ -134,7 +134,7 @@ impl ConnectionHandler {
 
                 return Ok(b)
             },
-            Err(e) => return Err("Error reading to buffer".into()), //Err(ConnectionHandlerError::Io(e)),
+            Err(e) => return Err(format!("Error reading to buffer: {}", e).into()), //Err(ConnectionHandlerError::Io(e)),
         }
     }
 }
