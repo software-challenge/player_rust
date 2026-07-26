@@ -1,4 +1,4 @@
-use crate::game::pieces::Pieces;
+use crate::game::piece::PieceType;
 
 #[derive(Copy, Clone)]
 
@@ -34,133 +34,133 @@ impl Board {
 
     /// Places a piece on the board at the specified coordinates.
     /// This function does not perform any validation and assumes that the coordinates are valid and the piece is not placed on an occupied space.
-    pub fn place_piece(&mut self, x: usize, y: usize, team: Team, piece: Pieces) {
+    pub fn place_piece(&mut self, x: usize, y: usize, team: Team, piece: PieceType) {
         match piece {
-            Pieces::Mono => {
+            PieceType::Mono => {
                 self.board[y][x] = Some(team);
             },
-            Pieces::Domino => {
+            PieceType::Domino => {
                 self.board[y][x] = Some(team);
                 self.board[y][x + 1] = Some(team);
             },
-            Pieces::TrioL => {
+            PieceType::TrioL => {
                 self.board[y][x] = Some(team);
                 self.board[y + 1][x] = Some(team);
                 self.board[y + 1][x + 1] = Some(team);
             },
-            Pieces::TrioI => {
+            PieceType::TrioI => {
                 self.board[y][x] = Some(team);
                 self.board[y + 1][x] = Some(team);
                 self.board[y + 2][x] = Some(team);
             },
-            Pieces::TetroO => {
+            PieceType::TetroO => {
                 self.board[y][x] = Some(team);
                 self.board[y][x + 1] = Some(team);
                 self.board[y + 1][x] = Some(team);
                 self.board[y + 1][x + 1] = Some(team);
             },
-            Pieces::TetroT => {
+            PieceType::TetroT => {
                 self.board[y][x] = Some(team);
                 self.board[y][x + 1] = Some(team);
                 self.board[y + 1][x + 1] = Some(team);
                 self.board[y][x + 2] = Some(team);
             },
-            Pieces::TetroI => {
+            PieceType::TetroI => {
                 self.board[y][x] = Some(team);
                 self.board[y + 1][x] = Some(team);
                 self.board[y + 2][x] = Some(team);
                 self.board[y + 3][x] = Some(team);
             },
-            Pieces::TetroL => {
+            PieceType::TetroL => {
                 self.board[y][x] = Some(team);
                 self.board[y + 1][x] = Some(team);
                 self.board[y + 2][x] = Some(team);
                 self.board[y + 2][x + 1] = Some(team);
             },
-            Pieces::TetroZ => {
+            PieceType::TetroZ => {
                 self.board[y][x] = Some(team);
                 self.board[y][x + 1] = Some(team);
                 self.board[y + 1][x + 1] = Some(team);
                 self.board[y + 1][x + 2] = Some(team);
             },
-            Pieces::PentoL => {
+            PieceType::PentoL => {
                 self.board[y][x] = Some(team);
                 self.board[y + 1][x] = Some(team);
                 self.board[y + 2][x] = Some(team);
                 self.board[y + 3][x] = Some(team);
                 self.board[y + 3][x + 1] = Some(team);
             },
-            Pieces::PentoT => {
+            PieceType::PentoT => {
                 self.board[y][x] = Some(team);
                 self.board[y][x + 1] = Some(team);
                 self.board[y][x + 2] = Some(team);
                 self.board[y + 1][x + 1] = Some(team);
                 self.board[y + 2][x + 1] = Some(team);
             },
-            Pieces::PentoV => {
+            PieceType::PentoV => {
                 self.board[y][x] = Some(team);
                 self.board[y + 1][x] = Some(team);
                 self.board[y + 2][x] = Some(team);
                 self.board[y + 2][x + 1] = Some(team);
                 self.board[y + 2][x + 2] = Some(team);
             },
-            Pieces::PentoS => {
+            PieceType::PentoS => {
                 self.board[y + 1][x] = Some(team);
                 self.board[y + 1][x + 1] = Some(team);
                 self.board[y][x + 1] = Some(team);
                 self.board[y][x + 2] = Some(team);
                 self.board[y][x + 3] = Some(team);
             },
-            Pieces::PentoZ => {
+            PieceType::PentoZ => {
                 self.board[y][x] = Some(team);
                 self.board[y][x + 1] = Some(team);
                 self.board[y + 1][x + 1] = Some(team);
                 self.board[y + 2][x + 1] = Some(team);
                 self.board[y + 2][x + 2] = Some(team);
             },
-            Pieces::PentoI => {
+            PieceType::PentoI => {
                 self.board[y][x] = Some(team);
                 self.board[y + 1][x] = Some(team);
                 self.board[y + 2][x] = Some(team);
                 self.board[y + 3][x] = Some(team);
                 self.board[y + 4][x] = Some(team);
             },
-            Pieces::PentoP => {
+            PieceType::PentoP => {
                 self.board[y][x] = Some(team);
                 self.board[y][x + 1] = Some(team);
                 self.board[y + 1][x] = Some(team);
                 self.board[y + 1][x + 1] = Some(team);
                 self.board[y + 2][x] = Some(team);
             },
-            Pieces::PentoW => {
+            PieceType::PentoW => {
                 self.board[y][x] = Some(team);
                 self.board[y + 1][x] = Some(team);
                 self.board[y + 1][x + 1] = Some(team);
                 self.board[y + 2][x + 1] = Some(team);
                 self.board[y + 2][x + 2] = Some(team);
             },
-            Pieces::PentoU => {
+            PieceType::PentoU => {
                 self.board[y][x] = Some(team);
                 self.board[y + 1][x] = Some(team);
                 self.board[y + 1][x + 1] = Some(team);
                 self.board[y + 1][x + 2] = Some(team);
                 self.board[y][x + 2] = Some(team);
             },
-            Pieces::PentoR => {
+            PieceType::PentoR => {
                 self.board[y + 1][x] = Some(team);
                 self.board[y + 1][x + 1] = Some(team);
                 self.board[y + 2][x + 1] = Some(team);
                 self.board[y + 1][x + 2] = Some(team);
                 self.board[y][x + 2] = Some(team);
             },
-            Pieces::PentoX => {
+            PieceType::PentoX => {
                 self.board[y][x + 1] = Some(team);
                 self.board[y + 1][x] = Some(team);
                 self.board[y + 1][x + 1] = Some(team);
                 self.board[y + 1][x + 2] = Some(team);
                 self.board[y + 2][x + 1] = Some(team);
             },
-            Pieces::PentoY => {
+            PieceType::PentoY => {
                 self.board[y][x + 1] = Some(team);
                 self.board[y + 1][x] = Some(team);
                 self.board[y + 1][x + 1] = Some(team);

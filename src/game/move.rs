@@ -1,8 +1,8 @@
-use crate::game::{board::Team, pieces::Pieces};
+use crate::game::{board::Team, piece::PieceType};
 
 pub struct Move {
     pub team: Team,
-    pub piece: Pieces,
+    pub piece: PieceType,
     pub x: usize,
     pub y: usize,
     pub is_flipped: bool,

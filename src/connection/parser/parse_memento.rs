@@ -1,7 +1,9 @@
+use std::str::FromStr;
+
 use xml::EventReader;
 use xml::reader::XmlEvent;
 
-use crate::{connection::parser::message::Message, game::{board::{Board, Team}, gamestate::GameState, r#move::{Move, Rotation}, pieces::Pieces}};
+use crate::{connection::parser::message::Message, game::{board::{Board, Team}, gamestate::GameState, r#move::{Move, Rotation}, piece::PieceType}};
 
 pub fn parse_memento(mut parser: EventReader<&[u8]>) -> Box<Message> {
     loop {
@@ -19,11 +21,11 @@ pub fn parse_memento(mut parser: EventReader<&[u8]>) -> Box<Message> {
                                 
                                 println!("Extracting initial game state from memento message...");
 
-                                let mut starting_piece = Pieces::Mono; // Default value, will be overwritten if found 
+                                let mut starting_piece = PieceType::Mono; // Default value, will be overwritten if found 
 
                                 for attr in attributes {
                                     if attr.name.local_name == "startPiece" {
-                                        starting_piece = Pieces::from_string(&attr.value);
+                                        starting_piece = PieceType::from_str(&attr.value).unwrap();
                                     }
                                 }
 
@@ -31,31 +33,31 @@ pub fn parse_memento(mut parser: EventReader<&[u8]>) -> Box<Message> {
                                     starting_piece: starting_piece,
                                     board: Board::new(),
                                     turn: 0,
-                                    blue_pieces: Vec::new(),
-                                    yellow_pieces: Vec::new(),
-                                    red_pieces: Vec::new(),
-                                    green_pieces: Vec::new(),
+                                    blue_PieceType: Vec::new(),
+                                    yellow_PieceType: Vec::new(),
+                                    red_PieceType: Vec::new(),
+                                    green_PieceType: Vec::new(),
                                 };
 
-                                let mut current_pieces: Option<&mut Vec<Pieces>> = None;
+                                let mut current_PieceType: Option<&mut Vec<PieceType>> = None;
 
                                 loop {
                                     match parser.next() {
                                         Ok(XmlEvent::StartElement { name, .. }) => {
                                             if name.local_name == "blueShapes" {
-                                                current_pieces = Some(&mut game_state.blue_pieces);
+                                                current_PieceType = Some(&mut game_state.blue_PieceType);
                                             } else if name.local_name == "yellowShapes" {
-                                                current_pieces = Some(&mut game_state.yellow_pieces);
+                                                current_PieceType = Some(&mut game_state.yellow_PieceType);
                                             } else if name.local_name == "redShapes" {
-                                                current_pieces = Some(&mut game_state.red_pieces);
+                                                current_PieceType = Some(&mut game_state.red_PieceType);
                                             } else if name.local_name == "greenShapes" {
-                                                current_pieces = Some(&mut game_state.green_pieces);
+                                                current_PieceType = Some(&mut game_state.green_PieceType);
                                             } else if name.local_name == "validColors" {
-                                                current_pieces = None; // No pieces to add for validColors
+                                                current_PieceType = None; // No PieceType to add for validColors
                                             }
                                         }
-                                        Ok(XmlEvent::Characters(text)) if current_pieces.is_some() => {
-                                            current_pieces.as_mut().unwrap().push(Pieces::from_string(&text));
+                                        Ok(XmlEvent::Characters(text)) if current_PieceType.is_some() => {
+                                            current_PieceType.as_mut().unwrap().push(PieceType::from_str(&text).unwrap());
                                         }
                                         Ok(XmlEvent::EndElement { name }) => {
                                             if name.local_name == "state" {
@@ -81,7 +83,7 @@ pub fn parse_memento(mut parser: EventReader<&[u8]>) -> Box<Message> {
                                 println!("Extracting last move from memento message...");
 
                                 let mut team: Option<Team> = None;
-                                let mut piece: Option<Pieces> = None;
+                                let mut piece: Option<PieceType> = None;
                                 let mut x: Option<usize> = None;
                                 let mut y: Option<usize> = None;
                                 let mut is_flipped: Option<bool> = None;
@@ -94,7 +96,7 @@ pub fn parse_memento(mut parser: EventReader<&[u8]>) -> Box<Message> {
                                                 for attr in attributes {
                                                     match attr.name.local_name.as_str() {
                                                         "color" => team = Some(Team::from_string(&attr.value)),
-                                                        "kind" => piece = Some(Pieces::from_string(&attr.value)),
+                                                        "kind" => piece = Some(PieceType::from_str(&attr.value).unwrap()),
                                                         "isFlipped" => is_flipped = Some(attr.value.parse::<bool>().unwrap()),
                                                         "rotation" => rotation = Some(Rotation::from_string(&attr.value).unwrap()),
                                                         _ => {}

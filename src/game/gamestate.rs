@@ -1,16 +1,16 @@
 use crate::game::board::Board;
-use crate::game::pieces::Pieces;
+use crate::game::piece::PieceType;
 use crate::game::r#move::Move;
 
 #[derive(Clone)]
 pub struct GameState {
-    pub starting_piece: Pieces,
+    pub starting_piece: PieceType,
     pub board: Board,
     pub turn: u8,
-    pub blue_pieces: Vec<Pieces>,
-    pub yellow_pieces: Vec<Pieces>,
-    pub red_pieces: Vec<Pieces>,
-    pub green_pieces: Vec<Pieces>,
+    pub blue_PieceType: Vec<PieceType>,
+    pub yellow_PieceType: Vec<PieceType>,
+    pub red_PieceType: Vec<PieceType>,
+    pub green_PieceType: Vec<PieceType>,
 }
 
 impl GameState {
