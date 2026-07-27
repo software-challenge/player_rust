@@ -23,6 +23,18 @@ impl Client for RandomPlayerClient {
             _ => {}
         }
 
+        if self.game_state.as_ref().unwrap().turn > 4 {
+            return Some(Move {
+                team: current_team,
+                piece: self.game_state.as_ref().unwrap().starting_piece,
+                x: 0,
+                y: 0,
+                is_flipped: false,
+                rotation: socha::game::r#move::Rotation::None,
+                skip: true
+            })
+        }
+
         let legal_moves = gamerulelogic::get_legal_moves_for_team(self.game_state.as_ref().unwrap(), &current_team);
 
         let random_index = random_index(legal_moves.len());
@@ -34,14 +46,8 @@ impl Client for RandomPlayerClient {
     }
 
     fn on_game_state_updated(&mut self, game_state: GameState ) {
+        game_state.board.print_board();
         self.game_state = Some(game_state);
-
-        for piece in &self.game_state.as_ref().unwrap().blue_PieceType {
-            println!("Blue piece: {}", piece.to_string());
-        }
-
-        self.game_state.as_ref().unwrap().board.print_board();
-
         println!("Game state updated!");
     }
 }

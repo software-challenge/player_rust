@@ -29,38 +29,35 @@ pub fn parse_memento(mut parser: EventReader<&[u8]>) -> Box<Message> {
                                     }
                                 }
 
-                                let mut game_state = GameState {
-                                    starting_piece: starting_piece,
-                                    board: Board::new(),
-                                    turn: 0,
-                                    blue_PieceType: Vec::new(),
-                                    yellow_PieceType: Vec::new(),
-                                    red_PieceType: Vec::new(),
-                                    green_PieceType: Vec::new(),
-                                };
+                                let mut blue_pieces: Vec<PieceType> = Vec::new();
+                                let mut yellow_pieces: Vec<PieceType> = Vec::new();
+                                let mut red_pieces: Vec<PieceType> = Vec::new();
+                                let mut green_pieces: Vec<PieceType> = Vec::new();
 
-                                let mut current_PieceType: Option<&mut Vec<PieceType>> = None;
+                                let mut current_teams_pieces: Option<&mut Vec<PieceType>> = None;
 
                                 loop {
                                     match parser.next() {
                                         Ok(XmlEvent::StartElement { name, .. }) => {
                                             if name.local_name == "blueShapes" {
-                                                current_PieceType = Some(&mut game_state.blue_PieceType);
+                                                current_teams_pieces = Some(&mut blue_pieces);
                                             } else if name.local_name == "yellowShapes" {
-                                                current_PieceType = Some(&mut game_state.yellow_PieceType);
+                                                current_teams_pieces = Some(&mut yellow_pieces);
                                             } else if name.local_name == "redShapes" {
-                                                current_PieceType = Some(&mut game_state.red_PieceType);
+                                                current_teams_pieces = Some(&mut red_pieces    );
                                             } else if name.local_name == "greenShapes" {
-                                                current_PieceType = Some(&mut game_state.green_PieceType);
+                                                current_teams_pieces = Some(&mut green_pieces);
                                             } else if name.local_name == "validColors" {
-                                                current_PieceType = None; // No PieceType to add for validColors
+                                                current_teams_pieces = None; // No PieceType to add for validColors
                                             }
                                         }
-                                        Ok(XmlEvent::Characters(text)) if current_PieceType.is_some() => {
-                                            current_PieceType.as_mut().unwrap().push(PieceType::from_str(&text).unwrap());
+                                        Ok(XmlEvent::Characters(text)) if current_teams_pieces.is_some() => {
+                                            current_teams_pieces.as_mut().unwrap().push(PieceType::from_str(&text).unwrap());
                                         }
                                         Ok(XmlEvent::EndElement { name }) => {
                                             if name.local_name == "state" {
+                                                let game_state = GameState::new(starting_piece, Board::new(), 0, 1, blue_pieces, yellow_pieces, red_pieces, green_pieces);
+
                                                 return Box::new(Message {
                                                     message_type: crate::connection::parser::message::MessageType::MementoInitial,
                                                     game_state: Some(game_state),
@@ -88,6 +85,9 @@ pub fn parse_memento(mut parser: EventReader<&[u8]>) -> Box<Message> {
                                 let mut y: Option<usize> = None;
                                 let mut is_flipped: Option<bool> = None;
                                 let mut rotation: Option<Rotation> = None;
+                                let mut skip: bool = false;
+
+                                let mut next_text_color = false;
 
                                 loop {
                                     match parser.next() {
@@ -110,14 +110,40 @@ pub fn parse_memento(mut parser: EventReader<&[u8]>) -> Box<Message> {
                                                         _ => {}
                                                     }
                                                 }
+                                            } else if name.local_name == "lastMove" {
+                                                for attr in attributes {
+                                                    if attr.name.local_name == "class" {
+                                                        if attr.value == "sc.plugin2027.SkipMove" {
+                                                            skip = true;
+                                                        }
+                                                    }
+                                                }
+                                            } else if name.local_name == "color" {
+                                                next_text_color = true;
+                                            }
+                                        }
+                                        Ok(XmlEvent::Characters(text)) => {
+                                            if next_text_color {
+                                                team = Some(Team::from_string(&text));
+                                                next_text_color = false;
                                             }
                                         }
                                         Ok(XmlEvent::EndElement { name }) => {
                                             if name.local_name == "lastMove" {
+
+                                                if skip {
+                                                    return Box::new(Message {
+                                                        message_type: crate::connection::parser::message::MessageType::MementoLastMove,
+                                                        game_state: None,
+                                                        last_move: Some(Box::new(Move { team: team.unwrap(), piece: PieceType::Mono, x: 0, y: 0, is_flipped: false, rotation: Rotation::None, skip: true })),
+                                                        result: None,
+                                                    });
+                                                }
+
                                                 return Box::new(Message {
                                                     message_type: crate::connection::parser::message::MessageType::MementoLastMove,
                                                     game_state: None,
-                                                    last_move: Some(Box::new(Move { team: team.unwrap(), piece: piece.unwrap(), x: x.unwrap(), y: y.unwrap(), is_flipped: is_flipped.unwrap(), rotation: rotation.unwrap() })),
+                                                    last_move: Some(Box::new(Move { team: team.unwrap(), piece: piece.unwrap(), x: x.unwrap(), y: y.unwrap(), is_flipped: is_flipped.unwrap(), rotation: rotation.unwrap(), skip: false })),
                                                     result: None,
                                                 });
                                             }

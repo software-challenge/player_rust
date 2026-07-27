@@ -1,4 +1,4 @@
-use crate::game::piece::PieceType;
+use crate::game::piece::{Piece};
 
 pub const BOARD_WIDTH: usize = 20;
 pub const BOARD_HEIGHT: usize = 20;
@@ -35,7 +35,28 @@ impl Board {
         }
     }
 
-    /// Places a piece on the board at the specified coordinates.
+    pub fn get_cell(&self, x: usize, y: usize) -> Option<Team> {
+        if x < BOARD_WIDTH && y < BOARD_HEIGHT {
+            self.board[y][x]
+        } else {
+            None
+        }
+    }
+
+    pub fn place_piece(&mut self, x: usize, y: usize, team: Team, piece: Piece) {
+        for coord in piece.get_coordinates() {
+            let new_x = x + coord.x as usize;
+            let new_y = y + coord.y as usize;
+
+            if new_x < BOARD_WIDTH && new_y < BOARD_HEIGHT {
+                self.board[new_y][new_x] = Some(team);
+            } else {
+                panic!("Attempted to place a piece out of bounds at ({}, {})", new_x, new_y);
+            }
+        }
+    }
+
+    /*/// Places a piece on the board at the specified coordinates.
     /// This function does not perform any validation and assumes that the coordinates are valid and the piece is not placed on an occupied space.
     pub fn place_piece(&mut self, x: usize, y: usize, team: Team, piece: PieceType) {
         match piece {
@@ -171,10 +192,10 @@ impl Board {
                 self.board[y + 3][x + 1] = Some(team);
             },
         }
-    }
+    }*/
 }
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, PartialEq, Eq, Debug, Hash, PartialOrd, Ord)]
 pub enum Team {
     Blue,
     Yellow,

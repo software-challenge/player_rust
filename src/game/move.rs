@@ -7,7 +7,8 @@ pub struct Move {
     pub x: usize,
     pub y: usize,
     pub is_flipped: bool,
-    pub rotation: Rotation
+    pub rotation: Rotation,
+    pub skip: bool,
 }
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]
