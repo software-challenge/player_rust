@@ -1,5 +1,6 @@
 use crate::game::{board::Team, piece::PieceType};
 
+#[derive(Clone)]
 pub struct Move {
     pub team: Team,
     pub piece: PieceType,
@@ -9,6 +10,7 @@ pub struct Move {
     pub rotation: Rotation
 }
 
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]
 pub enum Rotation {
     None,
     Right,

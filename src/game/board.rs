@@ -1,15 +1,18 @@
 use crate::game::piece::PieceType;
 
+pub const BOARD_WIDTH: usize = 20;
+pub const BOARD_HEIGHT: usize = 20;
+
 #[derive(Copy, Clone)]
 
 pub struct Board {
-    pub board: [[Option<Team>; 20]; 20],
+    pub board: [[Option<Team>; BOARD_WIDTH]; BOARD_HEIGHT],
 }
 
 impl Board {
     pub fn new() -> Self {
         Board {
-            board: [[None; 20]; 20],
+            board: [[None; BOARD_WIDTH]; BOARD_HEIGHT],
         }
     }
 

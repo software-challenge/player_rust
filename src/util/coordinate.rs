@@ -1,41 +1,34 @@
 use crate::game::r#move::Rotation;
 
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]
 pub struct Coordinate {
     pub x: isize,
     pub y: isize,
 }
 
 impl Coordinate {
-    pub fn new(x: isize, y: isize) -> Self {
+    pub const fn new(x: isize, y: isize) -> Self {
         Coordinate { x, y }
     }
 
-    pub fn add(&self, other: &Coordinate) -> Coordinate {
-        Coordinate {
-            x: self.x + other.x,
-            y: self.y + other.y,
-        }
+    pub fn add(&mut self, other: &Coordinate) {
+        self.x += other.x;
+        self.y += other.y;
     }
 
-    pub fn subtract(&self, other: &Coordinate) -> Coordinate {
-        Coordinate {
-            x: self.x - other.x,
-            y: self.y - other.y,
-        }
+    pub fn subtract(&mut self, other: &Coordinate) {
+        self.x -= other.x;
+        self.y -= other.y;
     }
 
-    pub fn multiply(&self, scalar: isize) -> Coordinate {
-        Coordinate {
-            x: self.x * scalar,
-            y: self.y * scalar,
-        }
+    pub fn multiply(&mut self, scalar: isize){
+        self.x *= scalar;
+        self.y *= scalar;
     }
 
-    pub fn divide(&self, scalar: isize) -> Coordinate {
-        Coordinate {
-            x: self.x / scalar,
-            y: self.y / scalar,
-        }
+    pub fn divide(&mut self, scalar: isize) {
+        self.x /= scalar;
+        self.y /= scalar;
     }
 
     /// Transforms the coordinates relative to the coordinate origin by applying the specified rotation.

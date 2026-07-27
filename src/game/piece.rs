@@ -19,7 +19,30 @@ impl Piece {
 
     /// Applies the rotation and flipping and returns normalized coordinates from (0,0) in positive direction
     pub fn get_coordinates(&self) -> Vec<Coordinate> {
-        todo!();
+        let base_coordinates = self.piece_type.base_coordinates();
+        let mut transformed_coordinates: Vec<Coordinate> = base_coordinates.to_vec();
+
+        // Apply flipping
+        if self.is_flipped {
+            for coord in &mut transformed_coordinates {
+                coord.flip_on_vertical();
+            }
+        }
+
+        // Apply rotation
+        for coord in &mut transformed_coordinates {
+            coord.rotate(&self.rotation);
+        }
+
+        // Normalize coordinates to start from (0,0)
+        let min_x = transformed_coordinates.iter().map(|c| c.x).min().unwrap_or(0);
+        let min_y = transformed_coordinates.iter().map(|c| c.y).min().unwrap_or(0);
+
+        for coord in &mut transformed_coordinates {
+            coord.subtract(&Coordinate { x: min_x, y: min_y });
+        }
+
+        transformed_coordinates
     }
 }
 
@@ -46,6 +69,134 @@ pub enum PieceType {
     PentoR,
     PentoX,
     PentoY,
+}
+
+impl PieceType {
+
+    pub fn all_variants(&self) -> Vec<Vec<Coordinate>> {
+        let mut variants = Vec::new();
+        let base_coordinates = self.base_coordinates();
+
+        for &flip in &[false, true] {
+            for &rotation in &[Rotation::None, Rotation::Right, Rotation::Mirror, Rotation::Left] {
+                let mut transformed_coordinates: Vec<Coordinate> = base_coordinates.to_vec();
+
+                // Apply flipping
+                if flip {
+                    for coord in &mut transformed_coordinates {
+                        coord.flip_on_vertical();
+                    }
+                }
+
+                // Apply rotation
+                for coord in &mut transformed_coordinates {
+                    coord.rotate(&rotation);
+                }
+
+                // Normalize coordinates to start from (0,0)
+                let min_x = transformed_coordinates.iter().map(|c| c.x).min().unwrap_or(0);
+                let min_y = transformed_coordinates.iter().map(|c| c.y).min().unwrap_or(0);
+
+                for coord in &mut transformed_coordinates {
+                    coord.subtract(&Coordinate { x: min_x, y: min_y });
+                }
+
+                if !variants.contains(&transformed_coordinates) {
+                    variants.push(transformed_coordinates);
+                }
+            }
+        }
+        variants
+    }
+
+    pub fn base_coordinates(&self) -> &'static [Coordinate] {
+        match self {
+            PieceType::Mono => {
+                const COORDS: &[Coordinate] = &[Coordinate::new(0, 0)];
+                COORDS
+            }
+            PieceType::Domino => {
+                const COORDS: &[Coordinate] = &[Coordinate::new(0, 0), Coordinate::new(1, 0)];
+                COORDS
+            }
+            PieceType::TrioL => {
+                const COORDS: &[Coordinate] = &[Coordinate::new(0, 0), Coordinate::new(0, 1), Coordinate::new(1, 1)];
+                COORDS
+            }
+            PieceType::TrioI => {
+                const COORDS: &[Coordinate] = &[Coordinate::new(0, 0), Coordinate::new(0, 1), Coordinate::new(0, 2)];
+                COORDS
+            }
+            PieceType::TetroO => {
+                const COORDS: &[Coordinate] = &[Coordinate::new(0, 0), Coordinate::new(1, 0), Coordinate::new(0, 1), Coordinate::new(1, 1)];
+                COORDS
+            }
+            PieceType::TetroT => {
+                const COORDS: &[Coordinate] = &[Coordinate::new(0, 0), Coordinate::new(1, 0), Coordinate::new(2, 0), Coordinate::new(1, 1)];
+                COORDS
+            }
+            PieceType::TetroI => {
+                const COORDS: &[Coordinate] = &[Coordinate::new(0, 0), Coordinate::new(0, 1), Coordinate::new(0, 2), Coordinate::new(0, 3)];
+                COORDS
+            }
+            PieceType::TetroL => {
+                const COORDS: &[Coordinate] = &[Coordinate::new(0, 0), Coordinate::new(0, 1), Coordinate::new(0, 2), Coordinate::new(1, 2)];
+                COORDS
+            }
+            PieceType::TetroZ => {
+                const COORDS: &[Coordinate] = &[Coordinate::new(0, 0), Coordinate::new(1, 0), Coordinate::new(1, 1), Coordinate::new(2, 1)];
+                COORDS
+            }
+            PieceType::PentoL => {
+                const COORDS: &[Coordinate] = &[Coordinate::new(0, 0), Coordinate::new(0, 1), Coordinate::new(0, 2), Coordinate::new(0, 3), Coordinate::new(1, 3)];
+                COORDS
+            }
+            PieceType::PentoT => {
+                const COORDS: &[Coordinate] = &[Coordinate::new(0, 0), Coordinate::new(1, 0), Coordinate::new(2, 0), Coordinate::new(1, 1), Coordinate::new(1, 2)];
+                COORDS
+            }
+            PieceType::PentoV => {
+                const COORDS: &[Coordinate] = &[Coordinate::new(0, 0), Coordinate::new(0, 1), Coordinate::new(0, 2), Coordinate::new(1, 2), Coordinate::new(2, 2)];
+                COORDS
+            }
+            PieceType::PentoS => {
+                const COORDS: &[Coordinate] = &[Coordinate::new(1, 0), Coordinate::new(2, 0), Coordinate::new(3, 0), Coordinate::new(0, 1), Coordinate::new(1, 1)];
+                COORDS
+            }
+            PieceType::PentoZ => {
+                const COORDS: &[Coordinate] = &[Coordinate::new(0, 0), Coordinate::new(1, 0), Coordinate::new(1, 1), Coordinate::new(1, 2), Coordinate::new(2, 2)];
+                COORDS
+            }
+            PieceType::PentoI => {
+                const COORDS: &[Coordinate] = &[Coordinate::new(0, 0), Coordinate::new(0, 1), Coordinate::new(0, 2), Coordinate::new(0, 3), Coordinate::new(0, 4)];
+                COORDS
+            }
+            PieceType::PentoP => {
+                const COORDS: &[Coordinate] = &[Coordinate::new(0, 0), Coordinate::new(1, 0), Coordinate::new(0, 1), Coordinate::new(1, 1), Coordinate::new(0, 2)];
+                COORDS
+            }
+            PieceType::PentoW => {
+                const COORDS: &[Coordinate] = &[Coordinate::new(0, 0), Coordinate::new(0, 1), Coordinate::new(1, 1), Coordinate::new(1, 2), Coordinate::new(2, 2)];
+                COORDS
+            }
+            PieceType::PentoU => {
+                const COORDS: &[Coordinate] = &[Coordinate::new(0, 0), Coordinate::new(2, 0), Coordinate::new(0, 1), Coordinate::new(1, 1), Coordinate::new(2, 1)];
+                COORDS
+            }
+            PieceType::PentoR => {
+                const COORDS: &[Coordinate] = &[Coordinate::new(2, 0), Coordinate::new(0, 1), Coordinate::new(1, 1), Coordinate::new(2, 1), Coordinate::new(1, 2)];
+                COORDS
+            }
+            PieceType::PentoX => {
+                const COORDS: &[Coordinate] = &[Coordinate::new(1, 0), Coordinate::new(0, 1), Coordinate::new(1, 1), Coordinate::new(2, 1), Coordinate::new(1, 2)];
+                COORDS
+            }
+            PieceType::PentoY => {
+                const COORDS: &[Coordinate] = &[Coordinate::new(1, 0), Coordinate::new(0, 1), Coordinate::new(1, 1), Coordinate::new(1, 2), Coordinate::new(1, 3)];
+                COORDS
+            }
+        }
+    }
 }
 
 impl fmt::Display for PieceType {
