@@ -13,19 +13,9 @@ impl Client for RandomPlayerClient {
     fn on_move_request(&mut self) -> Option<Move> {
         println!("Received a move request!");
 
-        // Is not true after the first skip
-        let mut current_team = Team::Yellow;
-        match self.game_state.as_ref().unwrap().turn % 4 {
-            0 => current_team = Team::Blue,
-            1 => current_team = Team::Yellow,
-            2 => current_team = Team::Red,
-            3 => current_team = Team::Green,
-            _ => {}
-        }
-
         if self.game_state.as_ref().unwrap().turn > 4 {
             return Some(Move {
-                team: current_team,
+                team: self.game_state.as_ref().unwrap().current_turn_team,
                 piece: self.game_state.as_ref().unwrap().starting_piece,
                 x: 0,
                 y: 0,
@@ -35,7 +25,7 @@ impl Client for RandomPlayerClient {
             })
         }
 
-        let legal_moves = gamerulelogic::get_legal_moves_for_team(self.game_state.as_ref().unwrap(), &current_team);
+        let legal_moves = gamerulelogic::get_possible_start_moves(self.game_state.as_ref().unwrap());
 
         let random_index = random_index(legal_moves.len());
         Some(legal_moves[random_index].clone())

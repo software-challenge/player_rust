@@ -1,18 +1,16 @@
 use crate::game::piece::{Piece};
-
-pub const BOARD_WIDTH: usize = 20;
-pub const BOARD_HEIGHT: usize = 20;
+use crate::game::constants::{BOARD_WIDTH, BOARD_HEIGHT};
 
 #[derive(Copy, Clone)]
 
 pub struct Board {
-    pub board: [[Option<Team>; BOARD_WIDTH]; BOARD_HEIGHT],
+    pub board: [[Option<Team>; BOARD_WIDTH as usize]; BOARD_HEIGHT as usize],
 }
 
 impl Board {
     pub fn new() -> Self {
         Board {
-            board: [[None; BOARD_WIDTH]; BOARD_HEIGHT],
+            board: [[None; BOARD_WIDTH as usize]; BOARD_HEIGHT as usize],
         }
     }
 
@@ -36,23 +34,21 @@ impl Board {
     }
 
     pub fn get_cell(&self, x: usize, y: usize) -> Option<Team> {
-        if x < BOARD_WIDTH && y < BOARD_HEIGHT {
+        if x < BOARD_WIDTH as usize && y < BOARD_HEIGHT as usize {
             self.board[y][x]
         } else {
             None
         }
     }
 
+    /// Place the specified piece on the board at the given coordinates (x, y) for the specified team.
+    /// Does not perform any validation and assumes that the coordinates are valid and the piece is not placed on an occupied space.
     pub fn place_piece(&mut self, x: usize, y: usize, team: Team, piece: Piece) {
         for coord in piece.get_coordinates() {
             let new_x = x + coord.x as usize;
             let new_y = y + coord.y as usize;
 
-            if new_x < BOARD_WIDTH && new_y < BOARD_HEIGHT {
-                self.board[new_y][new_x] = Some(team);
-            } else {
-                panic!("Attempted to place a piece out of bounds at ({}, {})", new_x, new_y);
-            }
+            self.board[new_y][new_x] = Some(team);
         }
     }
 

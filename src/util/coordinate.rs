@@ -1,5 +1,58 @@
 use crate::game::r#move::Rotation;
 
+pub struct Coordinates {
+
+}
+
+impl Coordinates {
+    /// Normalizes the coordinates by translating them so that the minimum x and y values become (0, 0).
+    pub fn normalize_coordinates(coordinates: &Vec<Coordinate>) -> Vec<Coordinate> {
+        let mut min_x = isize::MAX;
+        let mut min_y = isize::MAX;
+
+        for coord in coordinates {
+            if coord.x < min_x {
+                min_x = coord.x;
+            }
+            
+            if coord.y < min_y {
+                min_y = coord.y;
+            }
+        }
+
+        let mut normalized_coordinates: Vec<Coordinate> = Vec::new();
+        for coord in coordinates {
+            normalized_coordinates.push(Coordinate { x: coord.x - min_x, y: coord.y - min_y });
+        }
+
+        normalized_coordinates
+    }
+
+    /// Rotates the coordinates by the specified rotation (clockwise) relative to the coordinate origin.
+    /// Does not normalize the coordinates after rotation, so the minimum x and y values may not be (0, 0).
+    pub fn rotate_coordinates(coordinates: Vec<Coordinate>, rotation: &Rotation) -> Vec<Coordinate> {
+        let mut rotated_coordinates: Vec<Coordinate> = Vec::new();
+
+        for mut coord in coordinates {
+            coord.rotate(rotation);
+            rotated_coordinates.push(coord);
+        }
+
+        rotated_coordinates
+    }
+
+    pub fn flip_coordinates(coordinates: Vec<Coordinate>) -> Vec<Coordinate> {
+        let mut flipped_coordinates: Vec<Coordinate> = Vec::new();
+
+        for mut coord in coordinates {
+            coord.flip_on_vertical();
+            flipped_coordinates.push(coord);
+        }
+
+        flipped_coordinates
+    }
+}
+
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]
 pub struct Coordinate {
     pub x: isize,
@@ -33,33 +86,29 @@ impl Coordinate {
 
     /// Transforms the coordinates relative to the coordinate origin by applying the specified rotation.
     /// The rotation is applied in a clockwise direction.
-    /// The old coordinates are overwritten!
-    pub fn rotate(&mut self, rotation: &Rotation) {
+    pub fn rotate(&mut self, rotation: &Rotation) -> Coordinate{
         match rotation {
             Rotation::Right => {
                 // 90 degrees clockwise rotation (x, y) -> (y, -x)
-                let old_x = self.x;
-                self.x = self.y;
-                self.y = -old_x;
+                Coordinate { x: self.y, y: -self.x }
             },
             Rotation::Mirror => {
                 // 180 degrees clokweise rotation (x, y) -> (-x, -y)
-                self.x = -self.x;
-                self.y = -self.y;
+                Coordinate { x: -self.x, y: -self.y }
             },
             Rotation::Left => {
                 // 270 degrees clockwise rotation (x, y) -> (-y, x)
-                let old_x = self.x;
-                self.x = -self.y;
-                self.y = old_x;
+                Coordinate { x: -self.y, y: self.x }
             },
-            Rotation::None => {}
+            Rotation::None => {
+                // No rotation, return the original coordinates
+                Coordinate { x: self.x, y: self.y }
+            }
         }
     }
 
     /// Flips the coordinates on the vetical axis (y-axis) relative to the coordinate origin.
-    /// The old coordinates are overwritten!
-    pub fn flip_on_vertical(&mut self) {
-        self.x = -self.x;
+    pub fn flip_on_vertical(&mut self) -> Coordinate {
+        Coordinate { x: -self.x, y: self.y }
     }
 }

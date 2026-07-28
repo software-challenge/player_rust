@@ -56,7 +56,8 @@ pub fn parse_memento(mut parser: EventReader<&[u8]>) -> Box<Message> {
                                         }
                                         Ok(XmlEvent::EndElement { name }) => {
                                             if name.local_name == "state" {
-                                                let game_state = GameState::new(starting_piece, Board::new(), 0, 1, blue_pieces, yellow_pieces, red_pieces, green_pieces);
+                                                // TODO: Replace current turn team with real starting team
+                                                let game_state = GameState::new(starting_piece, Board::new(), 0, 1, Team::Blue, blue_pieces, yellow_pieces, red_pieces, green_pieces);
 
                                                 return Box::new(Message {
                                                     message_type: crate::connection::parser::message::MessageType::MementoInitial,

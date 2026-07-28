@@ -1,6 +1,6 @@
 use std::{fmt, str::FromStr};
 
-use crate::{game::r#move::Rotation, util::coordinate::Coordinate};
+use crate::{game::r#move::Rotation, util::coordinate::{Coordinate, Coordinates}};
 
 pub struct Piece {
     pub piece_type: PieceType,
@@ -73,9 +73,13 @@ pub enum PieceType {
 
 impl PieceType {
 
-    pub fn all_variants(&self) -> Vec<Vec<Coordinate>> {
-        let mut variants = Vec::new();
+    /// Returns all variants of the piece typ
+    /// Data Format: Vector<(relative coordinates, (rotation, is flipped?))>
+    pub fn all_variants(&self) -> Vec<(Vec<Coordinate>, (Rotation, bool))> {
+        let mut variants: Vec<(Vec<Coordinate>, (Rotation, bool))> = Vec::new();
         let base_coordinates = self.base_coordinates();
+
+        // TODO: Filtering out variants that have the same relative coordinates
 
         for &flip in &[false, true] {
             for &rotation in &[Rotation::None, Rotation::Right, Rotation::Mirror, Rotation::Left] {
@@ -94,16 +98,10 @@ impl PieceType {
                 }
 
                 // Normalize coordinates to start from (0,0)
-                let min_x = transformed_coordinates.iter().map(|c| c.x).min().unwrap_or(0);
-                let min_y = transformed_coordinates.iter().map(|c| c.y).min().unwrap_or(0);
+                transformed_coordinates = Coordinates::normalize_coordinates(&transformed_coordinates);
 
-                for coord in &mut transformed_coordinates {
-                    coord.subtract(&Coordinate { x: min_x, y: min_y });
-                }
+                variants.push((transformed_coordinates, (rotation, flip)))
 
-                if !variants.contains(&transformed_coordinates) {
-                    variants.push(transformed_coordinates);
-                }
             }
         }
         variants

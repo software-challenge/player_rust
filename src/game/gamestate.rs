@@ -8,20 +8,24 @@ pub struct GameState {
     pub board: Board,
     pub turn: u8,
     pub round: u8,
+    pub current_turn_team: Team,
     blue_pieces: Vec<PieceType>,
     yellow_pieces: Vec<PieceType>,
     red_pieces: Vec<PieceType>,
     green_pieces: Vec<PieceType>,
 }
 
+// TODO: Replace color pieces with a HashMap<Team, Vec<PieceType>> to make it more flexible and easier to manage.
+
 impl GameState {
 
-    pub fn new(starting_piece: PieceType, board: Board, turn: u8, round: u8, blue_pieces: Vec<PieceType>, yellow_pieces: Vec<PieceType>, red_pieces: Vec<PieceType>, green_pieces: Vec<PieceType>) -> Self {
+    pub fn new(starting_piece: PieceType, board: Board, turn: u8, round: u8, current_turn_team: Team, blue_pieces: Vec<PieceType>, yellow_pieces: Vec<PieceType>, red_pieces: Vec<PieceType>, green_pieces: Vec<PieceType>) -> Self {
         GameState {
             starting_piece,
             board,
             turn,
             round,
+            current_turn_team,
             blue_pieces,
             yellow_pieces,
             red_pieces,
@@ -34,6 +38,27 @@ impl GameState {
     /// If the move is invalid, this function may lead to an inconsistent game state.
     pub fn apply_move_unchecked(&mut self, m: &Move) {
         self.board.place_piece(m.x, m.y, m.team, Piece { piece_type: m.piece, is_flipped: m.is_flipped, rotation: m.rotation });
+    
+        // TODO: Skip moves are not handled yet
+        match m.team {
+            Team::Blue => {
+                self.blue_pieces.retain(|&p| p != m.piece);
+                self.current_turn_team = Team::Yellow;
+            },
+            Team::Yellow => {
+                self.yellow_pieces.retain(|&p| p != m.piece);
+                self.current_turn_team = Team::Red;
+            },
+            Team::Red => {
+                self.red_pieces.retain(|&p| p != m.piece);
+                self.current_turn_team = Team::Green;
+            },
+            Team::Green => {
+                self.green_pieces.retain(|&p| p != m.piece);
+                self.current_turn_team = Team::Blue;
+            },
+        }
+
         self.turn += 1;
     }
 
