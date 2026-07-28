@@ -38,7 +38,8 @@ impl GameState {
     /// If the move is invalid, this function may lead to an inconsistent game state.
     pub fn apply_move_unchecked(&mut self, m: &Move) {
         self.board.place_piece(m.x, m.y, m.team, Piece { piece_type: m.piece, is_flipped: m.is_flipped, rotation: m.rotation });
-    
+        println!("Applied move: {} {} {} {} {}", m.piece.to_string(), m.x, m.y, m.is_flipped, m.rotation.to_string());
+
         // TODO: Skip moves are not handled yet
         match m.team {
             Team::Blue => {

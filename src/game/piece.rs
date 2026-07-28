@@ -25,22 +25,17 @@ impl Piece {
         // Apply flipping
         if self.is_flipped {
             for coord in &mut transformed_coordinates {
-                coord.flip_on_vertical();
+                *coord = coord.flip_on_vertical();
             }
         }
 
         // Apply rotation
         for coord in &mut transformed_coordinates {
-            coord.rotate(&self.rotation);
+            *coord = coord.rotate(&self.rotation);
         }
 
         // Normalize coordinates to start from (0,0)
-        let min_x = transformed_coordinates.iter().map(|c| c.x).min().unwrap_or(0);
-        let min_y = transformed_coordinates.iter().map(|c| c.y).min().unwrap_or(0);
-
-        for coord in &mut transformed_coordinates {
-            coord.subtract(&Coordinate { x: min_x, y: min_y });
-        }
+        transformed_coordinates = Coordinates::normalize_coordinates(&transformed_coordinates);
 
         transformed_coordinates
     }
@@ -88,20 +83,19 @@ impl PieceType {
                 // Apply flipping
                 if flip {
                     for coord in &mut transformed_coordinates {
-                        coord.flip_on_vertical();
+                        *coord = coord.flip_on_vertical();
                     }
                 }
 
                 // Apply rotation
                 for coord in &mut transformed_coordinates {
-                    coord.rotate(&rotation);
+                    *coord = coord.rotate(&rotation);
                 }
 
                 // Normalize coordinates to start from (0,0)
                 transformed_coordinates = Coordinates::normalize_coordinates(&transformed_coordinates);
 
                 variants.push((transformed_coordinates, (rotation, flip)))
-
             }
         }
         variants

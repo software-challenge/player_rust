@@ -48,6 +48,8 @@ impl Board {
             let new_x = x + coord.x as usize;
             let new_y = y + coord.y as usize;
 
+            println!("Placing piece at: {} {}", new_x, new_y);
+
             self.board[new_y][new_x] = Some(team);
         }
     }
