@@ -61,6 +61,12 @@ impl GameState {
         }
 
         self.turn += 1;
+        
+        if self.turn % 4 == 0 {
+           self.round += 1;
+        }
+
+        println!("Game state updated: Turn {}, Round {}, Current Team {:?}", self.turn, self.round, self.current_turn_team);
     }
 
     pub fn get_team_pieces(&self, team: &Team) -> &[PieceType] {

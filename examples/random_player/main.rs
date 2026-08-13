@@ -13,19 +13,7 @@ impl Client for RandomPlayerClient {
     fn on_move_request(&mut self) -> Option<Move> {
         println!("Received a move request!");
 
-        if self.game_state.as_ref().unwrap().turn > 4 {
-            return Some(Move {
-                team: self.game_state.as_ref().unwrap().current_turn_team,
-                piece: self.game_state.as_ref().unwrap().starting_piece,
-                x: 0,
-                y: 0,
-                is_flipped: false,
-                rotation: socha::game::r#move::Rotation::None,
-                skip: true
-            })
-        }
-
-        let legal_moves = gamerulelogic::get_possible_start_moves(self.game_state.as_ref().unwrap());
+        let legal_moves = gamerulelogic::get_possible_moves(self.game_state.as_ref().unwrap());
 
         let random_index = random_index(legal_moves.len());
         Some(legal_moves[random_index].clone())
