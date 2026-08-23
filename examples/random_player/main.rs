@@ -1,4 +1,3 @@
-use socha::game::board::Team;
 use socha::game::gamerulelogic;
 use socha::game::gamestate::GameState;
 use socha::client::{Client, start_client_from_commandline_args};
@@ -13,7 +12,20 @@ impl Client for RandomPlayerClient {
     fn on_move_request(&mut self) -> Option<Move> {
         println!("Received a move request!");
 
-        let legal_moves = gamerulelogic::get_possible_moves(self.game_state.as_ref().unwrap());
+        let state = self.game_state.as_ref().unwrap();
+        let legal_moves = gamerulelogic::get_possible_moves(state);
+
+        if legal_moves.is_empty() {
+            return Some(Move {
+                team: state.current_turn_team,
+                piece: state.starting_piece,
+                x: 0,
+                y: 0,
+                is_flipped: false,
+                rotation: socha::game::r#move::Rotation::None,
+                skip: true,
+            });
+        }
 
         let random_index = random_index(legal_moves.len());
         Some(legal_moves[random_index].clone())
