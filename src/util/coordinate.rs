@@ -34,7 +34,7 @@ impl Coordinates {
         let mut rotated_coordinates: Vec<Coordinate> = Vec::new();
 
         for mut coord in coordinates {
-            coord.rotate(rotation);
+            coord = coord.rotate(rotation);
             rotated_coordinates.push(coord);
         }
 
@@ -45,7 +45,7 @@ impl Coordinates {
         let mut flipped_coordinates: Vec<Coordinate> = Vec::new();
 
         for mut coord in coordinates {
-            coord.flip_on_vertical();
+            coord = coord.flip_on_vertical();
             flipped_coordinates.push(coord);
         }
 
@@ -89,16 +89,16 @@ impl Coordinate {
     pub fn rotate(&mut self, rotation: &Rotation) -> Coordinate{
         match rotation {
             Rotation::Right => {
-                // 90 degrees clockwise rotation (x, y) -> (y, -x)
-                Coordinate { x: self.y, y: -self.x }
+                // Board coordinates increase downward, so clockwise is (x, y) -> (-y, x).
+                Coordinate { x: -self.y, y: self.x }
             },
             Rotation::Mirror => {
                 // 180 degrees clokweise rotation (x, y) -> (-x, -y)
                 Coordinate { x: -self.x, y: -self.y }
             },
             Rotation::Left => {
-                // 270 degrees clockwise rotation (x, y) -> (-y, x)
-                Coordinate { x: -self.y, y: self.x }
+                // 270 degrees clockwise rotation (x, y) -> (y, -x)
+                Coordinate { x: self.y, y: -self.x }
             },
             Rotation::None => {
                 // No rotation, return the original coordinates
