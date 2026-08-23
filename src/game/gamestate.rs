@@ -1,4 +1,5 @@
 use crate::game::board::{Board, Team};
+use crate::game::gamestate;
 use crate::game::piece::{Piece, PieceType};
 use crate::game::r#move::Move;
 
@@ -30,34 +31,41 @@ impl GameState {
     /// Applies a move to the game state without any validation.
     /// This function assumes that the move is valid and directly updates the game state.
     /// If the move is invalid, this function may lead to an inconsistent game state.
-    pub fn apply_move_unchecked(&mut self, m: &Move) {
+    pub fn apply_move_unchecked(&mut self, m: &Move, turn: u8) {
         self.board.place_piece(m.x, m.y, m.team, Piece { piece_type: m.piece, is_flipped: m.is_flipped, rotation: m.rotation });
         println!("Applied move: {} {} {} {} {}", m.piece.to_string(), m.x, m.y, m.is_flipped, m.rotation.to_string());
 
-        // TODO: Skip moves are not handled yet
+        // Remove used piece from the corresponding team's available pieces
         match m.team {
             Team::Blue => {
                 self.pieces[0].retain(|&p| p != m.piece);
-                self.current_turn_team = Team::Yellow;
             },
             Team::Yellow => {
                 self.pieces[1].retain(|&p| p != m.piece);
-                self.current_turn_team = Team::Red;
             },
             Team::Red => {
                 self.pieces[2].retain(|&p| p != m.piece);
-                self.current_turn_team = Team::Green;
             },
             Team::Green => {
                 self.pieces[3].retain(|&p| p != m.piece);
-                self.current_turn_team = Team::Blue;
             },
         }
 
-        self.turn += 1;
-        
+        self.turn = turn;
+
         if self.turn % 4 == 0 {
            self.round += 1;
+        }
+
+
+        // TODO: Start team not implemented! Currently using "ONE" as default
+        // Current team can be caluclated from turn number
+        match self.turn % 4 {
+            0 => self.current_turn_team = Team::Blue,
+            1 => self.current_turn_team = Team::Yellow,
+            2 => self.current_turn_team = Team::Red,
+            3 => self.current_turn_team = Team::Green,
+            _ => unreachable!(),
         }
 
         println!("Game state updated: Turn {}, Round {}, Current Team {:?}", self.turn, self.round, self.current_turn_team);

@@ -20,6 +20,7 @@ pub fn parse_message(mut parser: EventReader<&[u8]>) -> Result<Box<Message>, Box
                                         message_type: crate::connection::parser::message::MessageType::MoveRequest,
                                         game_state: None,
                                         last_move: None,
+                                        turn: None,
                                         result: None,
                                     }));
                                 },
@@ -28,6 +29,7 @@ pub fn parse_message(mut parser: EventReader<&[u8]>) -> Result<Box<Message>, Box
                                         message_type: crate::connection::parser::message::MessageType::Result,
                                         game_state: None,
                                         last_move: None,
+                                        turn: None,
                                         result: None, // TODO parse result from XML
                                     }));
                                 },

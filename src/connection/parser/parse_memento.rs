@@ -63,6 +63,7 @@ pub fn parse_memento(mut parser: EventReader<&[u8]>) -> Box<Message> {
                                                     message_type: crate::connection::parser::message::MessageType::MementoInitial,
                                                     game_state: Some(game_state),
                                                     last_move: None,
+                                                    turn: None,
                                                     result: None,
                                                 });
                                             }
@@ -137,6 +138,7 @@ pub fn parse_memento(mut parser: EventReader<&[u8]>) -> Box<Message> {
                                                         message_type: crate::connection::parser::message::MessageType::MementoLastMove,
                                                         game_state: None,
                                                         last_move: Some(Box::new(Move { team: team.unwrap(), piece: PieceType::Mono, x: 0, y: 0, is_flipped: false, rotation: Rotation::None, skip: true })),
+                                                        turn: Some(turn_value as u8),
                                                         result: None,
                                                     });
                                                 }
@@ -145,6 +147,7 @@ pub fn parse_memento(mut parser: EventReader<&[u8]>) -> Box<Message> {
                                                     message_type: crate::connection::parser::message::MessageType::MementoLastMove,
                                                     game_state: None,
                                                     last_move: Some(Box::new(Move { team: team.unwrap(), piece: piece.unwrap(), x: x.unwrap(), y: y.unwrap(), is_flipped: is_flipped.unwrap(), rotation: rotation.unwrap(), skip: false })),
+                                                    turn: Some(turn_value as u8),
                                                     result: None,
                                                 });
                                             }
@@ -154,6 +157,7 @@ pub fn parse_memento(mut parser: EventReader<&[u8]>) -> Box<Message> {
                                                 message_type: crate::connection::parser::message::MessageType::MementoLastMove,
                                                 game_state: None,
                                                 last_move: None,
+                                                turn: None,
                                                 result: None,
                                             });
                                         }
@@ -174,6 +178,7 @@ pub fn parse_memento(mut parser: EventReader<&[u8]>) -> Box<Message> {
                     message_type: crate::connection::parser::message::MessageType::MementoInitial,
                     game_state: None,
                     last_move: None,
+                    turn: None,
                     result: None,
                 });
             }

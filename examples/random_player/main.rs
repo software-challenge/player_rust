@@ -11,6 +11,7 @@ struct RandomPlayerClient {
 impl Client for RandomPlayerClient {
     fn on_move_request(&mut self) -> Option<Move> {
         println!("Received a move request!");
+        println!("Current team: {:?}", self.game_state.as_ref().unwrap().current_turn_team);
 
         let state = self.game_state.as_ref().unwrap();
         let legal_moves = gamerulelogic::get_possible_moves(state);

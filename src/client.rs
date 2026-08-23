@@ -30,7 +30,7 @@ pub fn start_client_from_commandline_args<C: Client>(mut client: C) -> Result<()
                 if let Some(last_move) = message.last_move {
                     if let Some(game_state) = &mut local_game_state {
                         println!("Applying last move: {} {} {} {} {}", last_move.piece.to_string(), last_move.x, last_move.y, last_move.is_flipped, last_move.rotation.to_string());
-                        game_state.apply_move_unchecked(&last_move);
+                        game_state.apply_move_unchecked(&last_move, message.turn.unwrap_or(0));
                         client.on_game_state_updated(game_state.clone());
                     } else {
                         eprintln!("Received LastMove message without existing game state!");
