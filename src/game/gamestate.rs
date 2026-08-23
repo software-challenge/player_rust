@@ -9,10 +9,7 @@ pub struct GameState {
     pub turn: u8,
     pub round: u8,
     pub current_turn_team: Team,
-    blue_pieces: Vec<PieceType>,
-    yellow_pieces: Vec<PieceType>,
-    red_pieces: Vec<PieceType>,
-    green_pieces: Vec<PieceType>,
+    pieces: [Vec<PieceType>; 4] // blue, yellow, red, green
 }
 
 // TODO: Replace color pieces with a HashMap<Team, Vec<PieceType>> to make it more flexible and easier to manage.
@@ -26,10 +23,7 @@ impl GameState {
             turn,
             round,
             current_turn_team,
-            blue_pieces,
-            yellow_pieces,
-            red_pieces,
-            green_pieces,
+            pieces: [blue_pieces, yellow_pieces, red_pieces, green_pieces],
         }
     }
 
@@ -43,19 +37,19 @@ impl GameState {
         // TODO: Skip moves are not handled yet
         match m.team {
             Team::Blue => {
-                self.blue_pieces.retain(|&p| p != m.piece);
+                self.pieces[0].retain(|&p| p != m.piece);
                 self.current_turn_team = Team::Yellow;
             },
             Team::Yellow => {
-                self.yellow_pieces.retain(|&p| p != m.piece);
+                self.pieces[1].retain(|&p| p != m.piece);
                 self.current_turn_team = Team::Red;
             },
             Team::Red => {
-                self.red_pieces.retain(|&p| p != m.piece);
+                self.pieces[2].retain(|&p| p != m.piece);
                 self.current_turn_team = Team::Green;
             },
             Team::Green => {
-                self.green_pieces.retain(|&p| p != m.piece);
+                self.pieces[3].retain(|&p| p != m.piece);
                 self.current_turn_team = Team::Blue;
             },
         }
@@ -71,10 +65,10 @@ impl GameState {
 
     pub fn get_team_pieces(&self, team: &Team) -> &[PieceType] {
         match team {
-            Team::Blue => &self.blue_pieces,
-            Team::Yellow => &self.yellow_pieces,
-            Team::Red => &self.red_pieces,
-            Team::Green => &self.green_pieces,
+            Team::Blue => &self.pieces[0],
+            Team::Yellow => &self.pieces[1],
+            Team::Red => &self.pieces[2],
+            Team::Green => &self.pieces[3],
         }
     }
 }
