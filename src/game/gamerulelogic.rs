@@ -1,4 +1,4 @@
-use crate::{game::{self, board::{self, Board, Team}, constants, gamestate::GameState, r#move::{Move, Rotation}, piece::PieceType}, util::coordinate::Coordinate};
+use crate::{game::{board::{Board, Team}, constants, gamestate::GameState, r#move::{Move, Rotation}, piece::{Piece, PieceType}}, util::coordinate::Coordinate};
 
 /// Returns a vector of all possible moves for the current team in the given game state
 /// Does not include skip moves
@@ -36,6 +36,9 @@ pub fn get_possible_start_moves(gamestate: &GameState) -> Vec<Move> {
                 max_y = coord.y;
             }
         }
+
+        println!("Variant: {} {} {} {}", piece.to_string(), is_flipped, rotation.to_string(), relative_coordinates.len());
+        println!("Bounding box: min_x: {}, min_y: {}, max_x: {}, max_y: {}", min_x, min_y, max_x, max_y);
 
         // Add all possible border placements
         for x in 0..(constants::BOARD_WIDTH - max_x) {
@@ -242,26 +245,9 @@ pub fn is_valid_move(gamestate: &GameState, m: &Move) -> bool {
         return false;
     }
 
-    // Get the base coordinates of the piece
-    let base_coordinates = m.piece.base_coordinates().to_vec();
-
-    // Transform the coordinates based on rotation and flip
-    let mut transformed_coordinates: Vec<Coordinate> = base_coordinates.clone();
-    for coord in &mut transformed_coordinates {
-        if m.is_flipped {
-            coord.flip_on_vertical();
-        }
-        coord.rotate(&m.rotation);
-    }
-
-    // Normalize the coordinates to start from (0, 0)
-    let min_x = transformed_coordinates.iter().map(|c| c.x).min().unwrap();
-    let min_y = transformed_coordinates.iter().map(|c| c.y).min().unwrap();
-    for coord in &mut transformed_coordinates {
-        coord.subtract(&Coordinate { x: min_x, y: min_y });
-    }
-
     // Check if all coordinates are within bounds and not occupied
+    let transformed_coordinates: Vec<Coordinate> = (Piece::new(m.piece, m.rotation, m.is_flipped)).get_coordinates();
+
     for coord in &transformed_coordinates {
         let board_x = (m.x as isize + coord.x) as usize;
         let board_y = (m.y as isize + coord.y) as usize;
