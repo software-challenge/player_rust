@@ -1,58 +1,76 @@
 use std::{fs::OpenOptions, io::{Read, Write}, net::TcpStream};
+use std::fmt::Write as _;
 
 use xml::EventReader;
 
 use crate::connection::parser::{parse_joined::parse_joined, parse_message::parse_message, message::Message};
 use crate::game::r#move::Move;
 
-pub struct ConnectionHandler {
-    pub connected: bool,
+/// A trait indicating that a connection is active.
+pub trait IsConnected {}
+
+///Indicates that the ConnectionHandler is connected.
+pub struct Connected;
+impl IsConnected for Connected {}
+///Indicates that the ConnectionHandler has joined a game, also holds the room id.
+pub struct Joined {
+    room_id: Box<str>
+}
+impl IsConnected for Joined {}
+
+#[derive(Debug)]
+pub struct ConnectionHandler<State> {
     pub connection: TcpStream,
     log_file: std::fs::File,
-    pub room_id: Option<Box<str>>,
+    state: State,
 }
 
-impl ConnectionHandler {
 
-    /// Creates a new `ConnectionHandler` instance by retrieving competition system parameters from command line arguments.
-    /// Automatically connects to the competition system using the provided host, port and reservation code.
-    pub fn new_from_commandline_args() -> Result<Self, Box<dyn std::error::Error>> {
-        
-        let cmd_args = crate::util::cmdl_args::get_competition_system_parameters();
-
+impl ConnectionHandler<()> {
+    /// Attempts to create a new ConnectionHandler instance by connecting to the specified host and port.
+    /// If no host or port is provided, defaults to "127.0.0.1" and "13050".
+    pub fn try_new(host: Option<Box<str>>, port: Option<Box<str>>) -> Result<ConnectionHandler<Connected>, Box<dyn std::error::Error>> {
         // Construct address using provided host and port, or default values if not provided
-        let host = if let Some(host) = cmd_args.0 {
-            host
-        } else {
-            Box::from("127.0.0.1")
-        };
-
-        let port = if let Some(port) = cmd_args.1 {
-            port
-        } else {
-            Box::from("13050")
-        };
+        let host = host.unwrap_or(Box::from("127.0.0.1"));
+        let port = port.unwrap_or(Box::from("13050"));
 
         let address = format!("{}:{}", host, port);
 
-        let mut connection_handler = ConnectionHandler{
-            connected: false,
+        Ok(ConnectionHandler{
             connection: TcpStream::connect(address)?,
-            room_id: None,
             // Debugging
             log_file: OpenOptions::new()
                 .create(true)
                 .append(true)
                 .open("connection_reads.log")?,
-        };
-
-        connection_handler.join(cmd_args.2.as_deref())?;
-
-        return Ok(connection_handler);
+                state: Connected,
+        })
     }
 
+    /// Creates a new `ConnectionHandler` instance by retrieving competition system parameters from command line arguments.
+    /// Automatically connects to the competition system using the provided host, port and reservation code.
+    pub fn new_from_commandline_args() -> Result<ConnectionHandler<Joined>, Box<dyn std::error::Error>> {
+        let cmd_args = crate::util::cmdl_args::get_competition_system_parameters();
+        
+        let connection_handler = Self::try_new(cmd_args.0, cmd_args.1)?;
+
+        connection_handler.join(cmd_args.2.as_deref())
+    }
+
+    /// Checks if the buffer ends with the "</room>" closing tag.
+    fn buffer_ends_with_room_tag(buffer: &[u8]) -> bool {
+        buffer.ends_with(b"</room>")
+    }
+
+    fn xml_payload_from_buffer(buffer: &[u8]) -> &[u8] {
+        let start = buffer.iter().position(|&b| b == b'<').unwrap_or(0);
+        &buffer[start..]
+    }
+}
+
+impl ConnectionHandler<Connected> {
     /// Joins a game, optionally using a reservation code if provided.
-    pub fn join(&mut self, reservation_code: Option<&str>) -> Result<(), Box<dyn std::error::Error>> {
+    pub fn join(mut self, reservation_code: Option<&str>) -> Result<ConnectionHandler<Joined>, Box<dyn std::error::Error>> {
         match reservation_code {
             Some(rc) => self.connection.write(format!("<protocol><joinPrepared reservationCode=\"{}\"/>", rc).as_bytes())?,
             None => self.connection.write(b"<protocol><join/>")?
@@ -68,34 +86,40 @@ impl ConnectionHandler {
         if !buffer.starts_with(b"<protocol>"){return Err("Invalid XML format".into());}
 
         // Parse the welcome message to extract the roomId
-        let raw_xml = Self::xml_payload_from_buffer(&buffer);
+        let raw_xml = ConnectionHandler::xml_payload_from_buffer(&buffer);
         let parser: EventReader<&[u8]> = EventReader::new(raw_xml);
-        self.room_id = Some(parse_joined(parser)?);
     
-        self.connected = true; 
-        return Ok(());
+        return Ok(ConnectionHandler { 
+            connection: self.connection,
+            log_file: self.log_file,
+            state: Joined { room_id: parse_joined(parser)? }
+        });
+    }
+
+
+}
+
+impl ConnectionHandler<Joined> {
+    pub fn get_room_id(&self) -> &Box<str> {
+        &self.state.room_id
     }
 
     /// Sends a move to the server in XML format.
     pub fn send_move(&mut self, m: &Move) -> Result<(), Box<dyn std::error::Error>> {
-        
-        let mut move_xml = format!(
-            "<room roomId=\"{}\"><data class=\"sc.plugin2027.SetMove\"><piece color=\"{}\" kind=\"{}\" rotation=\"{}\" isFlipped=\"{}\"><position x=\"{}\" y=\"{}\"/></piece></data></room>",
-            self.room_id.as_ref().unwrap_or(&Box::from("")),
+
+        let mut move_xml = String::new();
+        write!(move_xml, "<room roomId=\"{}\">", self.get_room_id().as_ref())?;
+
+        if m.skip {
+            write!(move_xml, "<data class=\"sc.plugin2027.SkipMove\"><color>{}</color></data></room>", m.team.to_string())?;
+        } else {
+            write!(move_xml, "<data class=\"sc.plugin2027.SetMove\"><piece color=\"{}\" kind=\"{}\" rotation=\"{}\" isFlipped=\"{}\"><position x=\"{}\" y=\"{}\"/></piece></data></room>",
             m.team.to_string(),
             m.piece.to_string(),
             m.rotation.to_string(),
             m.is_flipped,
             m.x,
-            m.y
-        );
-
-        if m.skip {
-            move_xml = format!(
-                "<room roomId=\"{}\"><data class=\"sc.plugin2027.SkipMove\"><color>{}</color></data></room>",
-                self.room_id.as_ref().unwrap_or(&Box::from("")),
-                m.team.to_string()
-            );
+            m.y)?;
         }
 
         self.connection.write_all(move_xml.as_bytes())?;
@@ -112,18 +136,17 @@ impl ConnectionHandler {
             return Err("No bytes received by the server".into()); //Err(ConnectionHandlerError::ZeroBytesReadToBuffer);
         }
 
-        let raw_xml: &[u8] = Self::xml_payload_from_buffer(&buffer);
+        let raw_xml: &[u8] = ConnectionHandler::xml_payload_from_buffer(&buffer);
         let parser: EventReader<&[u8]> = EventReader::new(raw_xml);
         let message: Box<Message> = parse_message(parser)?;
 
         return Ok(message);
     }
 
-    fn xml_payload_from_buffer(buffer: &[u8]) -> &[u8] {
-        let start = buffer.iter().position(|&b| b == b'<').unwrap_or(0);
-        &buffer[start..]
-    }
+    
+}
 
+impl<State: IsConnected> ConnectionHandler<State> {
     fn read_message_to_buffer(&mut self) -> Result<Vec<u8>, Box<dyn std::error::Error>> {
         let mut buffer = Vec::new();
 
@@ -134,14 +157,10 @@ impl ConnectionHandler {
                 return Err("Zero Bytes Read To Buffer".into()); //Err(ConnectionHandlerError::ZeroBytesReadToBuffer);
             }
 
-            if Self::buffer_ends_with_room_tag(&buffer) {
+            if ConnectionHandler::buffer_ends_with_room_tag(&buffer) {
                 return Ok(buffer);
             }
         }
-    }
-
-    fn buffer_ends_with_room_tag(buffer: &[u8]) -> bool {
-        buffer.ends_with(b"</room>")
     }
 
     fn read_to_buffer(&mut self, buffer: &mut Vec<u8>) -> Result<usize, Box<dyn std::error::Error>> {
@@ -171,9 +190,10 @@ impl ConnectionHandler {
     }
 }
 
+
 #[cfg(test)]
 mod tests {
-    use super::ConnectionHandler;
+use super::ConnectionHandler;
 
     #[test]
     fn extracts_xml_payload_from_room_message() {
