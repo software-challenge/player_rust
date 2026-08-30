@@ -5,6 +5,7 @@ use crate::game::r#move::Move;
 #[derive(Clone)]
 pub struct GameState {
     pub starting_piece: PieceType,
+    pub is_starting_team_one: bool,
     pub board: Board,
     pub turn: u8,
     pub round: u8,
@@ -16,9 +17,10 @@ pub struct GameState {
 
 impl GameState {
 
-    pub fn new(starting_piece: PieceType, board: Board, turn: u8, round: u8, current_turn_team: Team, blue_pieces: Vec<PieceType>, yellow_pieces: Vec<PieceType>, red_pieces: Vec<PieceType>, green_pieces: Vec<PieceType>) -> Self {
+    pub fn new(starting_piece: PieceType, is_starting_team_one: bool, board: Board, turn: u8, round: u8, current_turn_team: Team, blue_pieces: Vec<PieceType>, yellow_pieces: Vec<PieceType>, red_pieces: Vec<PieceType>, green_pieces: Vec<PieceType>) -> Self {
         GameState {
             starting_piece,
+            is_starting_team_one,
             board,
             turn,
             round,
@@ -57,15 +59,25 @@ impl GameState {
         }
 
 
-        // TODO: Start team not implemented! Currently using "ONE" as default
         // Current team can be caluclated from turn number
-        match self.turn % 4 {
-            0 => self.current_turn_team = Team::Blue,
-            1 => self.current_turn_team = Team::Yellow,
-            2 => self.current_turn_team = Team::Red,
-            3 => self.current_turn_team = Team::Green,
-            _ => unreachable!(),
+        if self.is_starting_team_one {
+            match self.turn % 4 {
+                0 => self.current_turn_team = Team::Blue,
+                1 => self.current_turn_team = Team::Yellow,
+                2 => self.current_turn_team = Team::Red,
+                3 => self.current_turn_team = Team::Green,
+                _ => unreachable!(),
+            }
+        } else {
+            match self.turn % 4 {
+                0 => self.current_turn_team = Team::Yellow,
+                1 => self.current_turn_team = Team::Red,
+                2 => self.current_turn_team = Team::Green,
+                3 => self.current_turn_team = Team::Blue,
+                _ => unreachable!(),
+            }
         }
+
 
         println!("Game state updated: Turn {}, Round {}, Current Team {:?}", self.turn, self.round, self.current_turn_team);
     }
