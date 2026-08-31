@@ -115,7 +115,7 @@ impl ConnectionHandler<Joined> {
         } else {
             write!(move_xml, "<data class=\"sc.plugin2027.SetMove\"><piece color=\"{}\" kind=\"{}\" rotation=\"{}\" isFlipped=\"{}\"><position x=\"{}\" y=\"{}\"/></piece></data></room>",
             m.team.to_string(),
-            m.piece.to_string(),
+            m.piece,
             m.rotation.to_string(),
             m.is_flipped,
             m.x,
@@ -140,7 +140,7 @@ impl ConnectionHandler<Joined> {
         let parser: EventReader<&[u8]> = EventReader::new(raw_xml);
         let message: Box<Message> = parse_message(parser)?;
 
-        return Ok(message);
+        Ok(message)
     }
 
     
@@ -170,7 +170,7 @@ impl<State: IsConnected> ConnectionHandler<State> {
         match self.connection.read(&mut buffer[start_len..]){
             Ok(0) => {
                 buffer.truncate(start_len);
-                return Err("Zero Bytes Read To Buffer".into()); //Err(ConnectionHandlerError::ZeroBytesReadToBuffer);
+                Err("Zero Bytes Read To Buffer".into()) //Err(ConnectionHandlerError::ZeroBytesReadToBuffer);
             },
             Ok(b) => {
                 buffer.truncate(start_len + b);
@@ -180,11 +180,11 @@ impl<State: IsConnected> ConnectionHandler<State> {
                 self.log_file.write_all(b"\n")?;
                 self.log_file.flush()?;
 
-                return Ok(b)
+                Ok(b)
             },
             Err(e) => {
                 buffer.truncate(start_len);
-                return Err(format!("Error reading to buffer: {}", e).into()); //Err(ConnectionHandlerError::Io(e))
+                Err(format!("Error reading to buffer: {}", e).into()) //Err(ConnectionHandlerError::Io(e))
             },
         }
     }

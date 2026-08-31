@@ -54,28 +54,18 @@ impl GameState {
 
         self.turn = turn;
 
-        if self.turn % 4 == 0 {
+        if self.turn.is_multiple_of(4) {
            self.round += 1;
         }
 
+        const TEAM_ORDER_ONE: [Team; 4] = [Team::Blue, Team::Yellow, Team::Red, Team::Green];
+        const TEAM_ORDER_TWO: [Team; 4] = [Team::Yellow, Team::Red, Team::Green, Team::Blue];
 
         // Current team can be caluclated from turn number
         if self.is_starting_team_one {
-            match self.turn % 4 {
-                0 => self.current_turn_team = Team::Blue,
-                1 => self.current_turn_team = Team::Yellow,
-                2 => self.current_turn_team = Team::Red,
-                3 => self.current_turn_team = Team::Green,
-                _ => unreachable!(),
-            }
+            self.current_turn_team = TEAM_ORDER_ONE[(self.turn % 4) as usize];
         } else {
-            match self.turn % 4 {
-                0 => self.current_turn_team = Team::Yellow,
-                1 => self.current_turn_team = Team::Red,
-                2 => self.current_turn_team = Team::Green,
-                3 => self.current_turn_team = Team::Blue,
-                _ => unreachable!(),
-            }
+           self.current_turn_team = TEAM_ORDER_TWO[(self.turn % 4) as usize];
         }
 
 

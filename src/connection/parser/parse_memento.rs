@@ -127,10 +127,8 @@ pub fn parse_memento(mut parser: EventReader<&[u8]>) -> Box<Message> {
                                                 }
                                             } else if name.local_name == "lastMove" {
                                                 for attr in attributes {
-                                                    if attr.name.local_name == "class" {
-                                                        if attr.value == "sc.plugin2027.SkipMove" {
-                                                            skip = true;
-                                                        }
+                                                    if attr.name.local_name == "class" && attr.value == "sc.plugin2027.SkipMove" {
+                                                        skip = true;
                                                     }
                                                 }
                                             } else if name.local_name == "color" {
