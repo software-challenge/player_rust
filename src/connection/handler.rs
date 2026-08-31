@@ -29,10 +29,10 @@ pub struct ConnectionHandler<State> {
 impl ConnectionHandler<()> {
     /// Attempts to create a new ConnectionHandler instance by connecting to the specified host and port.
     /// If no host or port is provided, defaults to "127.0.0.1" and "13050".
-    pub fn try_new(host: Option<Box<str>>, port: Option<Box<str>>) -> Result<ConnectionHandler<Connected>, Box<dyn std::error::Error>> {
+    pub fn try_new(host: Option<&str>, port: Option<&str>) -> Result<ConnectionHandler<Connected>, Box<dyn std::error::Error>> {
         // Construct address using provided host and port, or default values if not provided
-        let host = host.unwrap_or(Box::from("127.0.0.1"));
-        let port = port.unwrap_or(Box::from("13050"));
+        let host = host.unwrap_or("127.0.0.1");
+        let port = port.unwrap_or("13050");
 
         let address = format!("{}:{}", host, port);
 
@@ -52,9 +52,9 @@ impl ConnectionHandler<()> {
     pub fn new_from_commandline_args() -> Result<ConnectionHandler<Joined>, Box<dyn std::error::Error>> {
         let cmd_args = crate::util::cmdl_args::get_competition_system_parameters();
         
-        let connection_handler = Self::try_new(cmd_args.0, cmd_args.1)?;
+        let connection_handler = Self::try_new(cmd_args.get_host().as_deref(), cmd_args.get_port().as_deref())?;
 
-        connection_handler.join(cmd_args.2.as_deref())
+        connection_handler.join(cmd_args.get_reservation().as_deref())
     }
 
     /// Checks if the buffer ends with the "</room>" closing tag.
