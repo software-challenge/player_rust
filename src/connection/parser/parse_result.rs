@@ -23,7 +23,7 @@ impl FromStr for Team {
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s.trim().to_lowercase().as_str() {
             "one" => Ok(Team::One),
-            "Two" => Ok(Team::Two),
+            "two" => Ok(Team::Two),
             _ => Err(Error)
         }
     }
