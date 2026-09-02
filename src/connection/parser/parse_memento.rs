@@ -22,10 +22,22 @@ pub fn parse_memento(mut parser: EventReader<&[u8]>) -> Box<Message> {
                                 println!("Extracting initial game state from memento message...");
 
                                 let mut starting_piece = PieceType::Mono; // Default value, will be overwritten if found 
-
+                                let mut starting_team = Team::Blue; // Default value, will be overwritten if found 
                                 for attr in attributes {
                                     if attr.name.local_name == "startPiece" {
                                         starting_piece = PieceType::from_str(&attr.value).unwrap();
+                                    }
+
+                                    if attr.name.local_name == "startTeam" {
+                                        starting_team = match attr.value.as_str() {
+                                            "ONE" => Team::Blue,
+                                            "TWO" => Team::Yellow,
+                                            _ => {
+                                                //Fallback in case no valid startTeam exists.
+                                                eprintln!("No valid team found in startTeam; falling back to Team Blue!");
+                                                Team::Blue
+                                            }
+                                        }
                                     }
                                 }
 
@@ -57,7 +69,8 @@ pub fn parse_memento(mut parser: EventReader<&[u8]>) -> Box<Message> {
                                         Ok(XmlEvent::EndElement { name }) => {
                                             if name.local_name == "state" {
                                                 // TODO: Replace current turn team with real starting team
-                                                let game_state = GameState::new(starting_piece, Board::new(), 0, 1, Team::Blue, blue_pieces, yellow_pieces, red_pieces, green_pieces);
+
+                                                let game_state = GameState::new(starting_piece, starting_team == Team::Blue, Board::new(), 0, 1, starting_team, blue_pieces, yellow_pieces, red_pieces, green_pieces);
 
                                                 return Box::new(Message {
                                                     message_type: crate::connection::parser::message::MessageType::MementoInitial,
@@ -114,10 +127,8 @@ pub fn parse_memento(mut parser: EventReader<&[u8]>) -> Box<Message> {
                                                 }
                                             } else if name.local_name == "lastMove" {
                                                 for attr in attributes {
-                                                    if attr.name.local_name == "class" {
-                                                        if attr.value == "sc.plugin2027.SkipMove" {
-                                                            skip = true;
-                                                        }
+                                                    if attr.name.local_name == "class" && attr.value == "sc.plugin2027.SkipMove" {
+                                                        skip = true;
                                                     }
                                                 }
                                             } else if name.local_name == "color" {

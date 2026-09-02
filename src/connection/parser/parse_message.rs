@@ -1,6 +1,6 @@
 use xml::{EventReader, reader::XmlEvent};
 
-use crate::connection::parser::{message::Message, parse_memento::parse_memento};
+use crate::connection::parser::{message::Message, parse_memento::parse_memento, parse_result::parse_result};
 
 pub fn parse_message(mut parser: EventReader<&[u8]>) -> Result<Box<Message>, Box<dyn std::error::Error>> {
     loop {
@@ -25,13 +25,8 @@ pub fn parse_message(mut parser: EventReader<&[u8]>) -> Result<Box<Message>, Box
                                     }));
                                 },
                                 "result" => {
-                                    return Ok(Box::new(Message {
-                                        message_type: crate::connection::parser::message::MessageType::Result,
-                                        game_state: None,
-                                        last_move: None,
-                                        turn: None,
-                                        result: None, // TODO parse result from XML
-                                    }));
+                                    println!("Parsing memento result...");
+                                    return Ok(parse_result(parser))
                                 },
                                 _ => {
                                     return Err(format!("Unknown class attribute value: {}", attr.value).into());

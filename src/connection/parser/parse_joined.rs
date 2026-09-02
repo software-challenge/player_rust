@@ -16,5 +16,5 @@ pub fn parse_joined(parser: EventReader<&[u8]>) -> Result<Box<str>, Box<dyn std:
             _ => {}
         }
     }
-    return Err("No <joined> element found in XML".into()); //Err(ConnectionHandlerError::NoJoinedElement);
+    Err("No <joined> element found in XML".into()) //Err(ConnectionHandlerError::NoJoinedElement);
 }

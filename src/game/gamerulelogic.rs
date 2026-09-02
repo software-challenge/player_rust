@@ -321,6 +321,7 @@ mod tests {
     fn blue_turn_state_with_board(board: Board) -> GameState {
         GameState::new(
             PieceType::Mono,
+            true,
             board,
             5,
             2,
@@ -396,6 +397,7 @@ mod tests {
 
         let state = GameState::new(
             PieceType::Mono,
+            true,
             board,
             5,
             2,
