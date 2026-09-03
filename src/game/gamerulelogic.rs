@@ -336,7 +336,7 @@ mod tests {
     #[test]
     fn invalid_when_directly_adjacent_to_own_piece() {
         let mut board = Board::new();
-        board.board[5][5] = Some(Team::Blue);
+        board.set_cell(5, 5, Team::Blue);
 
         let state = blue_turn_state_with_board(board);
         let m = Move {
@@ -355,7 +355,7 @@ mod tests {
     #[test]
     fn valid_when_only_corner_contact_exists() {
         let mut board = Board::new();
-        board.board[5][5] = Some(Team::Blue);
+        board.set_cell(5, 5, Team::Blue);
 
         let state = blue_turn_state_with_board(board);
         let m = Move {
@@ -374,7 +374,7 @@ mod tests {
     #[test]
     fn invalid_when_no_corner_contact_after_first_move() {
         let mut board = Board::new();
-        board.board[5][5] = Some(Team::Blue);
+        board.set_cell(5, 5, Team::Blue);
 
         let state = blue_turn_state_with_board(board);
         let m = Move {
@@ -393,7 +393,7 @@ mod tests {
     #[test]
     fn calculates_moves_where_corner_is_not_piece_origin() {
         let mut board = Board::new();
-        board.board[5][5] = Some(Team::Blue);
+        board.set_cell(5, 5, Team::Blue);
 
         let state = GameState::new(
             PieceType::Mono,
