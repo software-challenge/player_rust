@@ -3,9 +3,9 @@ use std::{fmt, str::FromStr};
 use crate::{game::r#move::Rotation, util::coordinate::{Coordinate, Coordinates}};
 
 pub struct Piece {
-    pub piece_type: PieceType,
-    pub rotation: Rotation,
-    pub is_flipped: bool,
+    piece_type: PieceType,
+    rotation: Rotation,
+    is_flipped: bool,
 }
 
 impl Piece {
@@ -38,6 +38,30 @@ impl Piece {
         transformed_coordinates = Coordinates::normalize_coordinates(&transformed_coordinates);
 
         transformed_coordinates
+    }
+
+    pub fn get_piece_type(&self) -> &PieceType {
+        &self.piece_type
+    }
+
+    pub fn set_piece_type(&mut self, piece_type: PieceType) {
+        self.piece_type = piece_type;
+    }
+
+    pub fn get_rotation(&self) -> &Rotation {
+        &self.rotation
+    }
+
+    pub fn set_rotation(&mut self, rotation: Rotation) {
+        self.rotation = rotation;
+    }
+
+    pub fn is_flipped(&self) -> &bool {
+        &self.is_flipped
+    }
+
+    pub fn set_flipped(&mut self, is_flipped: bool) {
+        self.is_flipped = is_flipped;
     }
 }
 
