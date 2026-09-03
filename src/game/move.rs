@@ -11,6 +11,12 @@ pub struct Move {
     pub skip: bool,
 }
 
+impl Move {
+    pub fn new(team: Team, piece: PieceType, x: usize, y: usize, is_flipped: bool, rotation: Rotation, skip: bool) -> Self {
+        Self { team, piece, x, y, is_flipped, rotation, skip }
+    }
+}
+
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]
 pub enum Rotation {
     None,
