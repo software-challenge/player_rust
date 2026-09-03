@@ -18,9 +18,6 @@ pub fn parse_memento(mut parser: EventReader<&[u8]>) -> Box<Message> {
                             
                             if turn_value == 0 {
                                 // Extract all information for the initial state
-                                
-                                println!("Extracting initial game state from memento message...");
-
                                 let mut starting_piece = PieceType::Mono; // Default value, will be overwritten if found 
                                 let mut starting_team = Team::Blue; // Default value, will be overwritten if found 
                                 for attr in attributes {
@@ -91,9 +88,6 @@ pub fn parse_memento(mut parser: EventReader<&[u8]>) -> Box<Message> {
 
                             } else {
                                 // Extract last move
-
-                                println!("Extracting last move from memento message...");
-
                                 let mut team: Option<Team> = None;
                                 let mut piece: Option<PieceType> = None;
                                 let mut x: Option<usize> = None;

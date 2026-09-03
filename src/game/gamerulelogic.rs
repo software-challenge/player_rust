@@ -39,9 +39,6 @@ pub fn get_possible_start_moves(gamestate: &GameState) -> Vec<Move> {
             }
         }
 
-        println!("Variant: {} {} {} {}", piece.to_string(), is_flipped, rotation.to_string(), relative_coordinates.len());
-        println!("Bounding box: min_x: {}, min_y: {}, max_x: {}, max_y: {}", min_x, min_y, max_x, max_y);
-
         // Add all possible border placements
         for x in 0..(constants::BOARD_WIDTH - max_x) {
             let mut m = Move {

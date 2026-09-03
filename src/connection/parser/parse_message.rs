@@ -12,7 +12,6 @@ pub fn parse_message(mut parser: EventReader<&[u8]>) -> Result<Box<Message>, Box
                         if attr.name.local_name == "class" {
                             match attr.value.as_str() {
                                 "memento" => {
-                                    println!("Parsing memento message...");
                                     return Ok(parse_memento(parser))
                                 },
                                 "moveRequest" => {
@@ -25,7 +24,6 @@ pub fn parse_message(mut parser: EventReader<&[u8]>) -> Result<Box<Message>, Box
                                     }));
                                 },
                                 "result" => {
-                                    println!("Parsing memento result...");
                                     return Ok(parse_result(parser))
                                 },
                                 _ => {
