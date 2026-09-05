@@ -1,6 +1,6 @@
 use std::collections::HashSet;
 
-use crate::{game::{board::{Board, Team}, constants, gamestate::GameState, r#move::Move, piece::{Piece, PieceType}}, util::coordinate::Coordinate};
+use crate::{game::{board::{Board, Team}, constants, gamestate::GameState, r#move::Move, piece::{Piece, PieceType}, coordinate::Coordinate}};
 
 /// Returns a vector of all possible moves for the current team in the given game state
 /// Does not include skip moves
@@ -314,7 +314,7 @@ mod tests {
         piece::PieceType,
         r#move::{Move, Rotation},
     };
-    use crate::util::coordinate::Coordinate;
+    use crate::game::coordinate::Coordinate;
 
     use super::{get_possible_moves_for_piece, is_valid_move};
 
