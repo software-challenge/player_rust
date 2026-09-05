@@ -16,7 +16,7 @@ pub fn get_possible_start_moves(gamestate: &GameState) -> Vec<Move> {
     let mut moves: Vec<Move> = vec![];
     let piece: &PieceType = &gamestate.get_starting_piece();
 
-    for variant in piece.all_variants() {
+    for variant in piece.all_variants(true) {
         let (relative_coordinates, (rotation, is_flipped)) = variant;
 
         // Calculate the bounding box of the piece variant
@@ -118,7 +118,7 @@ pub fn get_possible_moves_for_piece(gamestate: &GameState, piece: &PieceType, va
     let mut seen: HashSet<(usize, usize, bool, crate::game::r#move::Rotation)> = HashSet::new();
 
     for field in valid_fields {
-        for variant in piece.all_variants() {
+        for variant in piece.all_variants(true) {
             let (relative_coordinates, (rotation, is_flipped)) = variant;
 
             // Align each block of the variant to this candidate corner field.
