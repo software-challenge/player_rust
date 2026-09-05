@@ -33,7 +33,7 @@ impl GameState {
     /// This function assumes that the move is valid and directly updates the game state.
     /// If the move is invalid, this function may lead to an inconsistent game state.
     pub fn apply_move_unchecked(&mut self, m: &Move, turn: u8) {
-        self.board.place_piece(m.x, m.y, m.team, Piece::new(m.piece, m.rotation, m.is_flipped));
+        self.board.place_piece_unchecked(m.x, m.y, m.team, Piece::new(m.piece, m.rotation, m.is_flipped));
 
         // Remove used piece from the corresponding team's available pieces
         match m.team {
