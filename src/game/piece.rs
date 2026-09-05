@@ -93,18 +93,15 @@ pub enum PieceType {
 impl PieceType {
 
     /// Returns all variants of the piece typ
+    /// If filter is set to true, all identical variants of a piece are only returned once.
     /// Data Format: Vector<(relative coordinates, (rotation, is flipped?))>
-    pub fn all_variants(&self) -> Vec<(Vec<Coordinate>, (Rotation, bool))> {
+    pub fn all_variants(&self, filter: bool) -> Vec<(Vec<Coordinate>, (Rotation, bool))> {
         let mut variants: Vec<(Vec<Coordinate>, (Rotation, bool))> = Vec::new();
         let base_coordinates = self.base_coordinates();
-
-        // TODO: Filtering out variants that have the same relative coordinates
 
         for &flip in &[false, true] {
             for &rotation in &[Rotation::None, Rotation::Right, Rotation::Mirror, Rotation::Left] {
                 let mut transformed_coordinates: Vec<Coordinate> = base_coordinates.to_vec();
-
-                
 
                 // Apply rotation
                 for coord in &mut transformed_coordinates {
@@ -120,6 +117,13 @@ impl PieceType {
 
                 // Normalize coordinates to start from (0,0)
                 transformed_coordinates = Coordinates::normalize_coordinates(&transformed_coordinates);
+
+                if filter {
+                    // Check if the transformed coordinates already exist in the variants vector
+                    if variants.iter().any(|(coords, _)| *coords == transformed_coordinates) {
+                        continue; // Skip adding this variant as it already exists
+                    }
+                }   
 
                 variants.push((transformed_coordinates, (rotation, flip)))
             }
