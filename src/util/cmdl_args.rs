@@ -46,7 +46,6 @@ pub fn get_competition_system_parameters() -> CompetitionSystemParameters{
     let mut host = None;
     let mut port = None;
     let mut reservation = None;
-    println!("{:?}", args);
     let mut iter = args.into_iter();
     while let Some(flag) = iter.next() {
         match flag.as_str() {

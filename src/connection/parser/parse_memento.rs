@@ -18,9 +18,6 @@ pub fn parse_memento(mut parser: EventReader<&[u8]>) -> Box<Message> {
                             
                             if turn_value == 0 {
                                 // Extract all information for the initial state
-                                
-                                println!("Extracting initial game state from memento message...");
-
                                 let mut starting_piece = PieceType::Mono; // Default value, will be overwritten if found 
                                 let mut starting_team = Team::Blue; // Default value, will be overwritten if found 
                                 for attr in attributes {
@@ -72,13 +69,7 @@ pub fn parse_memento(mut parser: EventReader<&[u8]>) -> Box<Message> {
 
                                                 let game_state = GameState::new(starting_piece, starting_team == Team::Blue, Board::new(), 0, 1, starting_team, blue_pieces, yellow_pieces, red_pieces, green_pieces);
 
-                                                return Box::new(Message {
-                                                    message_type: crate::connection::parser::message::MessageType::MementoInitial,
-                                                    game_state: Some(game_state),
-                                                    last_move: None,
-                                                    turn: None,
-                                                    result: None,
-                                                });
+                                                return Box::new(Message::MementoInitial(Some(game_state)));
                                             }
                                         }
                                         Ok(_) => {}
@@ -91,9 +82,6 @@ pub fn parse_memento(mut parser: EventReader<&[u8]>) -> Box<Message> {
 
                             } else {
                                 // Extract last move
-
-                                println!("Extracting last move from memento message...");
-
                                 let mut team: Option<Team> = None;
                                 let mut piece: Option<PieceType> = None;
                                 let mut x: Option<usize> = None;
@@ -145,32 +133,14 @@ pub fn parse_memento(mut parser: EventReader<&[u8]>) -> Box<Message> {
                                             if name.local_name == "lastMove" {
 
                                                 if skip {
-                                                    return Box::new(Message {
-                                                        message_type: crate::connection::parser::message::MessageType::MementoLastMove,
-                                                        game_state: None,
-                                                        last_move: Some(Box::new(Move { team: team.unwrap(), piece: PieceType::Mono, x: 0, y: 0, is_flipped: false, rotation: Rotation::None, skip: true })),
-                                                        turn: Some(turn_value as u8),
-                                                        result: None,
-                                                    });
+                                                    return Box::new(Message::MementoLastMove(Some(turn_value as u8), Some(Move::new(team.unwrap(), PieceType::Mono, 0, 0, false, Rotation::None, true))));
                                                 }
 
-                                                return Box::new(Message {
-                                                    message_type: crate::connection::parser::message::MessageType::MementoLastMove,
-                                                    game_state: None,
-                                                    last_move: Some(Box::new(Move { team: team.unwrap(), piece: piece.unwrap(), x: x.unwrap(), y: y.unwrap(), is_flipped: is_flipped.unwrap(), rotation: rotation.unwrap(), skip: false })),
-                                                    turn: Some(turn_value as u8),
-                                                    result: None,
-                                                });
+                                                return Box::new(Message::MementoLastMove(Some(turn_value as u8), Some(Move::new(team.unwrap(), piece.unwrap(), x.unwrap(), y.unwrap(), is_flipped.unwrap(), rotation.unwrap(), false))));
                                             }
                                         }
                                         Ok(XmlEvent::EndDocument) => {
-                                            return Box::new(Message {
-                                                message_type: crate::connection::parser::message::MessageType::MementoLastMove,
-                                                game_state: None,
-                                                last_move: None,
-                                                turn: None,
-                                                result: None,
-                                            });
+                                            return Box::new(Message::MementoLastMove(None, None));
                                         }
                                         Ok(_) => {}
                                         Err(e) => {
@@ -185,13 +155,7 @@ pub fn parse_memento(mut parser: EventReader<&[u8]>) -> Box<Message> {
                 }
             }
             Ok(XmlEvent::EndDocument) => {
-                return Box::new(Message {
-                    message_type: crate::connection::parser::message::MessageType::MementoInitial,
-                    game_state: None,
-                    last_move: None,
-                    turn: None,
-                    result: None,
-                });
+                return Box::new(Message::MementoInitial(None));
             }
             Ok(_) => {}
             Err(e) => {

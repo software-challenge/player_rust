@@ -3,9 +3,9 @@ use std::{fmt, str::FromStr};
 use crate::{game::r#move::Rotation, game::coordinate::{Coordinate, Coordinates}};
 
 pub struct Piece {
-    pub piece_type: PieceType,
-    pub rotation: Rotation,
-    pub is_flipped: bool,
+    piece_type: PieceType,
+    rotation: Rotation,
+    is_flipped: bool,
 }
 
 impl Piece {
@@ -39,6 +39,30 @@ impl Piece {
 
         transformed_coordinates
     }
+
+    pub fn get_piece_type(&self) -> &PieceType {
+        &self.piece_type
+    }
+
+    pub fn set_piece_type(&mut self, piece_type: PieceType) {
+        self.piece_type = piece_type;
+    }
+
+    pub fn get_rotation(&self) -> &Rotation {
+        &self.rotation
+    }
+
+    pub fn set_rotation(&mut self, rotation: Rotation) {
+        self.rotation = rotation;
+    }
+
+    pub fn is_flipped(&self) -> &bool {
+        &self.is_flipped
+    }
+
+    pub fn set_flipped(&mut self, is_flipped: bool) {
+        self.is_flipped = is_flipped;
+    }
 }
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]
@@ -69,18 +93,15 @@ pub enum PieceType {
 impl PieceType {
 
     /// Returns all variants of the piece typ
+    /// If filter is set to true, all identical variants of a piece are only returned once.
     /// Data Format: Vector<(relative coordinates, (rotation, is flipped?))>
-    pub fn all_variants(&self) -> Vec<(Vec<Coordinate>, (Rotation, bool))> {
+    pub fn all_variants(&self, filter: bool) -> Vec<(Vec<Coordinate>, (Rotation, bool))> {
         let mut variants: Vec<(Vec<Coordinate>, (Rotation, bool))> = Vec::new();
         let base_coordinates = self.base_coordinates();
-
-        // TODO: Filtering out variants that have the same relative coordinates
 
         for &flip in &[false, true] {
             for &rotation in &[Rotation::None, Rotation::Right, Rotation::Mirror, Rotation::Left] {
                 let mut transformed_coordinates: Vec<Coordinate> = base_coordinates.to_vec();
-
-                
 
                 // Apply rotation
                 for coord in &mut transformed_coordinates {
@@ -97,12 +118,21 @@ impl PieceType {
                 // Normalize coordinates to start from (0,0)
                 transformed_coordinates = Coordinates::normalize_coordinates(&transformed_coordinates);
 
+                if filter {
+                    // Check if the transformed coordinates already exist in the variants vector
+                    if variants.iter().any(|(coords, _)| *coords == transformed_coordinates) {
+                        continue; // Skip adding this variant as it already exists
+                    }
+                }   
+
                 variants.push((transformed_coordinates, (rotation, flip)))
             }
         }
         variants
     }
 
+    /// Returns the base coordinates of the piece type without any rotation or flipping.
+    /// Coordinate origin is at (0,0) and all coordinates are positive - grows to the bottom right.
     pub fn base_coordinates(&self) -> &'static [Coordinate] {
         match self {
             PieceType::Mono => {

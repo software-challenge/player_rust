@@ -56,20 +56,13 @@ pub fn parse_result(mut parser: EventReader<&[u8]>) -> Box<Message> {
             Ok(XmlEvent::EndDocument) => {break;},
             Ok(_) => {},
             Err(e) => {
-                println!("{}", e);
+                eprintln!("{}", e);
                 break;
             },
         }
     }
 
     println!("{:?}", result);
-
-    Box::new(Message {
-        message_type: crate::connection::parser::message::MessageType::Result,
-        game_state: None,
-        last_move: None,
-        turn: None,
-        result: Some(result),
-    })
+    Box::new(Message::Result(Some(result)))
 }
 

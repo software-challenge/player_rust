@@ -12,20 +12,12 @@ pub fn parse_message(mut parser: EventReader<&[u8]>) -> Result<Box<Message>, Box
                         if attr.name.local_name == "class" {
                             match attr.value.as_str() {
                                 "memento" => {
-                                    println!("Parsing memento message...");
                                     return Ok(parse_memento(parser))
                                 },
                                 "moveRequest" => {
-                                    return Ok(Box::new(Message {
-                                        message_type: crate::connection::parser::message::MessageType::MoveRequest,
-                                        game_state: None,
-                                        last_move: None,
-                                        turn: None,
-                                        result: None,
-                                    }));
+                                    return Ok(Box::new(Message::MoveRequest));
                                 },
                                 "result" => {
-                                    println!("Parsing memento result...");
                                     return Ok(parse_result(parser))
                                 },
                                 _ => {

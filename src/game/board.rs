@@ -1,10 +1,9 @@
 use crate::game::piece::{Piece};
 use crate::game::constants::{BOARD_WIDTH, BOARD_HEIGHT};
 
-#[derive(Copy, Clone)]
-
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Board {
-    pub board: [[Option<Team>; BOARD_WIDTH as usize]; BOARD_HEIGHT as usize],
+    board: [[Option<Team>; BOARD_WIDTH as usize]; BOARD_HEIGHT as usize],
 }
 
 impl Board {
@@ -14,6 +13,61 @@ impl Board {
         }
     }
 
+    /// Returns the Team of the given cell (x, y) on the board, or None if the cell is empty or out of bounds.
+    pub fn get_cell(&self, x: usize, y: usize) -> Option<Team> {
+        if x < BOARD_WIDTH as usize && y < BOARD_HEIGHT as usize {
+            self.board[y][x]
+        } else {
+            None
+        }
+    }
+
+    /// Sets the Team of the given cell (x, y) on the board and returns true if the cell was within bounds, false otherwise.
+    /// Does not perform any validation and assumes that the coordinates are valid.
+    pub fn set_cell(&mut self, x: usize, y: usize, team: Team) -> bool {
+        if x < BOARD_WIDTH as usize && y < BOARD_HEIGHT as usize {
+            self.board[y][x] = Some(team);
+            return true;
+        } 
+        false
+    }
+
+    /// Place the specified piece on the board at the given coordinates (x, y) for the specified team.
+    /// Does not perform any validation and assumes that the coordinates are valid and the piece is not placed on an occupied space.
+    pub fn place_piece_unchecked(&mut self, x: usize, y: usize, team: Team, piece: Piece) {
+        for coord in piece.get_coordinates() {
+            let new_x = x + coord.x as usize;
+            let new_y = y + coord.y as usize;
+
+            self.board[new_y][new_x] = Some(team);
+        }
+    }
+
+    /// Place the specified piece on the board at the given coordinates (x, y) for the specified team.
+    /// Returns true if the piece was placed successfully, false otherwise.
+    pub fn place_piece(&mut self, x: usize, y: usize, team: Team, piece: Piece) -> bool {
+        
+        let mut checked_coords: Vec<(usize, usize)> = vec![];
+
+        for coord in piece.get_coordinates() {
+            let new_x = x + coord.x as usize;
+            let new_y = y + coord.y as usize;
+
+            if new_x >= BOARD_WIDTH as usize || new_y >= BOARD_HEIGHT as usize || self.board[new_y][new_x].is_some() {
+                return false;
+            }
+
+            checked_coords.push((new_x, new_y));
+        }
+
+        for (new_x, new_y) in checked_coords {
+            self.board[new_y][new_x] = Some(team);
+        }
+
+        true
+    }
+
+    /// Prints the board to the console.
     pub fn print_board(&self) {
         for row in self.board.iter() {
             for cell in row.iter() {
@@ -32,165 +86,6 @@ impl Board {
             println!();
         }
     }
-
-    pub fn get_cell(&self, x: usize, y: usize) -> Option<Team> {
-        if x < BOARD_WIDTH as usize && y < BOARD_HEIGHT as usize {
-            self.board[y][x]
-        } else {
-            None
-        }
-    }
-
-    /// Place the specified piece on the board at the given coordinates (x, y) for the specified team.
-    /// Does not perform any validation and assumes that the coordinates are valid and the piece is not placed on an occupied space.
-    pub fn place_piece(&mut self, x: usize, y: usize, team: Team, piece: Piece) {
-        for coord in piece.get_coordinates() {
-            let new_x = x + coord.x as usize;
-            let new_y = y + coord.y as usize;
-
-            println!("Placing piece block at: {} {}", new_x, new_y);
-
-            self.board[new_y][new_x] = Some(team);
-        }
-    }
-
-    /*/// Places a piece on the board at the specified coordinates.
-    /// This function does not perform any validation and assumes that the coordinates are valid and the piece is not placed on an occupied space.
-    pub fn place_piece(&mut self, x: usize, y: usize, team: Team, piece: PieceType) {
-        match piece {
-            PieceType::Mono => {
-                self.board[y][x] = Some(team);
-            },
-            PieceType::Domino => {
-                self.board[y][x] = Some(team);
-                self.board[y][x + 1] = Some(team);
-            },
-            PieceType::TrioL => {
-                self.board[y][x] = Some(team);
-                self.board[y + 1][x] = Some(team);
-                self.board[y + 1][x + 1] = Some(team);
-            },
-            PieceType::TrioI => {
-                self.board[y][x] = Some(team);
-                self.board[y + 1][x] = Some(team);
-                self.board[y + 2][x] = Some(team);
-            },
-            PieceType::TetroO => {
-                self.board[y][x] = Some(team);
-                self.board[y][x + 1] = Some(team);
-                self.board[y + 1][x] = Some(team);
-                self.board[y + 1][x + 1] = Some(team);
-            },
-            PieceType::TetroT => {
-                self.board[y][x] = Some(team);
-                self.board[y][x + 1] = Some(team);
-                self.board[y + 1][x + 1] = Some(team);
-                self.board[y][x + 2] = Some(team);
-            },
-            PieceType::TetroI => {
-                self.board[y][x] = Some(team);
-                self.board[y + 1][x] = Some(team);
-                self.board[y + 2][x] = Some(team);
-                self.board[y + 3][x] = Some(team);
-            },
-            PieceType::TetroL => {
-                self.board[y][x] = Some(team);
-                self.board[y + 1][x] = Some(team);
-                self.board[y + 2][x] = Some(team);
-                self.board[y + 2][x + 1] = Some(team);
-            },
-            PieceType::TetroZ => {
-                self.board[y][x] = Some(team);
-                self.board[y][x + 1] = Some(team);
-                self.board[y + 1][x + 1] = Some(team);
-                self.board[y + 1][x + 2] = Some(team);
-            },
-            PieceType::PentoL => {
-                self.board[y][x] = Some(team);
-                self.board[y + 1][x] = Some(team);
-                self.board[y + 2][x] = Some(team);
-                self.board[y + 3][x] = Some(team);
-                self.board[y + 3][x + 1] = Some(team);
-            },
-            PieceType::PentoT => {
-                self.board[y][x] = Some(team);
-                self.board[y][x + 1] = Some(team);
-                self.board[y][x + 2] = Some(team);
-                self.board[y + 1][x + 1] = Some(team);
-                self.board[y + 2][x + 1] = Some(team);
-            },
-            PieceType::PentoV => {
-                self.board[y][x] = Some(team);
-                self.board[y + 1][x] = Some(team);
-                self.board[y + 2][x] = Some(team);
-                self.board[y + 2][x + 1] = Some(team);
-                self.board[y + 2][x + 2] = Some(team);
-            },
-            PieceType::PentoS => {
-                self.board[y + 1][x] = Some(team);
-                self.board[y + 1][x + 1] = Some(team);
-                self.board[y][x + 1] = Some(team);
-                self.board[y][x + 2] = Some(team);
-                self.board[y][x + 3] = Some(team);
-            },
-            PieceType::PentoZ => {
-                self.board[y][x] = Some(team);
-                self.board[y][x + 1] = Some(team);
-                self.board[y + 1][x + 1] = Some(team);
-                self.board[y + 2][x + 1] = Some(team);
-                self.board[y + 2][x + 2] = Some(team);
-            },
-            PieceType::PentoI => {
-                self.board[y][x] = Some(team);
-                self.board[y + 1][x] = Some(team);
-                self.board[y + 2][x] = Some(team);
-                self.board[y + 3][x] = Some(team);
-                self.board[y + 4][x] = Some(team);
-            },
-            PieceType::PentoP => {
-                self.board[y][x] = Some(team);
-                self.board[y][x + 1] = Some(team);
-                self.board[y + 1][x] = Some(team);
-                self.board[y + 1][x + 1] = Some(team);
-                self.board[y + 2][x] = Some(team);
-            },
-            PieceType::PentoW => {
-                self.board[y][x] = Some(team);
-                self.board[y + 1][x] = Some(team);
-                self.board[y + 1][x + 1] = Some(team);
-                self.board[y + 2][x + 1] = Some(team);
-                self.board[y + 2][x + 2] = Some(team);
-            },
-            PieceType::PentoU => {
-                self.board[y][x] = Some(team);
-                self.board[y + 1][x] = Some(team);
-                self.board[y + 1][x + 1] = Some(team);
-                self.board[y + 1][x + 2] = Some(team);
-                self.board[y][x + 2] = Some(team);
-            },
-            PieceType::PentoR => {
-                self.board[y + 1][x] = Some(team);
-                self.board[y + 1][x + 1] = Some(team);
-                self.board[y + 2][x + 1] = Some(team);
-                self.board[y + 1][x + 2] = Some(team);
-                self.board[y][x + 2] = Some(team);
-            },
-            PieceType::PentoX => {
-                self.board[y][x + 1] = Some(team);
-                self.board[y + 1][x] = Some(team);
-                self.board[y + 1][x + 1] = Some(team);
-                self.board[y + 1][x + 2] = Some(team);
-                self.board[y + 2][x + 1] = Some(team);
-            },
-            PieceType::PentoY => {
-                self.board[y][x + 1] = Some(team);
-                self.board[y + 1][x] = Some(team);
-                self.board[y + 1][x + 1] = Some(team);
-                self.board[y + 2][x + 1] = Some(team);
-                self.board[y + 3][x + 1] = Some(team);
-            },
-        }
-    }*/
 }
 
 #[derive(Copy, Clone, PartialEq, Eq, Debug, Hash, PartialOrd, Ord)]

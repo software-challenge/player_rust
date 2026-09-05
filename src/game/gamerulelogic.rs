@@ -2,18 +2,19 @@ use std::collections::HashSet;
 
 use crate::{game::{board::{Board, Team}, constants, gamestate::GameState, r#move::Move, piece::{Piece, PieceType}, coordinate::Coordinate}};
 
-/// Returns a vector of all possible moves for the current team in the given game state
-/// Does not include skip moves
+/// Returns a vector of all possible moves for the current team in the given game state.
+/// Does not include the skip move!
 pub fn get_possible_moves(gamestate: &GameState) -> Vec<Move> {
-    if gamestate.round == 1 {
+    if *gamestate.get_round() == 1 {
         return get_possible_start_moves(gamestate);
     }
     return get_possible_set_moves(gamestate);
 }
 
+/// Returns a vector of all possible moves for the current team in the first round.
 pub fn get_possible_start_moves(gamestate: &GameState) -> Vec<Move> {
     let mut moves: Vec<Move> = vec![];
-    let piece: &PieceType = &gamestate.starting_piece;
+    let piece: &PieceType = &gamestate.get_starting_piece();
 
     for variant in piece.all_variants() {
         let (relative_coordinates, (rotation, is_flipped)) = variant;
@@ -39,13 +40,10 @@ pub fn get_possible_start_moves(gamestate: &GameState) -> Vec<Move> {
             }
         }
 
-        println!("Variant: {} {} {} {}", piece.to_string(), is_flipped, rotation.to_string(), relative_coordinates.len());
-        println!("Bounding box: min_x: {}, min_y: {}, max_x: {}, max_y: {}", min_x, min_y, max_x, max_y);
-
         // Add all possible border placements
         for x in 0..(constants::BOARD_WIDTH - max_x) {
             let mut m = Move {
-                team: gamestate.current_turn_team,
+                team: *gamestate.get_current_turn_team(),
                 piece: *piece,
                 x: x as usize,
                 y: 0,
@@ -57,7 +55,7 @@ pub fn get_possible_start_moves(gamestate: &GameState) -> Vec<Move> {
             if is_valid_move(gamestate, &m) {moves.push(m)}
 
             m = Move {
-                team: gamestate.current_turn_team,
+                team: *gamestate.get_current_turn_team(),
                 piece: *piece,
                 x: x as usize,
                 y: (constants::BOARD_HEIGHT - max_y) as usize,
@@ -71,7 +69,7 @@ pub fn get_possible_start_moves(gamestate: &GameState) -> Vec<Move> {
 
         for y in 0..(constants::BOARD_WIDTH - max_y) {
             let mut m = Move {
-                team: gamestate.current_turn_team,
+                team: *gamestate.get_current_turn_team(),
                 piece: *piece,
                 x: 0,
                 y: y as usize,
@@ -83,7 +81,7 @@ pub fn get_possible_start_moves(gamestate: &GameState) -> Vec<Move> {
             if is_valid_move(gamestate, &m) {moves.push(m)}
 
             m = Move {
-                team: gamestate.current_turn_team,
+                team: *gamestate.get_current_turn_team(),
                 piece: *piece,
                 x: (constants::BOARD_WIDTH - max_x) as usize,
                 y: y as usize,
@@ -99,12 +97,13 @@ pub fn get_possible_start_moves(gamestate: &GameState) -> Vec<Move> {
     moves
 }
 
+/// Returns a vector of all possible set moves for the given game state.
 pub fn get_possible_set_moves(gamestate: &GameState) -> Vec<Move> {
     let mut moves: Vec<Move> = vec![];
 
-    let valid_fields: Vec<Coordinate> = get_valid_fields(&gamestate.board, &gamestate.current_turn_team);
+    let valid_fields: Vec<Coordinate> = get_valid_fields(gamestate.get_board(), gamestate.get_current_turn_team());
 
-    for piece in gamestate.get_team_pieces(&gamestate.current_turn_team) {
+    for piece in gamestate.get_team_pieces(gamestate.get_current_turn_team()) {
         let piece_moves = get_possible_moves_for_piece(gamestate, piece, &valid_fields);
         moves.extend(piece_moves);
     }
@@ -132,7 +131,7 @@ pub fn get_possible_moves_for_piece(gamestate: &GameState, piece: &PieceType, va
                 }
 
                 let m = Move {
-                    team: gamestate.current_turn_team,
+                    team: *gamestate.get_current_turn_team(),
                     piece: *piece,
                     x: origin_x as usize,
                     y: origin_y as usize,
@@ -259,7 +258,7 @@ pub fn is_valid_move(gamestate: &GameState, m: &Move) -> bool {
             return false; // Out of bounds
         }
 
-        if gamestate.board.get_cell(board_x as usize, board_y as usize).is_some() {
+        if gamestate.get_board().get_cell(board_x as usize, board_y as usize).is_some() {
             return false; // Cell is already occupied
         }
 
@@ -278,7 +277,7 @@ pub fn is_valid_move(gamestate: &GameState, m: &Move) -> bool {
                 continue;
             }
 
-            if gamestate.board.get_cell(nx as usize, ny as usize) == Some(m.team) {
+            if gamestate.get_board().get_cell(nx as usize, ny as usize) == Some(m.team) {
                 return false;
             }
         }
@@ -292,14 +291,14 @@ pub fn is_valid_move(gamestate: &GameState, m: &Move) -> bool {
                 continue;
             }
 
-            if gamestate.board.get_cell(nx as usize, ny as usize) == Some(m.team) {
+            if gamestate.get_board().get_cell(nx as usize, ny as usize) == Some(m.team) {
                 has_corner_contact = true;
             }
         }
     }
 
     // Only enforce corner contact once the team has at least one tile on the board.
-    if !get_colored_fiels(&gamestate.board, &m.team).is_empty() && !has_corner_contact {
+    if !get_colored_fiels(&*gamestate.get_board(), &m.team).is_empty() && !has_corner_contact {
         return false;
     }
 
@@ -336,7 +335,7 @@ mod tests {
     #[test]
     fn invalid_when_directly_adjacent_to_own_piece() {
         let mut board = Board::new();
-        board.board[5][5] = Some(Team::Blue);
+        board.set_cell(5, 5, Team::Blue);
 
         let state = blue_turn_state_with_board(board);
         let m = Move {
@@ -355,7 +354,7 @@ mod tests {
     #[test]
     fn valid_when_only_corner_contact_exists() {
         let mut board = Board::new();
-        board.board[5][5] = Some(Team::Blue);
+        board.set_cell(5, 5, Team::Blue);
 
         let state = blue_turn_state_with_board(board);
         let m = Move {
@@ -374,7 +373,7 @@ mod tests {
     #[test]
     fn invalid_when_no_corner_contact_after_first_move() {
         let mut board = Board::new();
-        board.board[5][5] = Some(Team::Blue);
+        board.set_cell(5, 5, Team::Blue);
 
         let state = blue_turn_state_with_board(board);
         let m = Move {
@@ -393,7 +392,7 @@ mod tests {
     #[test]
     fn calculates_moves_where_corner_is_not_piece_origin() {
         let mut board = Board::new();
-        board.board[5][5] = Some(Team::Blue);
+        board.set_cell(5, 5, Team::Blue);
 
         let state = GameState::new(
             PieceType::Mono,
