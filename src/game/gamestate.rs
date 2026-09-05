@@ -2,6 +2,7 @@ use crate::game::board::{Board, Team};
 use crate::game::piece::{Piece, PieceType};
 use crate::game::r#move::Move;
 
+/// Holds all information of a games state.
 #[derive(Clone)]
 pub struct GameState {
     starting_piece: PieceType,

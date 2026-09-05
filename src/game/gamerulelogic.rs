@@ -2,8 +2,8 @@ use std::collections::HashSet;
 
 use crate::{game::{board::{Board, Team}, constants, gamestate::GameState, r#move::Move, piece::{Piece, PieceType}}, util::coordinate::Coordinate};
 
-/// Returns a vector of all possible moves for the current team in the given game state
-/// Does not include skip moves
+/// Returns a vector of all possible moves for the current team in the given game state.
+/// Does not include the skip move!
 pub fn get_possible_moves(gamestate: &GameState) -> Vec<Move> {
     if *gamestate.get_round() == 1 {
         return get_possible_start_moves(gamestate);
@@ -11,6 +11,7 @@ pub fn get_possible_moves(gamestate: &GameState) -> Vec<Move> {
     return get_possible_set_moves(gamestate);
 }
 
+/// Returns a vector of all possible moves for the current team in the first round.
 pub fn get_possible_start_moves(gamestate: &GameState) -> Vec<Move> {
     let mut moves: Vec<Move> = vec![];
     let piece: &PieceType = &gamestate.get_starting_piece();
@@ -96,6 +97,7 @@ pub fn get_possible_start_moves(gamestate: &GameState) -> Vec<Move> {
     moves
 }
 
+/// Returns a vector of all possible set moves for the given game state.
 pub fn get_possible_set_moves(gamestate: &GameState) -> Vec<Move> {
     let mut moves: Vec<Move> = vec![];
 
