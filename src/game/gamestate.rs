@@ -1,4 +1,5 @@
 use crate::game::board::{Board, Team};
+use crate::game::gamerulelogic;
 use crate::game::piece::{Piece, PieceType};
 use crate::game::r#move::Move;
 
@@ -65,6 +66,51 @@ impl GameState {
         } else {
            self.current_turn_team = TEAM_ORDER_TWO[(self.turn % 4) as usize];
         }
+    }
+
+    /// Applies a move to the game state with validation.
+    /// Returns true if the move was valid and applied, false otherwise.
+    pub fn apply_move(&mut self, m: &Move, turn: u8) -> bool {
+
+        if gamerulelogic::is_valid_move(&self, m) == false {
+            return false;
+        }
+
+        self.board.place_piece(m.x, m.y, m.team, Piece::new(m.piece, m.rotation, m.is_flipped));
+
+        // Remove used piece from the corresponding team's available pieces
+        match m.team {
+            Team::Blue => {
+                self.pieces[0].retain(|&p| p != m.piece);
+            },
+            Team::Yellow => {
+                self.pieces[1].retain(|&p| p != m.piece);
+            },
+            Team::Red => {
+                self.pieces[2].retain(|&p| p != m.piece);
+            },
+            Team::Green => {
+                self.pieces[3].retain(|&p| p != m.piece);
+            },
+        }
+
+        self.turn = turn;
+
+        if self.turn.is_multiple_of(4) {
+           self.round += 1;
+        }
+
+        const TEAM_ORDER_ONE: [Team; 4] = [Team::Blue, Team::Yellow, Team::Red, Team::Green];
+        const TEAM_ORDER_TWO: [Team; 4] = [Team::Yellow, Team::Red, Team::Green, Team::Blue];
+
+        // Current team can be caluclated from turn number
+        if self.is_starting_team_one {
+            self.current_turn_team = TEAM_ORDER_ONE[(self.turn % 4) as usize];
+        } else {
+           self.current_turn_team = TEAM_ORDER_TWO[(self.turn % 4) as usize];
+        }
+
+        true
     }
 
     pub fn get_current_turn_team(&self) -> &Team {
