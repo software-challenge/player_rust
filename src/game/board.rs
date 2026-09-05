@@ -67,6 +67,7 @@ impl Board {
         true
     }
 
+    /// Prints the board to the console.
     pub fn print_board(&self) {
         for row in self.board.iter() {
             for cell in row.iter() {

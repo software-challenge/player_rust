@@ -127,6 +127,8 @@ impl PieceType {
         variants
     }
 
+    /// Returns the base coordinates of the piece type without any rotation or flipping.
+    /// Coordinate origin is at (0,0) and all coordinates are positive - grows to the bottom right.
     pub fn base_coordinates(&self) -> &'static [Coordinate] {
         match self {
             PieceType::Mono => {

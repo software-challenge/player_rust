@@ -9,6 +9,7 @@ pub trait Client {
     fn on_game_state_updated(&mut self, gamestate: GameState);
 }
 
+/// Starts a new client using the commandline args to connect to the game.
 pub fn start_client_from_commandline_args<C: Client>(mut client: C) -> Result<(), Box<dyn std::error::Error>> {
     let mut connection = ConnectionHandler::new_from_commandline_args()?;
 
