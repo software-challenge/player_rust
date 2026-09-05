@@ -16,7 +16,7 @@ impl Client for Player {
     }
 
     fn on_game_state_updated(&mut self, game_state: GameState ) {
-        game_state.board.print_board();
+        game_state.get_board().print_board();
         self.game_state = Some(game_state);
         println!("Game state updated!");
     }
