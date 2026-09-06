@@ -1,6 +1,6 @@
 use std::{fmt, str::FromStr};
 
-use crate::{game::r#move::Rotation, game::coordinate::{Coordinate, Coordinates}};
+use crate::{game::r#move::Rotation, game::coordinate::{Coordinate, flip_coordinates, rotate_coordinates, normalize_coordinates}};
 
 pub struct Piece {
     piece_type: PieceType,
@@ -22,20 +22,11 @@ impl Piece {
         let base_coordinates = self.piece_type.base_coordinates();
         let mut transformed_coordinates: Vec<Coordinate> = base_coordinates.to_vec();
 
-        // Apply rotation
-        for coord in &mut transformed_coordinates {
-            *coord = coord.rotate(&self.rotation);
+        transformed_coordinates = rotate_coordinates(transformed_coordinates, &self.rotation);  
+        if self.is_flipped { 
+            transformed_coordinates = flip_coordinates(transformed_coordinates);
         }
-
-        // Apply flipping in board space (left-right mirror)
-        if self.is_flipped {
-            for coord in &mut transformed_coordinates {
-                *coord = coord.flip_on_vertical();
-            }
-        }
-
-        // Normalize coordinates to start from (0,0)
-        transformed_coordinates = Coordinates::normalize_coordinates(&transformed_coordinates);
+        transformed_coordinates = normalize_coordinates(&transformed_coordinates);
 
         transformed_coordinates
     }
@@ -103,20 +94,11 @@ impl PieceType {
             for &rotation in &[Rotation::None, Rotation::Right, Rotation::Mirror, Rotation::Left] {
                 let mut transformed_coordinates: Vec<Coordinate> = base_coordinates.to_vec();
 
-                // Apply rotation
-                for coord in &mut transformed_coordinates {
-                    *coord = coord.rotate(&rotation);
+                transformed_coordinates = rotate_coordinates(transformed_coordinates, &rotation);  
+                if flip { 
+                    transformed_coordinates = flip_coordinates(transformed_coordinates);
                 }
-
-                // Flips from left to right, so we need to flip the coordinates on the vertical axis
-                if flip {
-                    for coord in &mut transformed_coordinates {
-                        *coord = coord.flip_on_vertical();
-                    }
-                }
-
-                // Normalize coordinates to start from (0,0)
-                transformed_coordinates = Coordinates::normalize_coordinates(&transformed_coordinates);
+                transformed_coordinates = normalize_coordinates(&transformed_coordinates);
 
                 if filter {
                     // Check if the transformed coordinates already exist in the variants vector
