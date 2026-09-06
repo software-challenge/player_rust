@@ -1,201 +1,90 @@
-use crate::game::piece::PieceType;
+use crate::game::color::Color;
+use crate::game::piece::{Piece};
+use crate::game::constants::BOARD_SIZE;
 
-#[derive(Copy, Clone)]
-
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Board {
-    pub board: [[Option<Team>; 20]; 20],
+    board: [[Option<Color>; BOARD_SIZE]; BOARD_SIZE],
 }
 
 impl Board {
     pub fn new() -> Self {
         Board {
-            board: [[None; 20]; 20],
+            board: [[None; BOARD_SIZE]; BOARD_SIZE],
         }
     }
 
+    /// Returns the Color of the given cell (x, y) on the board, or None if the cell is empty or out of bounds.
+    pub fn get_cell(&self, x: usize, y: usize) -> Option<Color> {
+        if x < BOARD_SIZE && y < BOARD_SIZE {
+            self.board[y][x]
+        } else {
+            None
+        }
+    }
+
+    /// Sets the Color of the given cell (x, y) on the board and returns true if the cell was within bounds, false otherwise.
+    /// Does not perform any validation and assumes that the coordinates are valid.
+    pub fn set_cell(&mut self, x: usize, y: usize, color: Color) -> bool {
+        if x < BOARD_SIZE && y < BOARD_SIZE {
+            self.board[y][x] = Some(color);
+            return true;
+        } 
+        false
+    }
+
+    /// Place the specified piece on the board at the given coordinates (x, y) for the specified color.
+    /// Does not perform any validation and assumes that the coordinates are valid and the piece is not placed on an occupied space.
+    pub fn place_piece_unchecked(&mut self, x: usize, y: usize, color: Color, piece: Piece) {
+        for coord in piece.get_coordinates() {
+            let new_x = x + coord.x as usize;
+            let new_y = y + coord.y as usize;
+
+            self.board[new_y][new_x] = Some(color);
+        }
+    }
+
+    /// Place the specified piece on the board at the given coordinates (x, y) for the specified color.
+    /// Returns true if the piece was placed successfully, false otherwise.
+    pub fn place_piece(&mut self, x: usize, y: usize, color: Color, piece: Piece) -> bool {
+        
+        let mut checked_coords: Vec<(usize, usize)> = vec![];
+
+        for coord in piece.get_coordinates() {
+            let new_x = x + coord.x as usize;
+            let new_y = y + coord.y as usize;
+
+            if new_x >= BOARD_SIZE || new_y >= BOARD_SIZE || self.board[new_y][new_x].is_some() {
+                return false;
+            }
+
+            checked_coords.push((new_x, new_y));
+        }
+
+        for (new_x, new_y) in checked_coords {
+            self.board[new_y][new_x] = Some(color);
+        }
+
+        true
+    }
+
+    /// Prints the board to the console.
     pub fn print_board(&self) {
         for row in self.board.iter() {
             for cell in row.iter() {
                 match cell {
-                    Some(team) => {
-                        match team {
-                            Team::Blue => print!("B "),
-                            Team::Yellow => print!("Y "),
-                            Team::Red => print!("R "),
-                            Team::Green => print!("G "),
+                    Some(color) => {
+                        match color {
+                            Color::Blue => print!("B "),
+                            Color::Yellow => print!("Y "),
+                            Color::Red => print!("R "),
+                            Color::Green => print!("G "),
                         }
                     },
                     None => print!(". "),
                 }
             }
             println!();
-        }
-    }
-
-    /// Places a piece on the board at the specified coordinates.
-    /// This function does not perform any validation and assumes that the coordinates are valid and the piece is not placed on an occupied space.
-    pub fn place_piece(&mut self, x: usize, y: usize, team: Team, piece: PieceType) {
-        match piece {
-            PieceType::Mono => {
-                self.board[y][x] = Some(team);
-            },
-            PieceType::Domino => {
-                self.board[y][x] = Some(team);
-                self.board[y][x + 1] = Some(team);
-            },
-            PieceType::TrioL => {
-                self.board[y][x] = Some(team);
-                self.board[y + 1][x] = Some(team);
-                self.board[y + 1][x + 1] = Some(team);
-            },
-            PieceType::TrioI => {
-                self.board[y][x] = Some(team);
-                self.board[y + 1][x] = Some(team);
-                self.board[y + 2][x] = Some(team);
-            },
-            PieceType::TetroO => {
-                self.board[y][x] = Some(team);
-                self.board[y][x + 1] = Some(team);
-                self.board[y + 1][x] = Some(team);
-                self.board[y + 1][x + 1] = Some(team);
-            },
-            PieceType::TetroT => {
-                self.board[y][x] = Some(team);
-                self.board[y][x + 1] = Some(team);
-                self.board[y + 1][x + 1] = Some(team);
-                self.board[y][x + 2] = Some(team);
-            },
-            PieceType::TetroI => {
-                self.board[y][x] = Some(team);
-                self.board[y + 1][x] = Some(team);
-                self.board[y + 2][x] = Some(team);
-                self.board[y + 3][x] = Some(team);
-            },
-            PieceType::TetroL => {
-                self.board[y][x] = Some(team);
-                self.board[y + 1][x] = Some(team);
-                self.board[y + 2][x] = Some(team);
-                self.board[y + 2][x + 1] = Some(team);
-            },
-            PieceType::TetroZ => {
-                self.board[y][x] = Some(team);
-                self.board[y][x + 1] = Some(team);
-                self.board[y + 1][x + 1] = Some(team);
-                self.board[y + 1][x + 2] = Some(team);
-            },
-            PieceType::PentoL => {
-                self.board[y][x] = Some(team);
-                self.board[y + 1][x] = Some(team);
-                self.board[y + 2][x] = Some(team);
-                self.board[y + 3][x] = Some(team);
-                self.board[y + 3][x + 1] = Some(team);
-            },
-            PieceType::PentoT => {
-                self.board[y][x] = Some(team);
-                self.board[y][x + 1] = Some(team);
-                self.board[y][x + 2] = Some(team);
-                self.board[y + 1][x + 1] = Some(team);
-                self.board[y + 2][x + 1] = Some(team);
-            },
-            PieceType::PentoV => {
-                self.board[y][x] = Some(team);
-                self.board[y + 1][x] = Some(team);
-                self.board[y + 2][x] = Some(team);
-                self.board[y + 2][x + 1] = Some(team);
-                self.board[y + 2][x + 2] = Some(team);
-            },
-            PieceType::PentoS => {
-                self.board[y + 1][x] = Some(team);
-                self.board[y + 1][x + 1] = Some(team);
-                self.board[y][x + 1] = Some(team);
-                self.board[y][x + 2] = Some(team);
-                self.board[y][x + 3] = Some(team);
-            },
-            PieceType::PentoZ => {
-                self.board[y][x] = Some(team);
-                self.board[y][x + 1] = Some(team);
-                self.board[y + 1][x + 1] = Some(team);
-                self.board[y + 2][x + 1] = Some(team);
-                self.board[y + 2][x + 2] = Some(team);
-            },
-            PieceType::PentoI => {
-                self.board[y][x] = Some(team);
-                self.board[y + 1][x] = Some(team);
-                self.board[y + 2][x] = Some(team);
-                self.board[y + 3][x] = Some(team);
-                self.board[y + 4][x] = Some(team);
-            },
-            PieceType::PentoP => {
-                self.board[y][x] = Some(team);
-                self.board[y][x + 1] = Some(team);
-                self.board[y + 1][x] = Some(team);
-                self.board[y + 1][x + 1] = Some(team);
-                self.board[y + 2][x] = Some(team);
-            },
-            PieceType::PentoW => {
-                self.board[y][x] = Some(team);
-                self.board[y + 1][x] = Some(team);
-                self.board[y + 1][x + 1] = Some(team);
-                self.board[y + 2][x + 1] = Some(team);
-                self.board[y + 2][x + 2] = Some(team);
-            },
-            PieceType::PentoU => {
-                self.board[y][x] = Some(team);
-                self.board[y + 1][x] = Some(team);
-                self.board[y + 1][x + 1] = Some(team);
-                self.board[y + 1][x + 2] = Some(team);
-                self.board[y][x + 2] = Some(team);
-            },
-            PieceType::PentoR => {
-                self.board[y + 1][x] = Some(team);
-                self.board[y + 1][x + 1] = Some(team);
-                self.board[y + 2][x + 1] = Some(team);
-                self.board[y + 1][x + 2] = Some(team);
-                self.board[y][x + 2] = Some(team);
-            },
-            PieceType::PentoX => {
-                self.board[y][x + 1] = Some(team);
-                self.board[y + 1][x] = Some(team);
-                self.board[y + 1][x + 1] = Some(team);
-                self.board[y + 1][x + 2] = Some(team);
-                self.board[y + 2][x + 1] = Some(team);
-            },
-            PieceType::PentoY => {
-                self.board[y][x + 1] = Some(team);
-                self.board[y + 1][x] = Some(team);
-                self.board[y + 1][x + 1] = Some(team);
-                self.board[y + 2][x + 1] = Some(team);
-                self.board[y + 3][x + 1] = Some(team);
-            },
-        }
-    }
-}
-
-#[derive(Copy, Clone)]
-pub enum Team {
-    Blue,
-    Yellow,
-    Red,
-    Green,
-}
-
-impl Team {
-    pub fn from_string(s: &str) -> Self {
-        match s {
-            "BLUE" => Team::Blue,
-            "YELLOW" => Team::Yellow,
-            "RED" => Team::Red,
-            "GREEN" => Team::Green,
-            _ => panic!("Unknown team color: {}", s),
-        }
-    }
-
-    pub fn to_string(&self) -> String {
-        match self {
-            Team::Blue => "BLUE".to_string(),
-            Team::Yellow => "YELLOW".to_string(),
-            Team::Red => "RED".to_string(),
-            Team::Green => "GREEN".to_string(),
         }
     }
 }

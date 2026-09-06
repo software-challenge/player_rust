@@ -3,3 +3,7 @@ pub mod gamerulelogic;
 pub mod board;
 pub mod piece;
 pub mod r#move;
+pub mod constants;
+pub mod coordinate;
+pub mod color;
+pub mod rotation;

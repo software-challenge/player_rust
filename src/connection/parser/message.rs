@@ -1,15 +1,8 @@
-use crate::game::{gamestate::GameState, r#move::Move};
+use crate::{connection::parser::parse_result::GameResult, game::{gamestate::GameState, r#move::Move}};
 
-pub enum MessageType {
-    MementoInitial,
-    MementoLastMove,
+pub enum Message {
+    MementoInitial(Option<GameState>),
+    MementoLastMove(Option<u8>, Option<Move>),
     MoveRequest,
-    Result,
-}
-
-pub struct Message {
-    pub message_type: MessageType,
-    pub game_state: Option<GameState>,
-    pub last_move: Option<Box<Move>>,
-    pub result: Option<Box<str>>,
+    Result(Option<GameResult>),
 }

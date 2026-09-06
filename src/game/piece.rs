@@ -1,11 +1,11 @@
 use std::{fmt, str::FromStr};
 
-use crate::{game::r#move::Rotation, util::coordinate::Coordinate};
+use crate::{game::rotation::Rotation, game::coordinate::{Coordinate, flip_coordinates, rotate_coordinates, normalize_coordinates}};
 
 pub struct Piece {
-    pub piece_type: PieceType,
-    pub rotation: Rotation,
-    pub is_flipped: bool,
+    piece_type: PieceType,
+    rotation: Rotation,
+    is_flipped: bool,
 }
 
 impl Piece {
@@ -19,7 +19,40 @@ impl Piece {
 
     /// Applies the rotation and flipping and returns normalized coordinates from (0,0) in positive direction
     pub fn get_coordinates(&self) -> Vec<Coordinate> {
-        todo!();
+        let base_coordinates = self.piece_type.base_coordinates();
+        let mut transformed_coordinates: Vec<Coordinate> = base_coordinates.to_vec();
+
+        transformed_coordinates = rotate_coordinates(transformed_coordinates, &self.rotation);  
+        if self.is_flipped { 
+            transformed_coordinates = flip_coordinates(transformed_coordinates);
+        }
+        transformed_coordinates = normalize_coordinates(&transformed_coordinates);
+
+        transformed_coordinates
+    }
+
+    pub fn get_piece_type(&self) -> &PieceType {
+        &self.piece_type
+    }
+
+    pub fn set_piece_type(&mut self, piece_type: PieceType) {
+        self.piece_type = piece_type;
+    }
+
+    pub fn get_rotation(&self) -> &Rotation {
+        &self.rotation
+    }
+
+    pub fn set_rotation(&mut self, rotation: Rotation) {
+        self.rotation = rotation;
+    }
+
+    pub fn is_flipped(&self) -> &bool {
+        &self.is_flipped
+    }
+
+    pub fn set_flipped(&mut self, is_flipped: bool) {
+        self.is_flipped = is_flipped;
     }
 }
 
@@ -46,6 +79,130 @@ pub enum PieceType {
     PentoR,
     PentoX,
     PentoY,
+}
+
+impl PieceType {
+
+    /// Returns all variants of the piece typ
+    /// If filter is set to true, all identical variants of a piece are only returned once.
+    /// Data Format: Vector<(relative coordinates, (rotation, is flipped?))>
+    pub fn all_variants(&self, filter: bool) -> Vec<(Vec<Coordinate>, (Rotation, bool))> {
+        let mut variants: Vec<(Vec<Coordinate>, (Rotation, bool))> = Vec::new();
+        let base_coordinates = self.base_coordinates();
+
+        for &flip in &[false, true] {
+            for &rotation in &[Rotation::None, Rotation::Right, Rotation::Mirror, Rotation::Left] {
+                let mut transformed_coordinates: Vec<Coordinate> = base_coordinates.to_vec();
+
+                transformed_coordinates = rotate_coordinates(transformed_coordinates, &rotation);  
+                if flip { 
+                    transformed_coordinates = flip_coordinates(transformed_coordinates);
+                }
+                transformed_coordinates = normalize_coordinates(&transformed_coordinates);
+
+                if filter {
+                    // Check if the transformed coordinates already exist in the variants vector
+                    if variants.iter().any(|(coords, _)| *coords == transformed_coordinates) {
+                        continue; // Skip adding this variant as it already exists
+                    }
+                }   
+
+                variants.push((transformed_coordinates, (rotation, flip)))
+            }
+        }
+        variants
+    }
+
+    /// Returns the base coordinates of the piece type without any rotation or flipping.
+    /// Coordinate origin is at (0,0) and all coordinates are positive - grows to the bottom right.
+    pub fn base_coordinates(&self) -> &'static [Coordinate] {
+        match self {
+            PieceType::Mono => {
+                const COORDS: &[Coordinate] = &[Coordinate::new(0, 0)];
+                COORDS
+            }
+            PieceType::Domino => {
+                const COORDS: &[Coordinate] = &[Coordinate::new(0, 0), Coordinate::new(1, 0)];
+                COORDS
+            }
+            PieceType::TrioL => {
+                const COORDS: &[Coordinate] = &[Coordinate::new(0, 0), Coordinate::new(0, 1), Coordinate::new(1, 1)];
+                COORDS
+            }
+            PieceType::TrioI => {
+                const COORDS: &[Coordinate] = &[Coordinate::new(0, 0), Coordinate::new(0, 1), Coordinate::new(0, 2)];
+                COORDS
+            }
+            PieceType::TetroO => {
+                const COORDS: &[Coordinate] = &[Coordinate::new(0, 0), Coordinate::new(1, 0), Coordinate::new(0, 1), Coordinate::new(1, 1)];
+                COORDS
+            }
+            PieceType::TetroT => {
+                const COORDS: &[Coordinate] = &[Coordinate::new(0, 0), Coordinate::new(1, 0), Coordinate::new(2, 0), Coordinate::new(1, 1)];
+                COORDS
+            }
+            PieceType::TetroI => {
+                const COORDS: &[Coordinate] = &[Coordinate::new(0, 0), Coordinate::new(0, 1), Coordinate::new(0, 2), Coordinate::new(0, 3)];
+                COORDS
+            }
+            PieceType::TetroL => {
+                const COORDS: &[Coordinate] = &[Coordinate::new(0, 0), Coordinate::new(0, 1), Coordinate::new(0, 2), Coordinate::new(1, 2)];
+                COORDS
+            }
+            PieceType::TetroZ => {
+                const COORDS: &[Coordinate] = &[Coordinate::new(0, 0), Coordinate::new(1, 0), Coordinate::new(1, 1), Coordinate::new(2, 1)];
+                COORDS
+            }
+            PieceType::PentoL => {
+                const COORDS: &[Coordinate] = &[Coordinate::new(0, 0), Coordinate::new(0, 1), Coordinate::new(0, 2), Coordinate::new(0, 3), Coordinate::new(1, 3)];
+                COORDS
+            }
+            PieceType::PentoT => {
+                const COORDS: &[Coordinate] = &[Coordinate::new(0, 0), Coordinate::new(1, 0), Coordinate::new(2, 0), Coordinate::new(1, 1), Coordinate::new(1, 2)];
+                COORDS
+            }
+            PieceType::PentoV => {
+                const COORDS: &[Coordinate] = &[Coordinate::new(0, 0), Coordinate::new(0, 1), Coordinate::new(0, 2), Coordinate::new(1, 2), Coordinate::new(2, 2)];
+                COORDS
+            }
+            PieceType::PentoS => {
+                const COORDS: &[Coordinate] = &[Coordinate::new(1, 0), Coordinate::new(2, 0), Coordinate::new(3, 0), Coordinate::new(0, 1), Coordinate::new(1, 1)];
+                COORDS
+            }
+            PieceType::PentoZ => {
+                const COORDS: &[Coordinate] = &[Coordinate::new(0, 0), Coordinate::new(1, 0), Coordinate::new(1, 1), Coordinate::new(1, 2), Coordinate::new(2, 2)];
+                COORDS
+            }
+            PieceType::PentoI => {
+                const COORDS: &[Coordinate] = &[Coordinate::new(0, 0), Coordinate::new(0, 1), Coordinate::new(0, 2), Coordinate::new(0, 3), Coordinate::new(0, 4)];
+                COORDS
+            }
+            PieceType::PentoP => {
+                const COORDS: &[Coordinate] = &[Coordinate::new(0, 0), Coordinate::new(1, 0), Coordinate::new(0, 1), Coordinate::new(1, 1), Coordinate::new(0, 2)];
+                COORDS
+            }
+            PieceType::PentoW => {
+                const COORDS: &[Coordinate] = &[Coordinate::new(0, 0), Coordinate::new(0, 1), Coordinate::new(1, 1), Coordinate::new(1, 2), Coordinate::new(2, 2)];
+                COORDS
+            }
+            PieceType::PentoU => {
+                const COORDS: &[Coordinate] = &[Coordinate::new(0, 0), Coordinate::new(2, 0), Coordinate::new(0, 1), Coordinate::new(1, 1), Coordinate::new(2, 1)];
+                COORDS
+            }
+            PieceType::PentoR => {
+                const COORDS: &[Coordinate] = &[Coordinate::new(2, 0), Coordinate::new(0, 1), Coordinate::new(1, 1), Coordinate::new(2, 1), Coordinate::new(1, 2)];
+                COORDS
+            }
+            PieceType::PentoX => {
+                const COORDS: &[Coordinate] = &[Coordinate::new(1, 0), Coordinate::new(0, 1), Coordinate::new(1, 1), Coordinate::new(2, 1), Coordinate::new(1, 2)];
+                COORDS
+            }
+            PieceType::PentoY => {
+                const COORDS: &[Coordinate] = &[Coordinate::new(1, 0), Coordinate::new(0, 1), Coordinate::new(1, 1), Coordinate::new(1, 2), Coordinate::new(1, 3)];
+                COORDS
+            }
+        }
+    }
 }
 
 impl fmt::Display for PieceType {
@@ -114,6 +271,85 @@ impl FromStr for PieceType {
             "PENTO_X" => Ok(PieceType::PentoX),
             "PENTO_Y" => Ok(PieceType::PentoY),
             _ => Err(ParsePieceTypeError),
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{Piece, PieceType};
+    use crate::{game::rotation::Rotation, game::coordinate::Coordinate};
+
+    fn sorted_xy(coordinates: Vec<Coordinate>) -> Vec<(isize, isize)> {
+        let mut xy: Vec<(isize, isize)> = coordinates
+            .into_iter()
+            .map(|coord| (coord.x, coord.y))
+            .collect();
+        xy.sort_unstable();
+        xy
+    }
+
+    #[test]
+    fn pento_r_get_coordinates_all_8_variants() {
+        let cases: Vec<(Rotation, bool, Vec<(isize, isize)>)> = vec![
+            (
+                Rotation::None,
+                false,
+                vec![(2, 0), (0, 1), (1, 1), (2, 1), (1, 2)],
+            ),
+            (
+                Rotation::Right,
+                false,
+                vec![(2, 2), (1, 0), (1, 1), (1, 2), (0, 1)],
+            ),
+            (
+                Rotation::Mirror,
+                false,
+                vec![(0, 2), (2, 1), (1, 1), (0, 1), (1, 0)],
+            ),
+            (
+                Rotation::Left,
+                false,
+                vec![(0, 0), (1, 2), (1, 1), (1, 0), (2, 1)],
+            ),
+            (
+                Rotation::None,
+                true,
+                vec![(0, 0), (2, 1), (1, 1), (0, 1), (1, 2)],
+            ),
+            (
+                Rotation::Right,
+                true,
+                vec![(0, 2), (1, 0), (1, 1), (1, 2), (2, 1)],
+            ),
+            (
+                Rotation::Mirror,
+                true,
+                vec![(2, 2), (0, 1), (1, 1), (2, 1), (1, 0)],
+            ),
+            (
+                Rotation::Left,
+                true,
+                vec![(2, 0), (1, 2), (1, 1), (1, 0), (0, 1)],
+            ),
+        ];
+
+        for (rotation, is_flipped, expected) in cases {
+            let piece = Piece::new(PieceType::PentoR, rotation, is_flipped);
+            let actual = sorted_xy(piece.get_coordinates());
+
+            assert_eq!(
+                actual,
+                sorted_xy(
+                    expected
+                        .into_iter()
+                        .map(|(x, y)| Coordinate::new(x, y))
+                        .collect()
+                ),
+                "unexpected coordinates for rotation={:?}, is_flipped={}",
+                rotation,
+                is_flipped
+            );
         }
     }
 }
