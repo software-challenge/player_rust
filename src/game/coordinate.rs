@@ -1,4 +1,4 @@
-use crate::game::r#move::Rotation;
+use crate::game::rotation::Rotation;
 
 pub struct Coordinates {
 

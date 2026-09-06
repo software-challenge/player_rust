@@ -115,7 +115,7 @@ pub fn get_possible_set_moves(gamestate: &GameState) -> Vec<Move> {
 /// Only returns valid moves after round 1!
 pub fn get_possible_moves_for_piece(gamestate: &GameState, piece: &PieceType, valid_fields: &[Coordinate]) -> Vec<Move> {
     let mut moves: Vec<Move> = vec![];
-    let mut seen: HashSet<(usize, usize, bool, crate::game::r#move::Rotation)> = HashSet::new();
+    let mut seen: HashSet<(usize, usize, bool, crate::game::rotation::Rotation)> = HashSet::new();
 
     for field in valid_fields {
         for variant in piece.all_variants(true) {
@@ -312,7 +312,8 @@ mod tests {
         color::Color,
         gamestate::GameState,
         piece::PieceType,
-        r#move::{Move, Rotation},
+        r#move::Move,
+        rotation::Rotation
     };
     use crate::game::coordinate::Coordinate;
 
