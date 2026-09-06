@@ -5,7 +5,7 @@ license = "Apache-2.0"
 description = "Offiziele Rust Bibliothek der Software Challenge Germany"
 repository = "https://github.com/software-challenge/player_rust"
 readme = "README.md"
-keywords = ["socha", "software challenge"]
+keywords = ["socha", "software-challenge"]
 edition = "2024"
 exclude = [
     ".github/",
