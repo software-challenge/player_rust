@@ -1,4 +1,5 @@
-use crate::game::board::{Board, Color};
+use crate::game::board::Board;
+use crate::game::color::Color;
 use crate::game::gamerulelogic;
 use crate::game::piece::{Piece, PieceType};
 use crate::game::r#move::Move;

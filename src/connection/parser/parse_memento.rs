@@ -3,7 +3,7 @@ use std::str::FromStr;
 use xml::EventReader;
 use xml::reader::XmlEvent;
 
-use crate::{connection::parser::message::Message, game::{board::{Board, Color}, gamestate::GameState, r#move::{Move, Rotation}, piece::PieceType}};
+use crate::{connection::parser::message::Message, game::{board::Board, color::Color, gamestate::GameState, r#move::{Move, Rotation}, piece::PieceType}};
 
 pub fn parse_memento(mut parser: EventReader<&[u8]>) -> Box<Message> {
     loop {

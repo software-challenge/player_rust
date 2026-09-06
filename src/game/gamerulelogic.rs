@@ -1,6 +1,6 @@
 use std::collections::HashSet;
 
-use crate::{game::{board::{Board, Color}, constants::BOARD_SIZE_I, gamestate::GameState, r#move::Move, piece::{Piece, PieceType}, coordinate::Coordinate}};
+use crate::{game::{board::Board, color::Color, constants::BOARD_SIZE_I, gamestate::GameState, r#move::Move, piece::{Piece, PieceType}, coordinate::Coordinate}};
 
 /// Returns a vector of all possible moves for the current team in the given game state.
 /// Does not include the skip move!
@@ -308,7 +308,8 @@ pub fn is_valid_move(gamestate: &GameState, m: &Move) -> bool {
 #[cfg(test)]
 mod tests {
     use crate::game::{
-        board::{Board, Color},
+        board::Board,
+        color::Color,
         gamestate::GameState,
         piece::PieceType,
         r#move::{Move, Rotation},
