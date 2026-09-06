@@ -95,6 +95,7 @@ pub fn rotate_coordinates(coordinates: Vec<Coordinate>, rotation: &Rotation) -> 
     rotated_coordinates
 }
 
+/// Flips the coordinates on the vertical axis (y-axis) relative to the coordinate origin.
 pub fn flip_coordinates(coordinates: Vec<Coordinate>) -> Vec<Coordinate> {
     let mut flipped_coordinates: Vec<Coordinate> = Vec::new();
 
