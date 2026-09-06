@@ -159,7 +159,7 @@ pub fn get_valid_fields(board: &Board, color: &Color) -> Vec<Coordinate> {
 
     let mut valid_fields: Vec<Coordinate> = Vec::new();
 
-    for colored_field in get_colored_fiels(board, color) {
+    for colored_field in get_colored_fields(board, color) {
         for dx in [-1, 1] {
             for dy in [-1, 1] {
                 let corner = Coordinate {
@@ -214,7 +214,7 @@ pub fn get_valid_fields(board: &Board, color: &Color) -> Vec<Coordinate> {
 }
 
 /// Returns a vector of all coordinates on the board that are occupied by any piece of the given color
-pub fn get_colored_fiels(board: &Board, color: &Color) -> Vec<Coordinate> {
+pub fn get_colored_fields(board: &Board, color: &Color) -> Vec<Coordinate> {
     let mut colored_fields: Vec<Coordinate> = vec![];
 
     for y in 0..BOARD_SIZE_I {
@@ -298,7 +298,7 @@ pub fn is_valid_move(gamestate: &GameState, m: &Move) -> bool {
     }
 
     // Only enforce corner contact once the team has at least one tile on the board.
-    if !get_colored_fiels(&*gamestate.get_board(), &m.color).is_empty() && !has_corner_contact {
+    if !get_colored_fields(&*gamestate.get_board(), &m.color).is_empty() && !has_corner_contact {
         return false;
     }
 

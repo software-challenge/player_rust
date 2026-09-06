@@ -107,25 +107,25 @@ Es stehen hier außerdem einige Methoden zu verfügung.
 
 Hiermit kann das Board in die Konsole ausgegeben werden.
 
-#### get_cell(x: usize, y: usize) -> Option\<Team\>
+#### get_cell(x: usize, y: usize) -> Option\<Color\>
 
 Hiermit kann eine Zelle mit den gegebenen Koordinaten vom Board ausgelesen werden.
 
-#### set_cell(x: usize, y: usize, team: Team) -> bool
+#### set_cell(x: usize, y: usize, color: Color) -> bool
 
-Hiermit kann eine Zelle auf das angegebene Team gesetzt werden.
-Wenn die Zelle auf dem Spielfeld ist und somit die Zelle auf das Team gesetzt wurde, wird ``true`` zurückgegeben, ansonsten wird false zurückgegen.
+Hiermit kann eine Zelle auf die angegebene Farbe gesetzt werden.
+Wenn die Zelle auf dem Spielfeld ist und somit die Zelle auf die Farbe gesetzt wurde, wird ``true`` zurückgegeben, ansonsten wird ``false`` zurückgegeben.
 
-#### place_piece(x: uszize, y: usize. team: Team, piece: Piece) -> bool
+#### place_piece(x: usize, y: usize, color: Color, piece: Piece) -> bool
 
-Hiermit kann ein Spielstein auf dem Spielfeld plaziert werden.
-Der Spielstein wird nur platziert, wenn alle Koordinaten des Spielsteins noch nicht belegt und innehalb vom Spielfeld sind.
-Wenn der Spielstein erfolgreich platziert wurde, gibt die Funktion true zurück, ansonsten false.
-Diese Überprüfung verbraucht etwas mehr Leistung als die unchecked Variante, wenn ihr euch sicher seid, dass der Spielstein dort platziert werden darf, nutzt die unchecked variante.
+Hiermit kann ein Spielstein auf dem Spielfeld platziert werden.
+Der Spielstein wird nur platziert, wenn alle Koordinaten des Spielsteins noch nicht belegt und innerhalb vom Spielfeld sind.
+Wenn der Spielstein erfolgreich platziert wurde, gibt die Funktion ``true`` zurück, ansonsten ``false``.
+Diese Überprüfung verbraucht etwas mehr Leistung als die unchecked Variante; wenn ihr euch sicher seid, dass der Spielstein dort platziert werden darf, nutzt die unchecked Variante.
 
-#### place_piece_unchecked(x: uszize, y: usize. team: Team, piece: Piece)
+#### place_piece_unchecked(x: usize, y: usize, color: Color, piece: Piece)
 
-Diese Funktion tut das gleiche wie die place_piece Funktion, nur dass keine Überprüfung stattfindet, ob der Spielstein patziert werden kann.
+Diese Funktion tut das gleiche wie die place_piece Funktion, nur dass keine Überprüfung stattfindet, ob der Spielstein platziert werden kann.
 
 ### Color
 ``socha::game::color::Color``
@@ -155,22 +155,22 @@ Außerdem enthält es einige Funktionen mit den ein Vektor von ``Coordinate`` tr
 - x: isize
 - y: isize
 
-Das Struct Coordinate enthält die Funktionen ``add``, ``subtract``, ``multiply``, ``diivde`` mit denen Coordinaten verechnet werden können.
-Außerdem di Funktionen ``rotate`` und ``flip_on_vertical`` mit den die Coordinate rotiert und gespiegelt werden können.
+Das Struct Coordinate enthält die Funktionen ``add``, ``subtract``, ``multiply``, ``divide`` mit denen Koordinaten berechnet werden können.
+Außerdem die Funktionen ``rotate`` und ``flip_on_vertical`` mit denen die Coordinate rotiert und gespiegelt werden können.
 
 #### normalize_coordinates(coordinates: &Vec\<Coordinate\>) -> Vec\<Coordinate\>
 
-Normalisiert die gegebenen Koordinaten, bedeuetet es verschiebt sie so dass die oberste-linkste Koordinate im Usprung (0,0) ist.
+Normalisiert die gegebenen Koordinaten, das heißt sie werden so verschoben, dass die oberste-linkste Koordinate im Ursprung (0,0) ist.
 
 #### rotate_coordinates(coordinates: Vec\<Coordinate\>, rotation: &Rotation) -> Vec\<Coordinate\>
 
 Rotiert die Koordinaten nach der angegebenen Rotation.
-Die Koordinaten werden dannach nicht normalisiert, die oberste-linkste Koordinate liegt dannach also wahrscheinlich nicht im Urpsrung.
+Die Koordinaten werden danach nicht normalisiert, die oberste-linkste Koordinate liegt danach also wahrscheinlich nicht im Ursprung.
 
 #### flip_coordinates(coordinates: Vec\<Coordinate\>) -> Vec\<Coordinate\>
 
-Spiegel die gegebenen Koordinaten auf der Ordinate.
-Die Koordinaten werden dannach nicht normalisiert, die oberste-linkste Koordinate liegt dannach also wahrscheinlich nicht im Urpsrung.
+Spiegelt die gegebenen Koordinaten auf der y-Achse.
+Die Koordinaten werden danach nicht normalisiert, die oberste-linkste Koordinate liegt danach also wahrscheinlich nicht im Ursprung.
 
 ### Game Rule Logic
 ``socha::game::gamerulelogic``
@@ -205,10 +205,9 @@ Diese Funktion ist nur für Spielzüge nach der ersten Runde vorgesehen.
 Gibt alle freien Spielfelder zurück, die diagonal an einen Spielstein der angegebenen Farbe angrenzen.
 Felder außerhalb des Spielfelds, belegte Felder und Felder mit direktem Kantenkontakt zu einem eigenen Spielstein werden ausgeschlossen.
 
-#### get_colored_fiels(board: &Board, color: &Color) -> Vec\<Coordinate\>
+#### get_colored_fields(board: &Board, color: &Color) -> Vec\<Coordinate\>
 
 Gibt alle Koordinaten zurück, die auf dem Board mit der angegebenen Farbe belegt sind.
-Der Name der Funktion ist ``fiels`` und entspricht der aktuellen API.
 
 #### is_valid_move(gamestate: &GameState, m: &Move) -> bool
 
@@ -222,7 +221,86 @@ Sobald das Team bereits einen Spielstein auf dem Board besitzt, muss mindestens 
 ``socha::game::gamestate::GameState``
 
 Der Game State enthält alle Informationen zu einem Spielstand.
-!!! error Unfertig
+
+#### Felder
+
+- `starting_piece: PieceType` - Der Startspielstein für dieses Spiel
+- `is_starting_team_one: bool` - Gibt an, ob Team 1 (Blau/Rot) oder Team 2 (Gelb/Grün) startet
+- `board: Board` - Das aktuelle Spielfeld
+- `turn: u8` - Die aktuelle Zugnummer
+- `round: u8` - Die aktuelle Rundennummer
+- `current_turn_color: Color` - Die Farbe des Spielers, der am Zug ist
+- `pieces: [Vec<PieceType>; 4]` - Die verfügbaren Spielsteine für jede Farbe (Blau, Gelb, Rot, Grün)
+
+#### new(starting_piece, is_starting_team_one, board, turn, round, current_turn_color, blue_pieces, yellow_pieces, red_pieces, green_pieces) -> GameState
+
+Erstellt einen neuen GameState mit den angegebenen Werten.
+
+#### apply_move(&mut self, m: &Move, turn: u8) -> bool
+
+Wendet einen Spielzug auf den GameState an und validiert ihn vorher.
+Gibt ``true`` zurück, wenn der Zug gültig war und angewendet wurde, ansonsten ``false``.
+
+#### apply_move_unchecked(&mut self, m: &Move, turn: u8)
+
+Wendet einen Spielzug auf den GameState an, ohne ihn zu validieren.
+Dies ist schneller, aber kann zu inkonsistenten Spielständen führen, wenn ein ungültiger Zug angewendet wird.
+
+#### get_current_turn_color(&self) -> &Color
+
+Gibt die Farbe des Spielers zurück, der am Zug ist.
+
+#### set_current_turn_color(&mut self, color: Color)
+
+Setzt die Farbe des Spielers, der am Zug ist.
+
+#### get_turn(&self) -> &u8
+
+Gibt die aktuelle Zugnummer zurück.
+
+#### set_turn(&mut self, turn: u8)
+
+Setzt die Zugnummer.
+
+#### get_round(&self) -> &u8
+
+Gibt die aktuelle Rundennummer zurück.
+
+#### set_round(&mut self, round: u8)
+
+Setzt die Rundennummer.
+
+#### get_starting_piece(&self) -> &PieceType
+
+Gibt den Startspielstein zurück.
+
+#### set_starting_piece(&mut self, piece: PieceType)
+
+Setzt den Startspielstein.
+
+#### is_starting_team_one(&self) -> &bool
+
+Gibt zurück, ob Team 1 startet.
+
+#### set_is_starting_team_one(&mut self, is_starting_team_one: bool)
+
+Setzt, ob Team 1 startet.
+
+#### get_board(&self) -> &Board
+
+Gibt eine Referenz auf das Spielfeld zurück.
+
+#### set_board(&mut self, board: Board)
+
+Setzt das Spielfeld.
+
+#### get_color_pieces(&self, color: &Color) -> &[PieceType]
+
+Gibt die verfügbaren Spielsteine für die angegebene Farbe zurück.
+
+#### set_color_pieces(&mut self, color: &Color, pieces: Vec<PieceType>)
+
+Setzt die verfügbaren Spielsteine für die angegebene Farbe.
 
 ### Move
 ``socha::game::move::Move``
