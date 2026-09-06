@@ -4,7 +4,7 @@ use crate::game::piece::{Piece, PieceType};
 use crate::game::r#move::Move;
 
 /// Holds all information of a games state.
-#[derive(Clone)]
+#[derive(Clone, PartialEq, Eq, Debug)]
 pub struct GameState {
     starting_piece: PieceType,
     is_starting_team_one: bool,
