@@ -17,7 +17,6 @@ pub fn start_client_from_commandline_args<C: Client>(mut client: C) -> Result<()
 
     loop {
         let message = connection.get_new_message()?;
-        println!("size of {}", size_of::<Message>());
         match *message {
             Message::MementoInitial(game_state) => {
                 if let Some(game_state) = game_state {

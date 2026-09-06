@@ -1,9 +1,22 @@
+use std::fmt::Display;
+
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]
 pub enum Rotation {
     None,
     Right,
     Mirror,
     Left,
+}
+
+impl Display for Rotation {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Rotation::None => write!(f, "NONE"),
+            Rotation::Right => write!(f, "RIGHT"),
+            Rotation::Mirror => write!(f, "MIRROR"),
+            Rotation::Left => write!(f, "LEFT"),
+        }
+    }
 }
 
 impl Rotation {
@@ -24,15 +37,6 @@ impl Rotation {
             2 => Ok(Rotation::Mirror),
             3 => Ok(Rotation::Left),
             _ => Err(format!("Invalid rotation number: {}", rotation_number).into()),
-        }
-    }
-
-    pub fn to_string(&self) -> &str {
-        match self {
-            Rotation::None => "NONE",
-            Rotation::Right => "RIGHT",
-            Rotation::Mirror => "MIRROR",
-            Rotation::Left => "LEFT",
         }
     }
 }
