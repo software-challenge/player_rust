@@ -1,6 +1,6 @@
 use std::{fmt, str::FromStr};
 
-use crate::{game::r#move::Rotation, game::coordinate::{Coordinate, flip_coordinates, rotate_coordinates, normalize_coordinates}};
+use crate::{game::rotation::Rotation, game::coordinate::{Coordinate, flip_coordinates, rotate_coordinates, normalize_coordinates}};
 
 pub struct Piece {
     piece_type: PieceType,
@@ -278,7 +278,7 @@ impl FromStr for PieceType {
 #[cfg(test)]
 mod tests {
     use super::{Piece, PieceType};
-    use crate::{game::r#move::Rotation, game::coordinate::Coordinate};
+    use crate::{game::rotation::Rotation, game::coordinate::Coordinate};
 
     fn sorted_xy(coordinates: Vec<Coordinate>) -> Vec<(isize, isize)> {
         let mut xy: Vec<(isize, isize)> = coordinates

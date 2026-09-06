@@ -1,11 +1,8 @@
-use socha::game::gamerulelogic;
-use socha::game::gamestate::GameState;
-use socha::client::{Client, start_client_from_commandline_args};
-use socha::game::r#move::Move;
+use socha::prelude::*;
 use std::time::{SystemTime, UNIX_EPOCH};
 
 struct RandomPlayerClient {
-    game_state: Option<socha::game::gamestate::GameState>,
+    game_state: Option<GameState>,
 }
 
 impl Client for RandomPlayerClient {
@@ -14,7 +11,7 @@ impl Client for RandomPlayerClient {
         println!("Current team: {:?}", self.game_state.as_ref().unwrap().get_current_turn_color());
         
         let state = self.game_state.as_ref().unwrap();
-        let legal_moves = gamerulelogic::get_possible_moves(state);
+        let legal_moves = get_possible_moves(state);
 
         if legal_moves.is_empty() {
             return Some(Move {
@@ -23,7 +20,7 @@ impl Client for RandomPlayerClient {
                 x: 0,
                 y: 0,
                 is_flipped: false,
-                rotation: socha::game::r#move::Rotation::None,
+                rotation: Rotation::None,
                 skip: true,
             });
         }

@@ -1,4 +1,4 @@
-use crate::game::r#move::Rotation;
+use crate::game::rotation::Rotation;
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]
 pub struct Coordinate {
