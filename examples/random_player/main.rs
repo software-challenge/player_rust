@@ -11,14 +11,14 @@ struct RandomPlayerClient {
 impl Client for RandomPlayerClient {
     fn on_move_request(&mut self) -> Option<Move> {
         println!("Received a move request!");
-        println!("Current team: {:?}", self.game_state.as_ref().unwrap().get_current_turn_team());
+        println!("Current team: {:?}", self.game_state.as_ref().unwrap().get_current_turn_color());
         
         let state = self.game_state.as_ref().unwrap();
         let legal_moves = gamerulelogic::get_possible_moves(state);
 
         if legal_moves.is_empty() {
             return Some(Move {
-                team: *state.get_current_turn_team(),
+                color: *state.get_current_turn_color(),
                 piece: *state.get_starting_piece(),
                 x: 0,
                 y: 0,

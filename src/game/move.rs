@@ -1,8 +1,8 @@
-use crate::game::{board::Team, piece::PieceType};
+use crate::game::{board::Color, piece::PieceType};
 
 #[derive(Clone)]
 pub struct Move {
-    pub team: Team,
+    pub color: Color,
     pub piece: PieceType,
     pub x: usize,
     pub y: usize,
@@ -12,8 +12,8 @@ pub struct Move {
 }
 
 impl Move {
-    pub fn new(team: Team, piece: PieceType, x: usize, y: usize, is_flipped: bool, rotation: Rotation, skip: bool) -> Self {
-        Self { team, piece, x, y, is_flipped, rotation, skip }
+    pub fn new(color: Color, piece: PieceType, x: usize, y: usize, is_flipped: bool, rotation: Rotation, skip: bool) -> Self {
+        Self { color, piece, x, y, is_flipped, rotation, skip }
     }
 }
 

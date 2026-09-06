@@ -3,7 +3,7 @@ use std::str::FromStr;
 use xml::EventReader;
 use xml::reader::XmlEvent;
 
-use crate::{connection::parser::message::Message, game::{board::{Board, Team}, gamestate::GameState, r#move::{Move, Rotation}, piece::PieceType}};
+use crate::{connection::parser::message::Message, game::{board::{Board, Color}, gamestate::GameState, r#move::{Move, Rotation}, piece::PieceType}};
 
 pub fn parse_memento(mut parser: EventReader<&[u8]>) -> Box<Message> {
     loop {
@@ -19,20 +19,20 @@ pub fn parse_memento(mut parser: EventReader<&[u8]>) -> Box<Message> {
                             if turn_value == 0 {
                                 // Extract all information for the initial state
                                 let mut starting_piece = PieceType::Mono; // Default value, will be overwritten if found 
-                                let mut starting_team = Team::Blue; // Default value, will be overwritten if found 
+                                let mut starting_color = Color::Blue; // Default value, will be overwritten if found 
                                 for attr in attributes {
                                     if attr.name.local_name == "startPiece" {
                                         starting_piece = PieceType::from_str(&attr.value).unwrap();
                                     }
 
                                     if attr.name.local_name == "startTeam" {
-                                        starting_team = match attr.value.as_str() {
-                                            "ONE" => Team::Blue,
-                                            "TWO" => Team::Yellow,
+                                        starting_color = match attr.value.as_str() {
+                                            "ONE" => Color::Blue,
+                                            "TWO" => Color::Yellow,
                                             _ => {
                                                 //Fallback in case no valid startTeam exists.
-                                                eprintln!("No valid team found in startTeam; falling back to Team Blue!");
-                                                Team::Blue
+                                                eprintln!("No valid team found in startTeam; falling back to Color Blue!");
+                                                Color::Blue
                                             }
                                         }
                                     }
@@ -43,31 +43,30 @@ pub fn parse_memento(mut parser: EventReader<&[u8]>) -> Box<Message> {
                                 let mut red_pieces: Vec<PieceType> = Vec::new();
                                 let mut green_pieces: Vec<PieceType> = Vec::new();
 
-                                let mut current_teams_pieces: Option<&mut Vec<PieceType>> = None;
+                                let mut current_colors_pieces: Option<&mut Vec<PieceType>> = None;
 
                                 loop {
                                     match parser.next() {
                                         Ok(XmlEvent::StartElement { name, .. }) => {
                                             if name.local_name == "blueShapes" {
-                                                current_teams_pieces = Some(&mut blue_pieces);
+                                                current_colors_pieces = Some(&mut blue_pieces);
                                             } else if name.local_name == "yellowShapes" {
-                                                current_teams_pieces = Some(&mut yellow_pieces);
+                                                current_colors_pieces = Some(&mut yellow_pieces);
                                             } else if name.local_name == "redShapes" {
-                                                current_teams_pieces = Some(&mut red_pieces    );
+                                                current_colors_pieces = Some(&mut red_pieces    );
                                             } else if name.local_name == "greenShapes" {
-                                                current_teams_pieces = Some(&mut green_pieces);
+                                                current_colors_pieces = Some(&mut green_pieces);
                                             } else if name.local_name == "validColors" {
-                                                current_teams_pieces = None; // No PieceType to add for validColors
+                                                current_colors_pieces = None; // No PieceType to add for validColors
                                             }
                                         }
-                                        Ok(XmlEvent::Characters(text)) if current_teams_pieces.is_some() => {
-                                            current_teams_pieces.as_mut().unwrap().push(PieceType::from_str(&text).unwrap());
+                                        Ok(XmlEvent::Characters(text)) if current_colors_pieces.is_some() => {
+                                            current_colors_pieces.as_mut().unwrap().push(PieceType::from_str(&text).unwrap());
                                         }
                                         Ok(XmlEvent::EndElement { name }) => {
                                             if name.local_name == "state" {
-                                                // TODO: Replace current turn team with real starting team
 
-                                                let game_state = GameState::new(starting_piece, starting_team == Team::Blue, Board::new(), 0, 1, starting_team, blue_pieces, yellow_pieces, red_pieces, green_pieces);
+                                                let game_state = GameState::new(starting_piece, starting_color == Color::Blue, Board::new(), 0, 1, starting_color, blue_pieces, yellow_pieces, red_pieces, green_pieces);
 
                                                 return Box::new(Message::MementoInitial(Some(game_state)));
                                             }
@@ -82,7 +81,7 @@ pub fn parse_memento(mut parser: EventReader<&[u8]>) -> Box<Message> {
 
                             } else {
                                 // Extract last move
-                                let mut team: Option<Team> = None;
+                                let mut color: Option<Color> = None;
                                 let mut piece: Option<PieceType> = None;
                                 let mut x: Option<usize> = None;
                                 let mut y: Option<usize> = None;
@@ -98,7 +97,7 @@ pub fn parse_memento(mut parser: EventReader<&[u8]>) -> Box<Message> {
                                             if name.local_name == "piece" {
                                                 for attr in attributes {
                                                     match attr.name.local_name.as_str() {
-                                                        "color" => team = Some(Team::from_string(&attr.value)),
+                                                        "color" => color = Some(Color::from_string(&attr.value)),
                                                         "kind" => piece = Some(PieceType::from_str(&attr.value).unwrap()),
                                                         "isFlipped" => is_flipped = Some(attr.value.parse::<bool>().unwrap()),
                                                         "rotation" => rotation = Some(Rotation::from_string(&attr.value).unwrap()),
@@ -125,7 +124,7 @@ pub fn parse_memento(mut parser: EventReader<&[u8]>) -> Box<Message> {
                                         }
                                         Ok(XmlEvent::Characters(text)) => {
                                             if next_text_color {
-                                                team = Some(Team::from_string(&text));
+                                                color = Some(Color::from_string(&text));
                                                 next_text_color = false;
                                             }
                                         }
@@ -133,10 +132,10 @@ pub fn parse_memento(mut parser: EventReader<&[u8]>) -> Box<Message> {
                                             if name.local_name == "lastMove" {
 
                                                 if skip {
-                                                    return Box::new(Message::MementoLastMove(Some(turn_value as u8), Some(Move::new(team.unwrap(), PieceType::Mono, 0, 0, false, Rotation::None, true))));
+                                                    return Box::new(Message::MementoLastMove(Some(turn_value as u8), Some(Move::new(color.unwrap(), PieceType::Mono, 0, 0, false, Rotation::None, true))));
                                                 }
 
-                                                return Box::new(Message::MementoLastMove(Some(turn_value as u8), Some(Move::new(team.unwrap(), piece.unwrap(), x.unwrap(), y.unwrap(), is_flipped.unwrap(), rotation.unwrap(), false))));
+                                                return Box::new(Message::MementoLastMove(Some(turn_value as u8), Some(Move::new(color.unwrap(), piece.unwrap(), x.unwrap(), y.unwrap(), is_flipped.unwrap(), rotation.unwrap(), false))));
                                             }
                                         }
                                         Ok(XmlEvent::EndDocument) => {

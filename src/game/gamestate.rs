@@ -1,4 +1,4 @@
-use crate::game::board::{Board, Team};
+use crate::game::board::{Board, Color};
 use crate::game::gamerulelogic;
 use crate::game::piece::{Piece, PieceType};
 use crate::game::r#move::Move;
@@ -11,20 +11,20 @@ pub struct GameState {
     board: Board,
     turn: u8,
     round: u8,
-    current_turn_team: Team,
+    current_turn_color: Color,
     pieces: [Vec<PieceType>; 4] // blue, yellow, red, green
 }
 
 impl GameState {
 
-    pub fn new(starting_piece: PieceType, is_starting_team_one: bool, board: Board, turn: u8, round: u8, current_turn_team: Team, blue_pieces: Vec<PieceType>, yellow_pieces: Vec<PieceType>, red_pieces: Vec<PieceType>, green_pieces: Vec<PieceType>) -> Self {
+    pub fn new(starting_piece: PieceType, is_starting_team_one: bool, board: Board, turn: u8, round: u8, current_turn_color: Color, blue_pieces: Vec<PieceType>, yellow_pieces: Vec<PieceType>, red_pieces: Vec<PieceType>, green_pieces: Vec<PieceType>) -> Self {
         GameState {
             starting_piece,
             is_starting_team_one,
             board,
             turn,
             round,
-            current_turn_team,
+            current_turn_color,
             pieces: [blue_pieces, yellow_pieces, red_pieces, green_pieces],
         }
     }
@@ -33,20 +33,20 @@ impl GameState {
     /// This function assumes that the move is valid and directly updates the game state.
     /// If the move is invalid, this function may lead to an inconsistent game state.
     pub fn apply_move_unchecked(&mut self, m: &Move, turn: u8) {
-        self.board.place_piece_unchecked(m.x, m.y, m.team, Piece::new(m.piece, m.rotation, m.is_flipped));
+        self.board.place_piece_unchecked(m.x, m.y, m.color, Piece::new(m.piece, m.rotation, m.is_flipped));
 
-        // Remove used piece from the corresponding team's available pieces
-        match m.team {
-            Team::Blue => {
+        // Remove used piece from the corresponding color's available pieces
+        match m.color {
+            Color::Blue => {
                 self.pieces[0].retain(|&p| p != m.piece);
             },
-            Team::Yellow => {
+            Color::Yellow => {
                 self.pieces[1].retain(|&p| p != m.piece);
             },
-            Team::Red => {
+            Color::Red => {
                 self.pieces[2].retain(|&p| p != m.piece);
             },
-            Team::Green => {
+            Color::Green => {
                 self.pieces[3].retain(|&p| p != m.piece);
             },
         }
@@ -57,14 +57,14 @@ impl GameState {
            self.round += 1;
         }
 
-        const TEAM_ORDER_ONE: [Team; 4] = [Team::Blue, Team::Yellow, Team::Red, Team::Green];
-        const TEAM_ORDER_TWO: [Team; 4] = [Team::Yellow, Team::Red, Team::Green, Team::Blue];
+        const COLOR_ORDER_ONE: [Color; 4] = [Color::Blue, Color::Yellow, Color::Red, Color::Green];
+        const COLOR_ORDER_TWO: [Color; 4] = [Color::Yellow, Color::Red, Color::Green, Color::Blue];
 
-        // Current team can be caluclated from turn number
+        // Current color can be caluclated from turn number
         if self.is_starting_team_one {
-            self.current_turn_team = TEAM_ORDER_ONE[(self.turn % 4) as usize];
+            self.current_turn_color = COLOR_ORDER_ONE[(self.turn % 4) as usize];
         } else {
-           self.current_turn_team = TEAM_ORDER_TWO[(self.turn % 4) as usize];
+           self.current_turn_color = COLOR_ORDER_TWO[(self.turn % 4) as usize];
         }
     }
 
@@ -76,20 +76,20 @@ impl GameState {
             return false;
         }
 
-        self.board.place_piece(m.x, m.y, m.team, Piece::new(m.piece, m.rotation, m.is_flipped));
+        self.board.place_piece(m.x, m.y, m.color, Piece::new(m.piece, m.rotation, m.is_flipped));
 
-        // Remove used piece from the corresponding team's available pieces
-        match m.team {
-            Team::Blue => {
+        // Remove used piece from the corresponding color's available pieces
+        match m.color {
+            Color::Blue => {
                 self.pieces[0].retain(|&p| p != m.piece);
             },
-            Team::Yellow => {
+            Color::Yellow => {
                 self.pieces[1].retain(|&p| p != m.piece);
             },
-            Team::Red => {
+            Color::Red => {
                 self.pieces[2].retain(|&p| p != m.piece);
             },
-            Team::Green => {
+            Color::Green => {
                 self.pieces[3].retain(|&p| p != m.piece);
             },
         }
@@ -100,25 +100,25 @@ impl GameState {
            self.round += 1;
         }
 
-        const TEAM_ORDER_ONE: [Team; 4] = [Team::Blue, Team::Yellow, Team::Red, Team::Green];
-        const TEAM_ORDER_TWO: [Team; 4] = [Team::Yellow, Team::Red, Team::Green, Team::Blue];
+        const COLOR_ORDER_ONE: [Color; 4] = [Color::Blue, Color::Yellow, Color::Red, Color::Green];
+        const COLOR_ORDER_TWO: [Color; 4] = [Color::Yellow, Color::Red, Color::Green, Color::Blue];
 
-        // Current team can be caluclated from turn number
+        // Current color can be caluclated from turn number
         if self.is_starting_team_one {
-            self.current_turn_team = TEAM_ORDER_ONE[(self.turn % 4) as usize];
+            self.current_turn_color = COLOR_ORDER_ONE[(self.turn % 4) as usize];
         } else {
-           self.current_turn_team = TEAM_ORDER_TWO[(self.turn % 4) as usize];
+           self.current_turn_color = COLOR_ORDER_TWO[(self.turn % 4) as usize];
         }
 
         true
     }
 
-    pub fn get_current_turn_team(&self) -> &Team {
-        &self.current_turn_team
+    pub fn get_current_turn_color(&self) -> &Color {
+        &self.current_turn_color
     }
     
-    pub fn set_current_turn_team(&mut self, team: Team) {
-        self.current_turn_team = team;
+    pub fn set_current_turn_color(&mut self, color: Color) {
+        self.current_turn_color = color;
     }
 
     pub fn get_turn(&self) -> &u8 {
@@ -161,21 +161,21 @@ impl GameState {
         self.board = board;
     }
 
-    pub fn get_team_pieces(&self, team: &Team) -> &[PieceType] {
-        match team {
-            Team::Blue => &self.pieces[0],
-            Team::Yellow => &self.pieces[1],
-            Team::Red => &self.pieces[2],
-            Team::Green => &self.pieces[3],
+    pub fn get_color_pieces(&self, color: &Color) -> &[PieceType] {
+        match color {
+            Color::Blue => &self.pieces[0],
+            Color::Yellow => &self.pieces[1],
+            Color::Red => &self.pieces[2],
+            Color::Green => &self.pieces[3],
         }
     }
 
-    pub fn set_team_pieces(&mut self, team: &Team, pieces: Vec<PieceType>) {
-        match team {
-            Team::Blue => self.pieces[0] = pieces,
-            Team::Yellow => self.pieces[1] = pieces,
-            Team::Red => self.pieces[2] = pieces,
-            Team::Green => self.pieces[3] = pieces,
+    pub fn set_color_pieces(&mut self, color: &Color, pieces: Vec<PieceType>) {
+        match color {
+            Color::Blue => self.pieces[0] = pieces,
+            Color::Yellow => self.pieces[1] = pieces,
+            Color::Red => self.pieces[2] = pieces,
+            Color::Green => self.pieces[3] = pieces,
         }
     }
 }
