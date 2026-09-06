@@ -1,21 +1,21 @@
 use crate::game::piece::{Piece};
-use crate::game::constants::{BOARD_WIDTH, BOARD_HEIGHT};
+use crate::game::constants::BOARD_SIZE;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Board {
-    board: [[Option<Team>; BOARD_WIDTH as usize]; BOARD_HEIGHT as usize],
+    board: [[Option<Team>; BOARD_SIZE]; BOARD_SIZE],
 }
 
 impl Board {
     pub fn new() -> Self {
         Board {
-            board: [[None; BOARD_WIDTH as usize]; BOARD_HEIGHT as usize],
+            board: [[None; BOARD_SIZE]; BOARD_SIZE],
         }
     }
 
     /// Returns the Team of the given cell (x, y) on the board, or None if the cell is empty or out of bounds.
     pub fn get_cell(&self, x: usize, y: usize) -> Option<Team> {
-        if x < BOARD_WIDTH as usize && y < BOARD_HEIGHT as usize {
+        if x < BOARD_SIZE && y < BOARD_SIZE {
             self.board[y][x]
         } else {
             None
@@ -25,7 +25,7 @@ impl Board {
     /// Sets the Team of the given cell (x, y) on the board and returns true if the cell was within bounds, false otherwise.
     /// Does not perform any validation and assumes that the coordinates are valid.
     pub fn set_cell(&mut self, x: usize, y: usize, team: Team) -> bool {
-        if x < BOARD_WIDTH as usize && y < BOARD_HEIGHT as usize {
+        if x < BOARD_SIZE && y < BOARD_SIZE {
             self.board[y][x] = Some(team);
             return true;
         } 
@@ -53,7 +53,7 @@ impl Board {
             let new_x = x + coord.x as usize;
             let new_y = y + coord.y as usize;
 
-            if new_x >= BOARD_WIDTH as usize || new_y >= BOARD_HEIGHT as usize || self.board[new_y][new_x].is_some() {
+            if new_x >= BOARD_SIZE || new_y >= BOARD_SIZE || self.board[new_y][new_x].is_some() {
                 return false;
             }
 

@@ -1,6 +1,6 @@
 use std::collections::HashSet;
 
-use crate::{game::{board::{Board, Team}, constants, gamestate::GameState, r#move::Move, piece::{Piece, PieceType}, coordinate::Coordinate}};
+use crate::{game::{board::{Board, Team}, constants::BOARD_SIZE_I, gamestate::GameState, r#move::Move, piece::{Piece, PieceType}, coordinate::Coordinate}};
 
 /// Returns a vector of all possible moves for the current team in the given game state.
 /// Does not include the skip move!
@@ -41,7 +41,7 @@ pub fn get_possible_start_moves(gamestate: &GameState) -> Vec<Move> {
         }
 
         // Add all possible border placements
-        for x in 0..(constants::BOARD_WIDTH - max_x) {
+        for x in 0..(BOARD_SIZE_I - max_x) {
             let mut m = Move {
                 team: *gamestate.get_current_turn_team(),
                 piece: *piece,
@@ -58,7 +58,7 @@ pub fn get_possible_start_moves(gamestate: &GameState) -> Vec<Move> {
                 team: *gamestate.get_current_turn_team(),
                 piece: *piece,
                 x: x as usize,
-                y: (constants::BOARD_HEIGHT - max_y) as usize,
+                y: (BOARD_SIZE_I - max_y) as usize,
                 is_flipped,
                 rotation,
                 skip: false,
@@ -67,7 +67,7 @@ pub fn get_possible_start_moves(gamestate: &GameState) -> Vec<Move> {
             if is_valid_move(gamestate, &m) {moves.push(m)}
         }
 
-        for y in 0..(constants::BOARD_WIDTH - max_y) {
+        for y in 0..(BOARD_SIZE_I - max_y) {
             let mut m = Move {
                 team: *gamestate.get_current_turn_team(),
                 piece: *piece,
@@ -83,7 +83,7 @@ pub fn get_possible_start_moves(gamestate: &GameState) -> Vec<Move> {
             m = Move {
                 team: *gamestate.get_current_turn_team(),
                 piece: *piece,
-                x: (constants::BOARD_WIDTH - max_x) as usize,
+                x: (BOARD_SIZE_I - max_x) as usize,
                 y: y as usize,
                 is_flipped,
                 rotation,
@@ -174,9 +174,9 @@ pub fn get_valid_fields(board: &Board, team: &Team) -> Vec<Coordinate> {
 
                 // Check if the corner is within boounds
                 if corner.x < 0
-                    || corner.x >= constants::BOARD_WIDTH
+                    || corner.x >= BOARD_SIZE_I
                     || corner.y < 0
-                    || corner.y >= constants::BOARD_HEIGHT
+                    || corner.y >= BOARD_SIZE_I
                 {
                     continue;
                 }
@@ -196,9 +196,9 @@ pub fn get_valid_fields(board: &Board, team: &Team) -> Vec<Coordinate> {
                 .iter()
                 .any(|neighbor| {
                     neighbor.x >= 0
-                        && neighbor.x < constants::BOARD_WIDTH
+                        && neighbor.x < BOARD_SIZE_I
                         && neighbor.y >= 0
-                        && neighbor.y < constants::BOARD_HEIGHT
+                        && neighbor.y < BOARD_SIZE_I
                         && board.get_cell(neighbor.x as usize, neighbor.y as usize) == Some(*team)
                 })
                 {
@@ -217,8 +217,8 @@ pub fn get_valid_fields(board: &Board, team: &Team) -> Vec<Coordinate> {
 pub fn get_colored_fiels(board: &Board, team: &Team) -> Vec<Coordinate> {
     let mut colored_fields: Vec<Coordinate> = vec![];
 
-    for y in 0..constants::BOARD_HEIGHT {
-        for x in 0..constants::BOARD_WIDTH {
+    for y in 0..BOARD_SIZE_I {
+        for x in 0..BOARD_SIZE_I {
             if board.get_cell(x as usize, y as usize) == Some(*team) {
                 colored_fields.push(Coordinate { x: x as isize, y: y as isize });
             }
@@ -251,9 +251,9 @@ pub fn is_valid_move(gamestate: &GameState, m: &Move) -> bool {
         let board_y = m.y as isize + coord.y;
 
         if board_x < 0
-            || board_x >= constants::BOARD_WIDTH
+            || board_x >= BOARD_SIZE_I
             || board_y < 0
-            || board_y >= constants::BOARD_HEIGHT
+            || board_y >= BOARD_SIZE_I
         {
             return false; // Out of bounds
         }
@@ -273,7 +273,7 @@ pub fn is_valid_move(gamestate: &GameState, m: &Move) -> bool {
             let nx = cell.x + dx;
             let ny = cell.y + dy;
 
-            if nx < 0 || nx >= constants::BOARD_WIDTH || ny < 0 || ny >= constants::BOARD_HEIGHT {
+            if nx < 0 || nx >= BOARD_SIZE_I || ny < 0 || ny >= BOARD_SIZE_I {
                 continue;
             }
 
@@ -287,7 +287,7 @@ pub fn is_valid_move(gamestate: &GameState, m: &Move) -> bool {
             let nx = cell.x + dx;
             let ny = cell.y + dy;
 
-            if nx < 0 || nx >= constants::BOARD_WIDTH || ny < 0 || ny >= constants::BOARD_HEIGHT {
+            if nx < 0 || nx >= BOARD_SIZE_I || ny < 0 || ny >= BOARD_SIZE_I {
                 continue;
             }
 
