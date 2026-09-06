@@ -111,10 +111,10 @@ impl ConnectionHandler<Joined> {
         write!(move_xml, "<room roomId=\"{}\">", self.get_room_id().as_ref())?;
 
         if m.skip {
-            write!(move_xml, "<data class=\"sc.plugin2027.SkipMove\"><color>{}</color></data></room>", m.team.to_string())?;
+            write!(move_xml, "<data class=\"sc.plugin2027.SkipMove\"><color>{}</color></data></room>", m.color.to_string())?;
         } else {
             write!(move_xml, "<data class=\"sc.plugin2027.SetMove\"><piece color=\"{}\" kind=\"{}\" rotation=\"{}\" isFlipped=\"{}\"><position x=\"{}\" y=\"{}\"/></piece></data></room>",
-            m.team.to_string(),
+            m.color.to_string(),
             m.piece,
             m.rotation.to_string(),
             m.is_flipped,
