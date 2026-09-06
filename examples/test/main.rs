@@ -1,14 +1,13 @@
-use socha::game::{gamestate::GameState, gamerulelogic, r#move::Move};
-use socha::client::{Client, start_client_from_commandline_args};
+use socha::prelude::*;
 
 struct Player {
-    game_state: Option<socha::game::gamestate::GameState>,
+    game_state: Option<GameState>,
 }
 
 impl Client for Player {
     fn on_move_request(&mut self) -> Option<Move> {
         println!("Received a move request!");
-        gamerulelogic::get_possible_moves(&self.game_state.as_mut().unwrap()).first().cloned()
+        get_possible_moves(&self.game_state.as_mut().unwrap()).first().cloned()
     }
 
     fn on_game_over(&mut self) {
