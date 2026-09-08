@@ -1,6 +1,10 @@
 use xml::{EventReader, reader::XmlEvent};
 
-use crate::connection::parser::{message::Message, parse_memento::parse_memento, parse_result::parse_result};
+use crate::connection::parser::{
+    message::Message, 
+    parse_memento::parse_memento, 
+    parse_result::parse_result
+};
 
 pub fn parse_message(mut parser: EventReader<&[u8]>) -> Result<Box<Message>, Box<dyn std::error::Error>> {
     loop {

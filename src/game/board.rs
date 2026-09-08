@@ -1,6 +1,8 @@
-use crate::game::color::Color;
-use crate::game::piece::{Piece};
-use crate::game::constants::BOARD_SIZE;
+use crate::game::{
+    color::Color,
+    piece::{Piece},
+    constants::BOARD_SIZE
+};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Board {

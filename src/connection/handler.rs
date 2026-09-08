@@ -1,5 +1,11 @@
-use std::{fs::OpenOptions, io::{Read, Write}, net::TcpStream};
-use std::fmt::Write as _;
+use std::{
+    fmt::Write as _, 
+    io::{Read, Write}, 
+    net::TcpStream
+};
+
+#[cfg(feature = "debug-recv-comm-log")]
+use std::fs::OpenOptions;
 
 use xml::EventReader;
 
@@ -10,9 +16,11 @@ use crate::game::r#move::Move;
 pub trait IsConnected {}
 
 ///Indicates that the ConnectionHandler is connected.
+#[derive(Debug)]
 pub struct Connected;
 impl IsConnected for Connected {}
 ///Indicates that the ConnectionHandler has joined a game, also holds the room id.
+#[derive(Debug)]
 pub struct Joined {
     room_id: Box<str>
 }
@@ -21,6 +29,7 @@ impl IsConnected for Joined {}
 #[derive(Debug)]
 pub struct ConnectionHandler<State> {
     pub connection: TcpStream,
+    #[cfg(feature = "debug-recv-comm-log")]
     log_file: std::fs::File,
     state: State,
 }
@@ -38,11 +47,11 @@ impl ConnectionHandler<()> {
 
         Ok(ConnectionHandler{
             connection: TcpStream::connect(address)?,
-            // Debugging
+            #[cfg(feature = "debug-recv-comm-log")]
             log_file: OpenOptions::new()
                 .create(true)
                 .append(true)
-                .open("connection_reads.log")?,
+                .open("connection_log.xml")?,
                 state: Connected,
         })
     }
@@ -91,6 +100,7 @@ impl ConnectionHandler<Connected> {
     
         return Ok(ConnectionHandler { 
             connection: self.connection,
+            #[cfg(feature = "debug-recv-comm-log")]
             log_file: self.log_file,
             state: Joined { room_id: parse_joined(parser)? }
         });
@@ -175,10 +185,12 @@ impl<State: IsConnected> ConnectionHandler<State> {
             Ok(b) => {
                 buffer.truncate(start_len + b);
 
-                // Debugging
+                #[cfg(feature = "debug-recv-comm-log")]
+                {
                 self.log_file.write_all(&buffer[start_len..start_len + b])?;
                 self.log_file.write_all(b"\n")?;
                 self.log_file.flush()?;
+                }
 
                 Ok(b)
             },

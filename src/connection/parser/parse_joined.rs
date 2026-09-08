@@ -1,4 +1,7 @@
-use xml::{EventReader, reader::XmlEvent};
+use xml::{
+    EventReader, 
+    reader::XmlEvent
+};
 
 pub fn parse_joined(parser: EventReader<&[u8]>) -> Result<Box<str>, Box<dyn std::error::Error>> {
     for e in parser {

@@ -1,17 +1,16 @@
 use std::{fmt::Error, str::FromStr};
-
 use xml::{EventReader, reader::XmlEvent};
 
 use crate::connection::parser::message::Message;
 
-#[derive(Debug)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct GameResult {
     winner_team: Option<Team>,
     regular: bool,
     reason: Box<str>,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Team {
     One,
     Two,

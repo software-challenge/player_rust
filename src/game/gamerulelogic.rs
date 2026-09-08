@@ -1,6 +1,17 @@
 use std::collections::HashSet;
 
-use crate::{game::{board::Board, color::Color, constants::BOARD_SIZE_I, gamestate::GameState, r#move::Move, piece::{Piece, PieceType}, coordinate::Coordinate}};
+use crate::{game::{ board::Board, 
+                    color::Color, 
+                    constants::*, 
+                    gamestate::GameState, 
+                    r#move::Move, 
+                    piece::{
+                        Piece, 
+                        PieceType
+                    }, 
+                    coordinate::Coordinate
+                }
+            };
 
 /// Returns a vector of all possible moves for the current team in the given game state.
 /// Does not include the skip move!
@@ -20,18 +31,10 @@ pub fn get_possible_start_moves(gamestate: &GameState) -> Vec<Move> {
         let (relative_coordinates, (rotation, is_flipped)) = variant;
 
         // Calculate the bounding box of the piece variant
-        let mut min_x = std::isize::MAX;
-        let mut min_y = std::isize::MAX;
         let mut max_x = std::isize::MIN;
         let mut max_y = std::isize::MIN;
 
         for coord in &relative_coordinates {
-            if coord.x < min_x {
-                min_x = coord.x;
-            }
-            if coord.y < min_y {
-                min_y = coord.y;
-            }
             if coord.x > max_x {
                 max_x = coord.x;
             }
@@ -195,13 +198,12 @@ pub fn get_valid_fields(board: &Board, color: &Color) -> Vec<Coordinate> {
                 ]
                 .iter()
                 .any(|neighbor| {
-                    neighbor.x >= 0
+                           neighbor.x >= 0
                         && neighbor.x < BOARD_SIZE_I
                         && neighbor.y >= 0
                         && neighbor.y < BOARD_SIZE_I
                         && board.get_cell(neighbor.x as usize, neighbor.y as usize) == Some(*color)
-                })
-                {
+                }){
                     continue;
                 }
 
@@ -217,10 +219,10 @@ pub fn get_valid_fields(board: &Board, color: &Color) -> Vec<Coordinate> {
 pub fn get_colored_fields(board: &Board, color: &Color) -> Vec<Coordinate> {
     let mut colored_fields: Vec<Coordinate> = vec![];
 
-    for y in 0..BOARD_SIZE_I {
-        for x in 0..BOARD_SIZE_I {
-            if board.get_cell(x as usize, y as usize) == Some(*color) {
-                colored_fields.push(Coordinate { x: x as isize, y: y as isize });
+    for y in 0..BOARD_SIZE {
+        for x in 0..BOARD_SIZE {
+            if board.get_cell(x, y) == Some(*color) {
+                colored_fields.push(Coordinate::new(x as isize, y as isize));
             }
         }
     }
@@ -251,9 +253,9 @@ pub fn is_valid_move(gamestate: &GameState, m: &Move) -> bool {
         let board_y = m.y as isize + coord.y;
 
         if board_x < 0
-            || board_x >= BOARD_SIZE_I
-            || board_y < 0
-            || board_y >= BOARD_SIZE_I
+        || board_x >= BOARD_SIZE_I
+        || board_y < 0
+        || board_y >= BOARD_SIZE_I
         {
             return false; // Out of bounds
         }

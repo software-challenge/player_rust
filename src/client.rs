@@ -1,7 +1,12 @@
-use crate::connection::handler::ConnectionHandler;
-use crate::game::gamestate::GameState;
-use crate::connection::parser::message::Message;
-use crate::game::r#move::Move;
+use crate::{connection::{
+                handler::ConnectionHandler, 
+                parser::message::Message
+            }, 
+            game::{
+                gamestate::GameState,
+                r#move::Move
+            }
+        };
 
 pub trait Client {
     fn on_move_request(&mut self) -> Option<Move>;

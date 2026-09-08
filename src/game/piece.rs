@@ -1,7 +1,16 @@
 use std::{fmt, str::FromStr};
 
-use crate::{game::rotation::Rotation, game::coordinate::{Coordinate, flip_coordinates, rotate_coordinates, normalize_coordinates}};
+use crate::game::{
+    coordinate::{
+        Coordinate, 
+        flip_coordinates, 
+        rotate_coordinates, 
+        normalize_coordinates
+    },
+    rotation::Rotation,
+};
 
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]
 pub struct Piece {
     piece_type: PieceType,
     rotation: Rotation,
@@ -235,7 +244,7 @@ impl fmt::Display for PieceType {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct ParsePieceTypeError;
 
 impl fmt::Display for ParsePieceTypeError {
