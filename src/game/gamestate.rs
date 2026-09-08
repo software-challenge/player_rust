@@ -1,9 +1,13 @@
-use crate::game::board::Board;
-use crate::game::color::Color;
-use crate::game::gamerulelogic;
-use crate::game::piece::{Piece, PieceType};
-use crate::game::r#move::Move;
-
+use crate::game::{
+    board::Board,
+    color::Color,
+    gamerulelogic,
+    r#move::Move,
+    piece::{
+        Piece, 
+        PieceType
+    }
+};
 /// Holds all information of a games state.
 #[derive(Clone, PartialEq, Eq, Debug)]
 pub struct GameState {

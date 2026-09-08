@@ -1,4 +1,10 @@
-use crate::{connection::parser::parse_result::GameResult, game::{gamestate::GameState, r#move::Move}};
+use crate::{
+    connection::parser::parse_result::GameResult, 
+    game::{
+        gamestate::GameState, 
+        r#move::Move
+    }
+};
 
 pub enum Message {
     MementoInitial(Option<GameState>),

@@ -1,6 +1,14 @@
 use std::{fmt, str::FromStr};
 
-use crate::{game::rotation::Rotation, game::coordinate::{Coordinate, flip_coordinates, rotate_coordinates, normalize_coordinates}};
+use crate::game::{
+    coordinate::{
+        Coordinate, 
+        flip_coordinates, 
+        rotate_coordinates, 
+        normalize_coordinates
+    },
+    rotation::Rotation,
+};
 
 pub struct Piece {
     piece_type: PieceType,

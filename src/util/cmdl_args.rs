@@ -1,6 +1,5 @@
 use std::env;
 
-
 pub struct CompetitionSystemParameters {
     host: Option<Box<str>>,
     port: Option<Box<str>>,

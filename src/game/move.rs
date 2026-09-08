@@ -1,4 +1,8 @@
-use crate::game::{color::Color, piece::PieceType, rotation::Rotation};
+use crate::game::{
+    color::Color, 
+    piece::PieceType, 
+    rotation::Rotation
+};
 
 #[derive(Clone)]
 pub struct Move {

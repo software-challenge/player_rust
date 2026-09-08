@@ -1,5 +1,4 @@
 use std::{fmt::Error, str::FromStr};
-
 use xml::{EventReader, reader::XmlEvent};
 
 use crate::connection::parser::message::Message;

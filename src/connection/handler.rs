@@ -1,5 +1,9 @@
-use std::{fs::OpenOptions, io::{Read, Write}, net::TcpStream};
-use std::fmt::Write as _;
+use std::{
+    fmt::Write as _, 
+    fs::OpenOptions, 
+    io::{Read, Write}, 
+    net::TcpStream
+};
 
 use xml::EventReader;
 
