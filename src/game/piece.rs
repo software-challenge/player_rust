@@ -10,6 +10,7 @@ use crate::game::{
     rotation::Rotation,
 };
 
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]
 pub struct Piece {
     piece_type: PieceType,
     rotation: Rotation,
@@ -243,7 +244,7 @@ impl fmt::Display for PieceType {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct ParsePieceTypeError;
 
 impl fmt::Display for ParsePieceTypeError {

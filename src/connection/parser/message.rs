@@ -6,6 +6,7 @@ use crate::{
     }
 };
 
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Message {
     MementoInitial(Option<GameState>),
     MementoLastMove(Option<u8>, Option<Move>),

@@ -14,9 +14,11 @@ use crate::game::r#move::Move;
 pub trait IsConnected {}
 
 ///Indicates that the ConnectionHandler is connected.
+#[derive(Debug)]
 pub struct Connected;
 impl IsConnected for Connected {}
 ///Indicates that the ConnectionHandler has joined a game, also holds the room id.
+#[derive(Debug)]
 pub struct Joined {
     room_id: Box<str>
 }
