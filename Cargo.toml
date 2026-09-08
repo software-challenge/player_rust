@@ -18,6 +18,8 @@ exclude = [
 xml = "1.4.0"
 
 [features]
+debug = ["debug-recv-comm-log"]
+debug-recv-comm-log = []
 
 [lints.clippy]
 unwrap_used = "warn"

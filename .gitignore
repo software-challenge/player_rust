@@ -2,4 +2,4 @@ target/
 buffer.xml
 incoming_xml_log.txt
 
-connection_reads.log
+connection_log.xml
