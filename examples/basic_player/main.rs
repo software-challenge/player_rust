@@ -1,4 +1,4 @@
-use socha::prelude::*;
+use socha::{prelude::*};
 
 struct Player {
     game_state: Option<GameState>,
@@ -17,7 +17,6 @@ impl Client for Player {
     fn on_game_state_updated(&mut self, game_state: GameState ) {
         game_state.get_board().print_board();
         self.game_state = Some(game_state);
-        println!("Game state updated!");
     }
 }
 

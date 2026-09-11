@@ -17,6 +17,7 @@ pub struct GameState {
     turn: u8,
     round: u8,
     current_turn_color: Color,
+    last_move: [Option<Move>; 4], // last move of each color; blue, yellow, red, green
     pieces: [Vec<PieceType>; 4] // blue, yellow, red, green
 }
 
@@ -30,6 +31,7 @@ impl GameState {
             turn,
             round,
             current_turn_color,
+            last_move: [None, None, None, None],
             pieces: [blue_pieces, yellow_pieces, red_pieces, green_pieces],
         }
     }
@@ -60,15 +62,19 @@ impl GameState {
         match m.color {
             Color::Blue => {
                 self.pieces[0].retain(|&p| p != m.piece);
+                self.last_move[0] = Some(m.clone());
             },
             Color::Yellow => {
                 self.pieces[1].retain(|&p| p != m.piece);
+                self.last_move[1] = Some(m.clone());
             },
             Color::Red => {
                 self.pieces[2].retain(|&p| p != m.piece);
+                self.last_move[2] = Some(m.clone());
             },
             Color::Green => {
                 self.pieces[3].retain(|&p| p != m.piece);
+                self.last_move[3] = Some(m.clone());
             },
         }
 
@@ -86,6 +92,45 @@ impl GameState {
             self.current_turn_color = COLOR_ORDER_ONE[(self.turn % 4) as usize];
         } else {
            self.current_turn_color = COLOR_ORDER_TWO[(self.turn % 4) as usize];
+        }
+    }
+
+    /// Returns the points for the specified team as specified in the documentation.
+    pub fn get_points_for_team(&self, team: &crate::game::team::Team) -> u32 {
+        let team_colors = team.get_team_colors();
+        let mut total_points = 0;
+
+        for color in team_colors.iter() {
+            total_points += self.get_points_for_color(color);
+        }
+
+        total_points
+    }
+
+    /// Returns the points for the specified color as specified in the documentation.
+    pub fn get_points_for_color(&self, color: &Color) -> u32 {
+        let mut points = self.board.get_colored_tiles(color);
+
+        // Extra points for no pieces left
+        if self.get_color_pieces(color).is_empty() {
+            points += 10;
+        
+            // Extra points for last piece being mono
+            let last_move = self.get_last_move(color);
+            if last_move.is_some() && last_move.unwrap().piece == PieceType::Mono {
+                points += 5;
+            }
+        }
+
+        points
+    }
+
+    pub fn get_last_move(&self, color: &Color) -> &Option<Move> {
+        match color {
+            Color::Blue => &self.last_move[0],
+            Color::Yellow => &self.last_move[1],
+            Color::Red => &self.last_move[2],
+            Color::Green => &self.last_move[3],
         }
     }
 
