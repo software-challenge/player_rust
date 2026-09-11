@@ -95,19 +95,31 @@ impl GameState {
         }
     }
 
+    /// Returns the points for the specified team as specified in the documentation.
+    pub fn get_points_for_team(&self, team: &crate::game::team::Team) -> u32 {
+        let team_colors = team.get_team_colors();
+        let mut total_points = 0;
+
+        for color in team_colors.iter() {
+            total_points += self.get_points_for_color(color);
+        }
+
+        total_points
+    }
+
     /// Returns the points for the specified color as specified in the documentation.
-    pub fn get_points(&self, color: &Color) -> u32 {
-        let points = self.board.get_colored_tiles(color);
+    pub fn get_points_for_color(&self, color: &Color) -> u32 {
+        let mut points = self.board.get_colored_tiles(color);
 
         // Extra points for no pieces left
         if self.get_color_pieces(color).is_empty() {
-            return points + 15;
-        }
-
-        // Extra points for last piece being mono
-        let last_move = self.get_last_move(color);
-        if last_move.is_some() && last_move.unwrap().piece == PieceType::Mono {
-            return points + 5;
+            points += 10;
+        
+            // Extra points for last piece being mono
+            let last_move = self.get_last_move(color);
+            if last_move.is_some() && last_move.unwrap().piece == PieceType::Mono {
+                points += 5;
+            }
         }
 
         points
