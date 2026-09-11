@@ -24,7 +24,7 @@ auf Discord wenden.
 
 ## Wie wird das Library verwendet? 
 
-In `examples/random_player` kann eine Beispiel-Implementierung für einen Zufallsspieler gefunden werden.
+In `examples` können Beispiel-Implementierungen für Spieler gefunden werden.
 
 Um das Projekt zu erstellen führt ihr einmal ``cargo init`` in dem Ordner, in dem ihr euren Spieler programmieren wollt, aus.
 Alternativ könnt ihr auch ``cargo new projekt_name`` in dem Ordner, in dem der Projektordner sein soll, ausführen.
@@ -41,7 +41,7 @@ fn main() {
     println!("Hello, world!");
 }
 ```
-Diesen Code könnt ihr einfach löschen und dann folgenden Code einfügen:
+Diesen Code könnt ihr einfach löschen und dann folgenden Code einfügen (zu finden in examples/basic_player):
 ```rust
 use socha::prelude::*;
 
