@@ -1,4 +1,4 @@
-use crate::connection::parserstrategy::ParserStrategy;
+use crate::connection::parser_strategy::ParserStrategy;
 
 use std::str::FromStr;
 
