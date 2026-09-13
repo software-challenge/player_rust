@@ -11,7 +11,7 @@ impl Client for RandomPlayerClient {
         println!("Current team: {:?}", self.game_state.as_ref().unwrap().get_current_turn_color());
         
         let state = self.game_state.as_ref().unwrap();
-        let legal_moves = get_possible_moves(state);
+        let legal_moves = gamerulelogic::get_possible_moves(state);
 
         if legal_moves.is_empty() {
             return Some(Move {
