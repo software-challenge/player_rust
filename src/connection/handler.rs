@@ -9,7 +9,7 @@ use std::fs::OpenOptions;
 
 use xml::{EventReader, reader::XmlEvent};
 
-use crate::connection::{parser::{message::Message, parse_joined::parse_joined, parse_result::parse_result}, parserstrategy::ParserStrategy};
+use crate::connection::{parser::{message::Message, parse_joined::parse_joined, parse_result::parse_result}, parser_strategy::ParserStrategy};
 use crate::game::r#move::Move;
 
 
@@ -24,10 +24,10 @@ pub struct Joined {
 
 #[derive(Debug)]
 pub struct ConnectionHandler<State, S: ParserStrategy> {
-    pub connection: TcpStream,
+    connection: TcpStream,
     #[cfg(feature = "debug-recv-comm-log")]
     log_file: std::fs::File,
-    pub strategy: S,
+    strategy: S,
     state: State,
 }   
 
