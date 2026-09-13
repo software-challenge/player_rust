@@ -1,10 +1,8 @@
 use crate::{connection::{
                 handler::ConnectionHandler, 
                 parser::message::Message
-            }, 
-            game::{
-                gamestate::GameState,
-                r#move::Move
+            }, game::{
+                gamestate::GameState, r#move::Move, parser::Blokus2026
             }
         };
 
@@ -16,7 +14,7 @@ pub trait Client {
 
 /// Starts a new client using the commandline args to connect to the game.
 pub fn start_client_from_commandline_args<C: Client>(mut client: C) -> Result<(), Box<dyn std::error::Error>> {
-    let mut connection = ConnectionHandler::new_from_commandline_args()?;
+    let mut connection = ConnectionHandler::new_from_commandline_args(Blokus2026)?;
 
     let mut local_game_state: Option<GameState> = None;
 
