@@ -46,7 +46,6 @@ pub fn parse_result(mut parser: EventReader<&[u8]>) -> Box<Message> {
         }
     }
 
-    println!("{:?}", result);
     Box::new(Message::Result(Some(result)))
 }
 

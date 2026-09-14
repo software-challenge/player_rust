@@ -16,6 +16,9 @@ exclude = [
 
 [dependencies]
 xml = "1.4.0"
+quick-xml = {version = "0.42.0", features = ["serialize"]}
+serde = {version = "1.0.229", features = ["derive"]}
+criterion = { version = "0.8.2", features = ["html_reports"] }
 
 [features]
 debug = ["debug-recv-comm-log"]
@@ -26,3 +29,7 @@ unwrap_used = "warn"
 exprect_used = "warn"
 indexing_slicing = "warn"
 panic = "warn"
+
+[[bench]]
+name = "xml_bench"
+harness = false
