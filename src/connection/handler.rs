@@ -1,12 +1,11 @@
 use std::{
-    fmt::Write as _, 
-    io::{Read, Write}, 
-    net::TcpStream
+    fmt::Write as _, io::{self, Read, Write}, net::TcpStream
 };
 
 #[cfg(feature = "debug-recv-comm-log")]
 use std::fs::OpenOptions;
 
+use quick_xml::Reader;
 use xml::{EventReader, reader::XmlEvent};
 
 use crate::connection::{parser::{message::Message, parse_joined::parse_joined, parse_result::parse_result}, parser_strategy::ParserStrategy};
@@ -141,6 +140,50 @@ impl<S: ParserStrategy> ConnectionHandler<Joined, S> {
         Ok(message)
     }
 
+    pub fn new_parse_message(xml: &[u8])-> Result<Box<Message>, Box<dyn std::error::Error>> {
+        let xml_str = std::str::from_utf8(xml)?;
+
+        let data_start = xml_str.find("<data ").ok_or(io::Error::new(
+                io::ErrorKind::InvalidData,
+                "could not find <data start tag",
+        ))?;
+        let data_end = xml_str.rfind("</data>").ok_or(io::Error::new(
+                io::ErrorKind::InvalidData,
+                "could not find </data> end tag",
+        ))? + 6;
+
+        let mut reader = Reader::from_str(&xml_str[data_start..]);
+        loop {
+            match reader.read_event()? {
+                quick_xml::events::Event::Start(e) if e.name().as_ref() == "data"=> {
+                    match &*e.attributes().find(|attribute| {
+                        if let Ok(attr) = attribute {
+                            attr.key.as_ref() == "class"
+                        } else {
+                            false
+                        }
+                    }).ok_or(io::Error::new(
+                                io::ErrorKind::InvalidData,
+                                "could not find class atrr on data tag"))??.value {
+                        "memento" => return Ok(Box::new(Message::MoveRequest)),
+                        "moveRequest" => return Ok(Box::new(Message::MoveRequest)),
+                        "result" => return Ok(parse_result(&xml_str[data_start..=data_end])),
+                        attr_val => {return Err(Box::from(io::Error::new(
+                                    io::ErrorKind::InvalidData,
+                                    format!("Unknown class attribute value: {}", attr_val))))}
+
+                    }
+                },
+                quick_xml::events::Event::Eof => {break},
+                _ => ()
+            }
+        }
+
+        Err(Box::from(io::Error::new(
+            io::ErrorKind::InvalidData,
+            "could not find data class")))
+    }
+
     pub fn parse_message(mut parser: EventReader<&[u8]>) -> Result<Box<Message>, Box<dyn std::error::Error>> {
         loop {
             match parser.next() {
@@ -157,7 +200,7 @@ impl<S: ParserStrategy> ConnectionHandler<Joined, S> {
                                         return Ok(Box::new(Message::MoveRequest));
                                     },
                                     "result" => {
-                                        return Ok(parse_result(parser))
+                                        //return Ok(parse_result(parser))
                                     },
                                     _ => {
                                         return Err(format!("Unknown class attribute value: {}", attr.value).into());
