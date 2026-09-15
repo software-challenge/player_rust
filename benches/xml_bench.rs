@@ -2,11 +2,9 @@ use std::hint::black_box;
 use criterion::{criterion_group, criterion_main, Criterion};
 
 use socha::{connection::handler::{ConnectionHandler, Joined}, game::parser::Blokus2026};
-use xml::EventReader;
 
 fn xml_test_fn(xml: &[u8]) {
-    let parser = EventReader::new(xml);
-    let a = ConnectionHandler::<Joined, Blokus2026>::parse_message(parser);
+    let a = ConnectionHandler::<Joined, Blokus2026>::new_parse_message(xml);
 }
 
 fn xml_result_benchmark(c: &mut Criterion) {
