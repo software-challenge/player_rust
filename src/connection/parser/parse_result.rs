@@ -7,7 +7,7 @@ use serde::Deserialize;
 use quick_xml::de::from_str;
 
 /// The game result contained in a `<data class="result">` element.
-#[derive(Debug, Clone, PartialEq, Eq, Default, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
 pub struct GameResult {
     pub definition: Definition,
 
@@ -26,7 +26,7 @@ pub struct Definition {
 /// A single scoring fragment.
 #[derive(Debug, Clone, PartialEq, Eq, Default, Deserialize)]
 pub struct Fragment {
-    #[serde(rename = "@name")]
+    #[serde(rename = "@name", default)]
     pub name: String,
 
     #[serde(rename = "aggregation", default)]
@@ -44,7 +44,7 @@ pub struct Scores {
 }
 
 /// A single player entry inside `<scores>`.
-#[derive(Debug, Clone, PartialEq, Eq, Default, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
 pub struct Entry {
     #[serde(rename = "player")]
     pub player: Player,
@@ -54,13 +54,13 @@ pub struct Entry {
 }
 
 /// A player identified by name and team (both are attributes).
-#[derive(Debug, Clone, PartialEq, Eq, Default, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
 pub struct Player {
     #[serde(rename = "@name")]
     pub name: String,
 
     #[serde(rename = "@team")]
-    pub team: String,
+    pub team: Team,
 }
 
 /// A list of scored parts (e.g. `<part>2</part><part>102</part>`).
@@ -71,10 +71,10 @@ pub struct Score {
 }
 
 /// The winning team and the reason.
-#[derive(Debug, Clone, PartialEq, Eq, Default, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
 pub struct Winner {
     #[serde(rename = "@team")]
-    pub team: String,
+    pub team: Team,
 
     #[serde(rename = "@regular")]
     #[serde(default)]
