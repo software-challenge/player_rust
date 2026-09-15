@@ -1,4 +1,4 @@
-use socha::{prelude::*};
+use socha::prelude::*;
 
 struct Player {
     game_state: Option<GameState>,

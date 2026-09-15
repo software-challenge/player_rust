@@ -1,11 +1,8 @@
-use crate::connection::parser_strategy::ParserStrategy;
-
-use std::str::FromStr;
-
-use xml::reader::XmlEvent;
-
 use crate::{
-    connection::parser::message::Message, 
+    connection::parser::{
+        message::Message, 
+        parser_strategy::ParserStrategy
+    }, 
     game::{
         board::Board, 
         color::Color, 
@@ -15,6 +12,10 @@ use crate::{
         piece::PieceType
     }
 };
+
+use std::str::FromStr;
+
+use xml::reader::XmlEvent;
 
 pub struct Blokus2026;
 
