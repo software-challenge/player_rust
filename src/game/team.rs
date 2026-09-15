@@ -1,10 +1,14 @@
 use std::{fmt::Error, str::FromStr};
 
+use serde::Deserialize;
+
 use crate::game::color::Color::{self, Blue, Yellow, Red, Green};
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize)]
 pub enum Team {
+    #[serde(rename = "ONE")]
     One,
+    #[serde(rename = "TWO")]
     Two,
 }
 
