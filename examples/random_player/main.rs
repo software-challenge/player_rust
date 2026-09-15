@@ -1,5 +1,8 @@
 use socha::prelude::*;
-use std::time::{SystemTime, UNIX_EPOCH};
+use std::time::{
+    SystemTime, 
+    UNIX_EPOCH
+};
 
 struct RandomPlayerClient {
     game_state: Option<GameState>,

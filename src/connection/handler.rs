@@ -8,9 +8,15 @@ use std::fs::OpenOptions;
 use quick_xml::Reader;
 use xml::{EventReader, reader::XmlEvent};
 
-use crate::connection::{parser::{message::Message, parse_joined::parse_joined, parse_result::parse_result}, parser_strategy::ParserStrategy};
-use crate::game::r#move::Move;
-
+use crate::{
+    connection::parser::{
+        message::Message, 
+        parse_joined::parse_joined, 
+        parse_result::parse_result,
+        parser_strategy::ParserStrategy
+    },
+    game::r#move::Move
+};
 
 ///Indicates that the ConnectionHandler is connected.
 #[derive(Debug)]
