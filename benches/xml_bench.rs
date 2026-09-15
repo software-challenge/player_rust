@@ -1,7 +1,17 @@
-use std::hint::black_box;
-use criterion::{criterion_group, criterion_main, Criterion};
+use socha::{
+  connection::handler::{
+    ConnectionHandler, 
+    Joined
+  }, 
+  game::parser::Blokus2026
+};
 
-use socha::{connection::handler::{ConnectionHandler, Joined}, game::parser::Blokus2026};
+use std::hint::black_box;
+use criterion::{
+  criterion_group, 
+  criterion_main, 
+  Criterion
+};
 
 fn xml_test_fn(xml: &[u8]) {
     let a = ConnectionHandler::<Joined, Blokus2026>::new_parse_message(xml);
