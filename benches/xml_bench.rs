@@ -14,7 +14,7 @@ use criterion::{
 };
 
 fn xml_test_fn(xml: &[u8]) {
-    let a = ConnectionHandler::<Joined, Blokus2026>::new_parse_message(xml);
+    let _ = ConnectionHandler::<Joined, Blokus2026>::new_parse_message(xml);
 }
 
 fn xml_result_benchmark(c: &mut Criterion) {
