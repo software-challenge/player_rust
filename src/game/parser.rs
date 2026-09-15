@@ -19,7 +19,7 @@ use crate::{
 pub struct Blokus2026;
 
 impl ParserStrategy for Blokus2026 {
-    fn parse_memento(mut parser: xml::EventReader<&[u8]>) -> Box<crate::connection::parser::message::Message> {
+    fn parse_memento(mut parser: xml::EventReader<&[u8]>) -> Box<Message> {
         loop {
             match parser.next() {
                 Ok(XmlEvent::StartElement { name, attributes, .. }) => {
@@ -80,7 +80,16 @@ impl ParserStrategy for Blokus2026 {
                                             Ok(XmlEvent::EndElement { name }) => {
                                                 if name.local_name == "state" {
 
-                                                    let game_state = GameState::new(starting_piece, starting_color == Color::Blue, Board::new(), 0, 1, starting_color, blue_pieces, yellow_pieces, red_pieces, green_pieces);
+                                                    let game_state = GameState::new(starting_piece, 
+                                                        starting_color == Color::Blue, 
+                                                        Board::new(), 
+                                                        0, 
+                                                        1, 
+                                                        starting_color, 
+                                                        blue_pieces, 
+                                                        yellow_pieces, 
+                                                        red_pieces, 
+                                                        green_pieces);
 
                                                     return Box::new(Message::MementoInitial(Some(game_state)));
                                                 }
@@ -146,10 +155,24 @@ impl ParserStrategy for Blokus2026 {
                                                 if name.local_name == "lastMove" {
 
                                                     if skip {
-                                                        return Box::new(Message::MementoLastMove(Some(turn_value as u8), Some(Move::new(color.unwrap(), PieceType::Mono, 0, 0, false, Rotation::None, true))));
+                                                        return Box::new(Message::MementoLastMove(Some(turn_value as u8), 
+                                                                                                Some(Move::new(color.unwrap(), 
+                                                                                                PieceType::Mono, 
+                                                                                                0, 
+                                                                                                0, 
+                                                                                                false, 
+                                                                                                Rotation::None, 
+                                                                                                true))));
                                                     }
 
-                                                    return Box::new(Message::MementoLastMove(Some(turn_value as u8), Some(Move::new(color.unwrap(), piece.unwrap(), x.unwrap(), y.unwrap(), is_flipped.unwrap(), rotation.unwrap(), false))));
+                                                    return Box::new(Message::MementoLastMove(Some(turn_value as u8), 
+                                                                                            Some(Move::new(color.unwrap(), 
+                                                                                            piece.unwrap(), 
+                                                                                            x.unwrap(), 
+                                                                                            y.unwrap(), 
+                                                                                            is_flipped.unwrap(), 
+                                                                                            rotation.unwrap(), 
+                                                                                            false))));
                                                 }
                                             }
                                             Ok(XmlEvent::EndDocument) => {
