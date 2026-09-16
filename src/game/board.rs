@@ -1,3 +1,7 @@
+#[cfg(test)]
+#[path = "tests/board.rs"]
+mod tests;
+
 use crate::game::{
     color::Color,
     piece::{Piece},
@@ -10,6 +14,7 @@ pub struct Board {
 }
 
 impl Board {
+    /// Creates a new empty board with all cells set to None.
     pub fn new() -> Self {
         Board {
             board: [[None; BOARD_SIZE]; BOARD_SIZE],
