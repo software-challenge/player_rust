@@ -1,3 +1,7 @@
+#[cfg(test)]
+#[path = "tests/gamestate.rs"]
+mod tests;
+
 use crate::game::{
     board::Board,
     color::Color,
