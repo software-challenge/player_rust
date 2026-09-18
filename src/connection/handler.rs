@@ -6,7 +6,7 @@ use std::{
 use std::fs::OpenOptions;
 
 use quick_xml::Reader;
-use xml::{EventReader, reader::XmlEvent};
+use xml::EventReader;
 
 use crate::{
     connection::parser::{
@@ -140,13 +140,12 @@ impl<S: ParserStrategy> ConnectionHandler<Joined, S> {
         }
 
         let raw_xml: &[u8] = xml_payload_from_buffer(&buffer);
-        let parser: EventReader<&[u8]> = EventReader::new(raw_xml);
-        let message: Box<Message> = Self::parse_message(parser)?;
+        let message: Box<Message> = Self::parse_message(raw_xml)?;
 
         Ok(message)
     }
 
-    pub fn new_parse_message(xml: &[u8])-> Result<Box<Message>, Box<dyn std::error::Error>> {
+    pub fn parse_message(xml: &[u8])-> Result<Box<Message>, Box<dyn std::error::Error>> {
         let xml_str = std::str::from_utf8(xml)?;
 
         let data_start = xml_str.find("<data ").ok_or(io::Error::new(
@@ -172,7 +171,7 @@ impl<S: ParserStrategy> ConnectionHandler<Joined, S> {
                                 io::ErrorKind::InvalidData,
                                 "could not find class atrr on data tag"))??.value {
                         "memento" => {
-                            return Ok(Box::new(Message::MoveRequest))}
+                            return Ok(S::parse_memento(&xml_str[data_start..=data_end])?)}
                             ,
                         "moveRequest" => {
                             return Ok(Box::new(Message::MoveRequest))
@@ -195,44 +194,6 @@ impl<S: ParserStrategy> ConnectionHandler<Joined, S> {
         Err(Box::from(io::Error::new(
             io::ErrorKind::InvalidData,
             "could not find data class")))
-    }
-
-    pub fn parse_message(mut parser: EventReader<&[u8]>) -> Result<Box<Message>, Box<dyn std::error::Error>> {
-        loop {
-            match parser.next() {
-                Ok(XmlEvent::StartElement { name, attributes, .. }) => {
-                    // Search for the data element
-                    if name.local_name == "data" {
-                        for attr in attributes {
-                            if attr.name.local_name == "class" {
-                                match attr.value.as_str() {
-                                    "memento" => {
-                                        return Ok(S::parse_memento(parser))
-                                    },
-                                    "moveRequest" => {
-                                        return Ok(Box::new(Message::MoveRequest));
-                                    },
-                                    "result" => {
-                                        //return Ok(parse_result(parser))
-                                    },
-                                    _ => {
-                                        return Err(format!("Unknown class attribute value: {}", attr.value).into());
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-                Ok(XmlEvent::EndDocument) => {
-                    //If reached then the document ended without finding a data element, which is unexpected
-                    return Err("Error while parsing message: Unexpected end of document".into());
-                }
-                Err(e) => {
-                    return Err(format!("Error while parsing message: {e}").into());
-                }
-                Ok(_) => {}
-            }
-        }
     }
 }
 
