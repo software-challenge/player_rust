@@ -1,5 +1,3 @@
-use crate::{connection::parser_strategy::ParserStrategy, game::team::Team};
-
 use std::{io, str::FromStr};
 
 use quick_xml::{
@@ -12,20 +10,16 @@ use crate::{
     connection::parser::{
         message::Message, 
         parser_strategy::ParserStrategy
-    }, 
-    game::{
-        board::Board, 
-        color::Color, 
-        gamestate::GameState, 
-        r#move::Move, 
-        rotation::Rotation, 
-        piece::PieceType
+    }, game::{
+        board::Board,
+        color::Color,
+        gamestate::GameState,
+        r#move::Move,
+        piece::PieceType,
+        rotation::Rotation,
+        team::Team
     }
 };
-
-use std::str::FromStr;
-
-use xml::reader::XmlEvent;
 
 pub struct Blokus2026;
 
