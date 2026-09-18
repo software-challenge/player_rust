@@ -152,15 +152,16 @@ impl<S: ParserStrategy> ConnectionHandler<Joined, S> {
                 io::ErrorKind::InvalidData,
                 "could not find <data start tag",
         ))?;
-        let data_end = xml_str.rfind("</data>").ok_or(io::Error::new(
-                io::ErrorKind::InvalidData,
-                "could not find </data> end tag",
-        ))? + 6;
+        let data_end = xml_str.rfind("</data>");
 
-        let mut reader = Reader::from_str(&xml_str[data_start..]);
+        let mut reader = Reader::from_str(&xml_str);
         loop {
             match reader.read_event()? {
                 quick_xml::events::Event::Start(e) if e.name().as_ref() == "data"=> {
+                        let data_end = data_end.ok_or(io::Error::new(
+                            io::ErrorKind::InvalidData,
+                            "could not find </data> end tag",
+                        ))? + 6;
                     match &*e.attributes().find(|attribute| {
                         if let Ok(attr) = attribute {
                             attr.key.as_ref() == "class"
@@ -173,13 +174,29 @@ impl<S: ParserStrategy> ConnectionHandler<Joined, S> {
                         "memento" => {
                             return Ok(S::parse_memento(&xml_str[data_start..=data_end])?)}
                             ,
-                        "moveRequest" => {
-                            return Ok(Box::new(Message::MoveRequest))
-                        },
                         "result" => {
                             return Ok(parse_result(&xml_str[data_start..=data_end]))
                         },
                         "error" => {eprint!("Error: {}", xml_str)}
+                        attr_val => {return Err(Box::from(io::Error::new(
+                                    io::ErrorKind::InvalidData,
+                                    format!("Unknown class attribute value: {}", attr_val))))}
+
+                    }
+                },
+                quick_xml::events::Event::Empty(e) if e.name().as_ref() == "data"=> {
+                    match &*e.attributes().find(|attribute| {
+                        if let Ok(attr) = attribute {
+                            attr.key.as_ref() == "class"
+                        } else {
+                            false
+                        }
+                    }).ok_or(io::Error::new(
+                                io::ErrorKind::InvalidData,
+                                "could not find class atrr on data tag"))??.value {
+                        "moveRequest" => {
+                            return Ok(Box::new(Message::MoveRequest))
+                        },
                         attr_val => {return Err(Box::from(io::Error::new(
                                     io::ErrorKind::InvalidData,
                                     format!("Unknown class attribute value: {}", attr_val))))}
