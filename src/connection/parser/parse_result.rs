@@ -73,8 +73,8 @@ pub struct Score {
 /// The winning team and the reason.
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
 pub struct Winner {
-    #[serde(rename = "@team")]
-    pub team: Team,
+    #[serde(rename = "@team", default)]
+    pub team: Option<Team>,
 
     #[serde(rename = "@regular")]
     #[serde(default)]
