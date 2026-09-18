@@ -90,6 +90,30 @@ pub enum PieceType {
     PentoY,
 }
 
+pub const ALL_PIECE_TYPES: [PieceType; 21] = [
+    PieceType::Mono,
+    PieceType::Domino,
+    PieceType::TrioL,
+    PieceType::TrioI,
+    PieceType::TetroO,
+    PieceType::TetroT,
+    PieceType::TetroI,
+    PieceType::TetroL,
+    PieceType::TetroZ,
+    PieceType::PentoL,
+    PieceType::PentoT,
+    PieceType::PentoV,
+    PieceType::PentoS,
+    PieceType::PentoZ,
+    PieceType::PentoI,
+    PieceType::PentoP,
+    PieceType::PentoW,
+    PieceType::PentoU,
+    PieceType::PentoR,
+    PieceType::PentoX,
+    PieceType::PentoY,
+];
+
 impl PieceType {
 
     /// Returns all variants of the piece typ
