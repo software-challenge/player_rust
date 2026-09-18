@@ -1,3 +1,13 @@
+use crate::{connection::parser_strategy::ParserStrategy, game::team::Team};
+
+use std::{io, str::FromStr};
+
+use quick_xml::{
+    Reader,
+    events::Event,
+};
+use xml::reader::XmlEvent;
+
 use crate::{
     connection::parser::{
         message::Message, 
@@ -205,3 +215,37 @@ impl ParserStrategy for Blokus2026 {
     }
 }
 
+fn new_mem_parser(xml: &str) -> Result<Box<Message>, Box<dyn std::error::Error>> {
+    let mut start_piece: Option<PieceType> = None;
+    let mut start_team: Option<Team> = None;
+    let mut turn: u8 = 0;
+
+    let mut reader = Reader::from_str(xml);
+    loop {
+        match reader.read_event()? {
+            Event::Start(e) if e.name().as_ref() == "state"=> {
+                for attr in e.attributes() {
+                    let attr = attr?;
+                    match attr.key.as_ref() {
+                    "startTeam" => {
+                        start_team = Team::from_str(attr.value.as_ref()).ok();
+                    },
+                    "turn" => {
+                        turn = u8::from_str(attr.value.as_ref())?;
+                        continue;
+                    },
+                    "startPiece" => {
+                        start_piece = PieceType::from_str(attr.value.as_ref()).ok();
+                    }
+                    _ => {}
+                    }
+                }
+            },
+            Event::Start(e) if e.name().as_ref() == "lastMove" => {
+                
+            }
+            Event::Eof => return Err(Box::from(io::Error::new(io::ErrorKind::InvalidData,"No valid memento!"))),
+            _=> ()
+        }
+    }
+}

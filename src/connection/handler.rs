@@ -171,9 +171,16 @@ impl<S: ParserStrategy> ConnectionHandler<Joined, S> {
                     }).ok_or(io::Error::new(
                                 io::ErrorKind::InvalidData,
                                 "could not find class atrr on data tag"))??.value {
-                        "memento" => return Ok(Box::new(Message::MoveRequest)),
-                        "moveRequest" => return Ok(Box::new(Message::MoveRequest)),
-                        "result" => return Ok(parse_result(&xml_str[data_start..=data_end])),
+                        "memento" => {
+                            return Ok(Box::new(Message::MoveRequest))}
+                            ,
+                        "moveRequest" => {
+                            return Ok(Box::new(Message::MoveRequest))
+                        },
+                        "result" => {
+                            return Ok(parse_result(&xml_str[data_start..=data_end]))
+                        },
+                        "error" => {eprint!("Error: {}", xml_str)}
                         attr_val => {return Err(Box::from(io::Error::new(
                                     io::ErrorKind::InvalidData,
                                     format!("Unknown class attribute value: {}", attr_val))))}
