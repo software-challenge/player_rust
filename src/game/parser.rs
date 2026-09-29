@@ -412,7 +412,7 @@ use crate::game::{
           </data>
         </room>"#;
 
-        let gamestate = Blokus2026::parse_memento(&String::from_utf8(xml.to_vec()).unwrap()).unwrap();
+        let gamestate = Blokus2026::parse_memento(core::str::from_utf8(xml).unwrap()).unwrap();
 
         println!("{:?}", gamestate);
 
@@ -543,7 +543,7 @@ use crate::game::{
               </data>
             </room>"#;
 
-        let last_move = Blokus2026::parse_memento(&String::from_utf8(xml.to_vec()).unwrap()).unwrap();
+        let last_move = Blokus2026::parse_memento(core::str::from_utf8(xml).unwrap()).unwrap();
 
         println!("{:?}", last_move);
 
