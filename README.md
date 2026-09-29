@@ -19,7 +19,7 @@ Das ist die offiziele Rust-Bibliothek für die Programmierung von Spielern für 
 Eröffnet bei Fehlern oder euer Meinung nach fehlenden Funktionen gerne ein Issue und/oder schreibt es in den Discord Probleme Kanal.
 Außerdem könnt ihr euch an:
 - SturmEnte
-- NichtNil5
+- NichtNil5 \
 auf Discord wenden.
 
 ## Wie wird das Library verwendet? 
@@ -82,6 +82,17 @@ Erstellt nun also im GUI ein neues Spiel, ein Spieler sollte entweder "Mensch", 
 
 Nun könnt ihr den Spieler aus dem Hauptordner mit folgendem Befehl starten: ``cargo run``. 
 Der Hauptordner ist bei ``cargo init`` der Ordner, in dem der Befehl ausgeführt wurde, bei ``cargo new projekt_name`` der Ordner, der von Cargo erstellt wurde.
+
+## Start Argumente
+
+Die folgenden Befehle könnne beim starten des Spielers mit angehangen werden.\
+Diese Befehle sind vorallem für das Contest-System relevant, weil es damit dem Spieler die benötigten Informationen übergibt.
+
+| **Befehl** | **Beschreibung** | **Standart** |
+| :---  | :---  | :---: | 
+| **-h, --host** | Der Host, zu dem eine Verbindung hergestellt werden soll. | 'localhost' |
+| **-p, --port** | Der Port des Hosts. | 13050 | 
+| **-r, --reservation** | Reservierungscode für ein vorbereitetes Spiel. | / |
 
 ## Schnittstelle
 
