@@ -93,7 +93,7 @@ pub fn rotate_coordinates(coordinates: Vec<Coordinate>, rotation: &Rotation) -> 
     let mut rotated_coordinates: Vec<Coordinate> = Vec::new();
 
     for coord in coordinates {
-        rotated_coordinates.push(coord.rotate(&rotation));
+        rotated_coordinates.push(coord.rotate(rotation));
     }
 
     rotated_coordinates
