@@ -27,10 +27,8 @@ impl Board {
         let mut num = 0;
         for row in self.board.iter() {
             for cell in row.iter() {
-                if let Some(cell_color) = cell {
-                    if cell_color == color {
-                        num += 1;
-                    }
+                if let Some(cell_color) = cell && cell_color == color {
+                    num += 1;
                 }
             }
         }
