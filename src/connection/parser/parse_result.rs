@@ -86,6 +86,5 @@ pub struct Winner {
 }
 
 pub fn parse_result(xml: &str) -> Box<Message> {
-    Box::from(Message::Result(from_str(xml).unwrap()))
+    Box::from(Message::Result(from_str(xml).expect("Failed to parse game result")))
 }
-
