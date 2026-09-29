@@ -1,3 +1,5 @@
+#![allow(clippy::indexing_slicing)]
+
 use std::{
     fmt::Write as _, io::{self, Read, Write}, net::TcpStream
 };
@@ -152,7 +154,7 @@ impl<S: ParserStrategy> ConnectionHandler<Joined, S> {
         ))?;
         let data_end = xml_str.rfind("</data>");
 
-        let mut reader = Reader::from_str(&xml_str);
+        let mut reader = Reader::from_str(xml_str);
         loop {
             match reader.read_event()? {
                 quick_xml::events::Event::Start(e) if e.name().as_ref() == "data"=> {
@@ -170,8 +172,8 @@ impl<S: ParserStrategy> ConnectionHandler<Joined, S> {
                                 io::ErrorKind::InvalidData,
                                 "could not find class atrr on data tag"))??.value {
                         "memento" => {
-                            return Ok(S::parse_memento(&xml_str[data_start..=data_end])?)}
-                            ,
+                            return S::parse_memento(&xml_str[data_start..=data_end])
+                        },
                         "result" => {
                             return Ok(parse_result(&xml_str[data_start..=data_end]))
                         },
