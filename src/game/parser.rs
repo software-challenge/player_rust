@@ -67,11 +67,12 @@ impl ParserStrategy for Blokus2026 {
                         //taken from gamestate
                         const COLOR_ORDER_ONE: [Color; 4] = [Color::Blue, Color::Yellow, Color::Red, Color::Green];
                         const COLOR_ORDER_TWO: [Color; 4] = [Color::Yellow, Color::Red, Color::Green, Color::Blue];
+                        #[allow(clippy::indexing_slicing)]
                         let current_turn_color = if is_statrting_team_one {
                             COLOR_ORDER_ONE[(turn % 4) as usize]
                         } else {
                            COLOR_ORDER_TWO[(turn % 4) as usize]
-                        };
+                        };      
 
                         return Ok(Box::from(Message::MementoInitial(Some(GameState::new(starting_piece, is_statrting_team_one, Board::new(), turn, round, current_turn_color, ALL_PIECE_TYPES.to_vec(), ALL_PIECE_TYPES.to_vec(), ALL_PIECE_TYPES.to_vec(), ALL_PIECE_TYPES.to_vec())))));
                     }

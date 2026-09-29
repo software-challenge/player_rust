@@ -23,8 +23,8 @@ pub fn start_client_from_commandline_args<C: Client>(mut client: C) -> Result<()
         match *message {
             Message::MementoInitial(game_state) => {
                 if let Some(game_state) = game_state {
-                    local_game_state = Some(game_state);
-                    client.on_game_state_updated(local_game_state.as_ref().expect("Game state was none even though it should be some").clone());
+                    local_game_state = Some(game_state.clone());
+                    client.on_game_state_updated(game_state);
                 } else {
                     eprintln!("Received Memento message without game state!");
                 }
