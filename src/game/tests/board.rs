@@ -16,7 +16,7 @@ fn test_set_and_get_cell() {
     let mut board = Board::new();
     assert!(board.set_cell(3, 4, Color::Red));
     assert_eq!(board.get_cell(3, 4), Some(Color::Red));
-    assert_eq!(board.set_cell(BOARD_SIZE, BOARD_SIZE, Color::Blue), false); // Out of bounds, should return false
+    assert!(!board.set_cell(BOARD_SIZE, BOARD_SIZE, Color::Blue)); // Out of bounds, should return false
     assert_eq!(board.get_cell(BOARD_SIZE, BOARD_SIZE), None); // Out of bounds, should return None
 }
 

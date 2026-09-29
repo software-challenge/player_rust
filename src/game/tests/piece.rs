@@ -12,6 +12,7 @@ fn sorted_xy(coordinates: Vec<Coordinate>) -> Vec<(isize, isize)> {
 
 #[test]
 fn pento_r_get_coordinates_all_8_variants() {
+    #[allow(clippy::type_complexity)]
     let cases: Vec<(Rotation, bool, Vec<(isize, isize)>)> = vec![
         (
             Rotation::None,
