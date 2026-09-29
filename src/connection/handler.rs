@@ -6,7 +6,6 @@ use std::{
 use std::fs::OpenOptions;
 
 use quick_xml::Reader;
-use xml::EventReader;
 
 use crate::{
     connection::parser::{
@@ -88,13 +87,12 @@ impl<S: ParserStrategy> ConnectionHandler<Connected, S> {
 
         // Parse the welcome message to extract the roomId
         let raw_xml: &[u8] = xml_payload_from_buffer(&buffer);
-        let parser: EventReader<&[u8]> = EventReader::new(raw_xml);
     
         return Ok(ConnectionHandler { 
             connection: self.connection,
             #[cfg(feature = "debug-recv-comm-log")]
             log_file: self.log_file,
-            state: Joined { room_id: parse_joined(parser)? },
+            state: Joined { room_id: parse_joined(raw_xml)? },
             strategy: self.strategy
         });
     }
