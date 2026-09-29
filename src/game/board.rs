@@ -13,6 +13,7 @@ pub struct Board {
     board: [[Option<Color>; BOARD_SIZE]; BOARD_SIZE],
 }
 
+#[allow(clippy::indexing_slicing)]
 impl Board {
     /// Creates a new empty board with all cells set to None.
     pub fn new() -> Self {
