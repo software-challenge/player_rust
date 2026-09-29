@@ -101,7 +101,7 @@ impl<S: ParserStrategy> ConnectionHandler<Connected, S> {
 }
 
 impl<S: ParserStrategy> ConnectionHandler<Joined, S> {
-    pub fn get_room_id(&self) -> &Box<str> {
+    pub fn get_room_id(&self) -> &str {
         &self.state.room_id
     }
 
@@ -109,7 +109,7 @@ impl<S: ParserStrategy> ConnectionHandler<Joined, S> {
     pub fn send_move(&mut self, m: &Move) -> Result<(), Box<dyn std::error::Error>> {
 
         let mut move_xml = String::new();
-        write!(move_xml, "<room roomId=\"{}\">", self.get_room_id().as_ref())?;
+        write!(move_xml, "<room roomId=\"{}\">", self.get_room_id())?;
 
         if m.skip {
             write!(move_xml, "<data class=\"sc.plugin2027.SkipMove\"><color>{}</color></data></room>", m.color.to_string())?;
