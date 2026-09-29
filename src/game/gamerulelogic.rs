@@ -1,3 +1,8 @@
+#[cfg(test)]
+#[path = "tests/gamerulelogic.rs"]
+mod tests;
+
+
 use std::collections::HashSet;
 
 use crate::{game::{ board::Board, 
@@ -305,118 +310,4 @@ pub fn is_valid_move(gamestate: &GameState, m: &Move) -> bool {
     }
 
     true
-}
-
-#[cfg(test)]
-mod tests {
-    use crate::game::{
-        board::Board,
-        color::Color,
-        gamestate::GameState,
-        piece::PieceType,
-        r#move::Move,
-        rotation::Rotation
-    };
-    use crate::game::coordinate::Coordinate;
-
-    use super::{get_possible_moves_for_piece, is_valid_move};
-
-    fn blue_turn_state_with_board(board: Board) -> GameState {
-        GameState::new(
-            PieceType::Mono,
-            true,
-            board,
-            5,
-            2,
-            Color::Blue,
-            vec![PieceType::Mono],
-            vec![],
-            vec![],
-            vec![],
-        )
-    }
-
-    #[test]
-    fn invalid_when_directly_adjacent_to_own_piece() {
-        let mut board = Board::new();
-        board.set_cell(5, 5, Color::Blue);
-
-        let state = blue_turn_state_with_board(board);
-        let m = Move {
-            color: Color::Blue,
-            piece: PieceType::Mono,
-            x: 6,
-            y: 5,
-            is_flipped: false,
-            rotation: Rotation::None,
-            skip: false,
-        };
-
-        assert!(!is_valid_move(&state, &m));
-    }
-
-    #[test]
-    fn valid_when_only_corner_contact_exists() {
-        let mut board = Board::new();
-        board.set_cell(5, 5, Color::Blue);
-
-        let state = blue_turn_state_with_board(board);
-        let m = Move {
-            color: Color::Blue,
-            piece: PieceType::Mono,
-            x: 6,
-            y: 6,
-            is_flipped: false,
-            rotation: Rotation::None,
-            skip: false,
-        };
-
-        assert!(is_valid_move(&state, &m));
-    }
-
-    #[test]
-    fn invalid_when_no_corner_contact_after_first_move() {
-        let mut board = Board::new();
-        board.set_cell(5, 5, Color::Blue);
-
-        let state = blue_turn_state_with_board(board);
-        let m = Move {
-            color: Color::Blue,
-            piece: PieceType::Mono,
-            x: 10,
-            y: 10,
-            is_flipped: false,
-            rotation: Rotation::None,
-            skip: false,
-        };
-
-        assert!(!is_valid_move(&state, &m));
-    }
-
-    #[test]
-    fn calculates_moves_where_corner_is_not_piece_origin() {
-        let mut board = Board::new();
-        board.set_cell(5, 5, Color::Blue);
-
-        let state = GameState::new(
-            PieceType::Mono,
-            true,
-            board,
-            5,
-            2,
-            Color::Blue,
-            vec![PieceType::PentoX],
-            vec![],
-            vec![],
-            vec![],
-        );
-
-        let valid_fields = vec![Coordinate { x: 6, y: 6 }];
-        let moves = get_possible_moves_for_piece(&state, &PieceType::PentoX, &valid_fields);
-
-        assert!(
-            moves.iter().any(|m| m.x == 6 && m.y == 5),
-            "expected a placement that aligns a non-origin PENTO_X tile to the corner"
-        );
-    }
 }
