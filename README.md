@@ -24,6 +24,8 @@ Außerdem könnt ihr euch an
 
 auf Discord wenden.
 
+In `examples` können Beispiel-Implementierungen für Spieler gefunden werden.
+
 ## Eigenen Spieler erstellen
 
 1. Installiert Rust (mindestens Version 1.85 für 2024 edition) und Cargo (wird mit Rust installiert).
@@ -63,6 +65,17 @@ fn main() {
 
 5. Führt `cargo add socha` aus, um die Bibliothek zu eurem Projekt hinzuzufügen.
 6. Startet euren Spieler mit `cargo run` und verbindet ihn mit dem Spielserver (siehe den [Ein-neues-Spiel-erstellen](https://docs.software-challenge.de/grundlagen/server#ein-neues-spiel-erstellen) Guide mit einem "Manuell gestarteten Computerspieler")
+
+## Start Argumente
+
+Die folgenden Befehle könnne beim starten des Spielers mit angehangen werden.\
+Diese Befehle sind vorallem für das Contest-System relevant, weil es damit dem Spieler die benötigten Informationen übergibt.
+
+| **Befehl** | **Beschreibung** | **Standart** |
+| :---  | :---  | :---: | 
+| **-h, --host** | Der Host, zu dem eine Verbindung hergestellt werden soll. | 'localhost' |
+| **-p, --port** | Der Port des Hosts. | 13050 | 
+| **-r, --reservation** | Reservierungscode für ein vorbereitetes Spiel. | / |
 
 ## Schnittstelle
 
