@@ -238,6 +238,7 @@ fn _parse_game_board(reader: &mut Reader<&[u8]>) -> Result<Board, Box<dyn std::e
 }
 
 // blue, yellow, red, green
+#[allow(clippy::type_complexity)]
 fn _parse_pieces(reader: &mut Reader<&[u8]>) -> Result<(Vec<PieceType>, Vec<PieceType>, Vec<PieceType>, Vec<PieceType>), Box<dyn std::error::Error>> {
     let mut blue_pieces =  Vec::new();
     let mut yellow_pieces =  Vec::new();

@@ -28,6 +28,7 @@ pub struct GameState {
 
 impl GameState {
 
+    #[allow(clippy::too_many_arguments)]
     pub fn new(starting_piece: PieceType, is_starting_team_one: bool, board: Board, turn: u8, round: u8, current_turn_color: Color, blue_pieces: Vec<PieceType>, yellow_pieces: Vec<PieceType>, red_pieces: Vec<PieceType>, green_pieces: Vec<PieceType>) -> Self {
         GameState {
             starting_piece,
@@ -53,7 +54,7 @@ impl GameState {
     /// Applies a move to the game state with validation.
     /// Returns true if the move was valid and applied, false otherwise.
     pub fn apply_move(&mut self, m: &Move, turn: u8) -> bool {
-        if gamerulelogic::is_valid_move(&self, m) == false {
+        if !gamerulelogic::is_valid_move(self, m) {
             return false;
         }
 
@@ -69,22 +70,22 @@ impl GameState {
         match m.color {
             Color::Blue => {
                 self.pieces[0].retain(|&p| p != m.piece);
-                self.last_move[0] = Some(m.clone());
+                self.last_move[0] = Some(*m);
                 self.points[0] = self.calculate_points_for_color(&Color::Blue);
             },
             Color::Yellow => {
                 self.pieces[1].retain(|&p| p != m.piece);
-                self.last_move[1] = Some(m.clone());
+                self.last_move[1] = Some(*m);
                 self.points[1] = self.calculate_points_for_color(&Color::Yellow);
             },
             Color::Red => {
                 self.pieces[2].retain(|&p| p != m.piece);
-                self.last_move[2] = Some(m.clone());
+                self.last_move[2] = Some(*m);
                 self.points[2] = self.calculate_points_for_color(&Color::Red);
             },
             Color::Green => {
                 self.pieces[3].retain(|&p| p != m.piece);
-                self.last_move[3] = Some(m.clone());
+                self.last_move[3] = Some(*m);
                 self.points[3] = self.calculate_points_for_color(&Color::Green);
             },
         }
@@ -99,6 +100,7 @@ impl GameState {
         const COLOR_ORDER_TWO: [Color; 4] = [Color::Yellow, Color::Red, Color::Green, Color::Blue];
 
         // Current color can be caluclated from turn number
+        #[allow(clippy::indexing_slicing)]
         if self.is_starting_team_one {
             self.current_turn_color = COLOR_ORDER_ONE[(self.turn % 4) as usize];
         } else {
@@ -116,6 +118,7 @@ impl GameState {
         
             // Extra points for last piece being mono
             let last_move = self.get_last_move(color);
+            #[allow(clippy::unwrap_used)]
             if last_move.is_some() && last_move.unwrap().piece == PieceType::Mono {
                 points += 5;
             }

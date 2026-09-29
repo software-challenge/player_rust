@@ -86,5 +86,6 @@ pub struct Winner {
 }
 
 pub fn parse_result(xml: &str) -> Box<Message> {
+    #[allow(clippy::expect_used)]
     Box::from(Message::Result(from_str(xml).expect("Failed to parse game result")))
 }
