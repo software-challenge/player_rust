@@ -19,7 +19,8 @@ Das ist die offiziele Rust-Bibliothek für die Programmierung von Spielern für 
 Eröffnet bei Fehlern oder euer Meinung nach fehlenden Funktionen gerne ein Issue und/oder schreibt es in den Discord Probleme Kanal.
 Außerdem könnt ihr euch an:
 - SturmEnte
-- NichtNil5 \
+- NichtNil5  
+
 auf Discord wenden.
 
 ## Wie wird das Library verwendet? 
