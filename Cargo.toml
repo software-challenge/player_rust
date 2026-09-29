@@ -20,7 +20,8 @@ serde = {version = "1.0.229", features = ["derive"]}
 criterion = { version = "0.8.2", features = ["html_reports"] }
 
 [features]
-debug = ["debug-recv-comm-log"]
+debug = ["debug-print", "debug-recv-comm-log"]
+debug-print = []
 debug-recv-comm-log = []
 
 [lints.clippy]

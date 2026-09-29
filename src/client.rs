@@ -32,7 +32,8 @@ pub fn start_client_from_commandline_args<C: Client>(mut client: C) -> Result<()
             Message::MementoLastMove(turn, last_move) => {
                 if let Some(last_move) = last_move {
                     if let Some(game_state) = &mut local_game_state {
-                        println!("Applying last move: {} {} {} {} {}", last_move.piece, last_move.x, last_move.y, last_move.is_flipped, last_move.rotation.to_string());
+                        #[cfg(feature = "debug-print")]
+                        println!("Applying last move: {} {} {} {} {}", last_move.piece, last_move.x, last_move.y, last_move.is_flipped, last_move.rotation);
                         game_state.apply_move_unchecked(&last_move, turn.unwrap_or(0));
                         client.on_game_state_updated(game_state.clone());
                     } else {
