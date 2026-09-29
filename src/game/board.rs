@@ -110,3 +110,9 @@ impl Board {
         }
     }
 }
+
+impl Default for Board {
+    fn default() -> Self {
+        Self::new()
+    }
+}

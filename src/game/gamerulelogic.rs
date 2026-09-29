@@ -24,20 +24,20 @@ pub fn get_possible_moves(gamestate: &GameState) -> Vec<Move> {
     if *gamestate.get_round() == 1 {
         return get_possible_start_moves(gamestate);
     }
-    return get_possible_set_moves(gamestate);
+    get_possible_set_moves(gamestate)
 }
 
 /// Returns a vector of all possible moves for the current team in the first round.
 pub fn get_possible_start_moves(gamestate: &GameState) -> Vec<Move> {
     let mut moves: Vec<Move> = vec![];
-    let piece: &PieceType = &gamestate.get_starting_piece();
+    let piece: &PieceType = gamestate.get_starting_piece();
 
     for variant in piece.all_variants(true) {
         let (relative_coordinates, (rotation, is_flipped)) = variant;
 
         // Calculate the bounding box of the piece variant
-        let mut max_x = std::isize::MIN;
-        let mut max_y = std::isize::MIN;
+        let mut max_x = isize::MIN;
+        let mut max_y = isize::MIN;
 
         for coord in &relative_coordinates {
             if coord.x > max_x {
@@ -257,10 +257,7 @@ pub fn is_valid_move(gamestate: &GameState, m: &Move) -> bool {
         let board_x = m.x as isize + coord.x;
         let board_y = m.y as isize + coord.y;
 
-        if board_x < 0
-        || board_x >= BOARD_SIZE_I
-        || board_y < 0
-        || board_y >= BOARD_SIZE_I
+        if !(0..BOARD_SIZE_I).contains(&board_x) || !(0..BOARD_SIZE_I).contains(&board_y)
         {
             return false; // Out of bounds
         }
@@ -280,7 +277,7 @@ pub fn is_valid_move(gamestate: &GameState, m: &Move) -> bool {
             let nx = cell.x + dx;
             let ny = cell.y + dy;
 
-            if nx < 0 || nx >= BOARD_SIZE_I || ny < 0 || ny >= BOARD_SIZE_I {
+            if !(0..BOARD_SIZE_I).contains(&nx) || !(0..BOARD_SIZE_I).contains(&ny) {
                 continue;
             }
 
@@ -294,7 +291,7 @@ pub fn is_valid_move(gamestate: &GameState, m: &Move) -> bool {
             let nx = cell.x + dx;
             let ny = cell.y + dy;
 
-            if nx < 0 || nx >= BOARD_SIZE_I || ny < 0 || ny >= BOARD_SIZE_I {
+            if !(0..BOARD_SIZE_I).contains(&nx) || !(0..BOARD_SIZE_I).contains(&ny) {
                 continue;
             }
 
@@ -305,7 +302,7 @@ pub fn is_valid_move(gamestate: &GameState, m: &Move) -> bool {
     }
 
     // Only enforce corner contact once the team has at least one tile on the board.
-    if !get_colored_fields(&*gamestate.get_board(), &m.color).is_empty() && !has_corner_contact {
+    if !get_colored_fields(gamestate.get_board(), &m.color).is_empty() && !has_corner_contact {
         return false;
     }
 

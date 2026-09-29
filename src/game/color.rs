@@ -13,6 +13,7 @@ impl Color {
             "YELLOW" => Color::Yellow,
             "RED" => Color::Red,
             "GREEN" => Color::Green,
+            #[allow(clippy::panic)]
             _ => panic!("Unknown color: {}", s),
         }
     }
