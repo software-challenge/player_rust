@@ -27,13 +27,9 @@ auf Discord wenden.
 ## Eigenen Spieler erstellen
 
 1. Installiert Rust (mindestens Version 1.85 für 2024 edition) und Cargo (wird mit Rust installiert).
-2. Klont das Repository auf euren Rechner.
+2. Erzeugt über die Kommandozeile mit `cargo new best_player` ein neues Cargo-Projekt.
 3. Setzt eine beliebige Rust Entwicklungsumgebung auf und importiert das Projekt.
-4. Wechselt in der Kommandozeile in den `examples/random_player` Ordner.
-5a. Führt `cargo init` aus, um ein neues Cargo-Projekt zu erstellen, welches den Zufallsspieler enthält. `random_player` ist in diesem Fall das Projektverzeichnis, in dem die folgenden `cargo` Befehle ausgeführt werden müssen.
-5b. Überspringt Schritte 2, 4: Alternativ könnt ihr auch `cargo new projekt_name` ausführen, um ein neues Cargo-Projekt zu erstellen.
-In diesem Fall wäre `projekt_name` das Projektverzeichnis, in dem die folgenden `cargo` Befehle ausgeführt werden müssen.
-Kopiert anschließend den Zufallsspieler oder folgende Spielervorlage in `main.rs`:
+4. Kopiert anschließend den Zufallsspieler oder folgende Spielervorlage in `main.rs`:
 
 ```rust
 use socha::prelude::*;
@@ -65,8 +61,8 @@ fn main() {
 }
 ```
 
-6. Führt `cargo add socha` aus, um die Bibliothek zu eurem Projekt hinzuzufügen.
-7. Startet euren Spieler mit `cargo run` und verbindet ihn mit dem Spielserver (siehe den [Ein-neues-Spiel-erstellen](https://docs.software-challenge.de/grundlagen/server#ein-neues-spiel-erstellen) Guide mit einem "Manuell gestarteten Computerspieler")
+5. Führt `cargo add socha` aus, um die Bibliothek zu eurem Projekt hinzuzufügen.
+6. Startet euren Spieler mit `cargo run` und verbindet ihn mit dem Spielserver (siehe den [Ein-neues-Spiel-erstellen](https://docs.software-challenge.de/grundlagen/server#ein-neues-spiel-erstellen) Guide mit einem "Manuell gestarteten Computerspieler")
 
 ## Schnittstelle
 
