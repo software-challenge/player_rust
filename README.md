@@ -29,7 +29,7 @@ auf Discord wenden.
 1. Installiert Rust (mindestens Version 1.85 für 2024 edition) und Cargo (wird mit Rust installiert).
 2. Erzeugt über die Kommandozeile mit `cargo new best_player` ein neues Cargo-Projekt.
 3. Setzt eine beliebige Rust Entwicklungsumgebung auf und importiert das Projekt.
-4. Kopiert anschließend den Zufallsspieler oder folgende Spielervorlage in `main.rs`:
+4. Kopiert anschließend den Zufallsspieler (siehe `examples/basic_player`) oder folgende Spielervorlage in `main.rs`:
 
 ```rust
 use socha::prelude::*;
