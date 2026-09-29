@@ -72,7 +72,7 @@ Die folgenden Befehle könnne beim starten des Spielers mit angehangen werden.\
 Diese Befehle sind vorallem für das Contest-System relevant, weil es damit dem Spieler die benötigten Informationen übergibt.
 
 | **Befehl** | **Beschreibung** | **Standart** |
-| :---  | :---  | :---: | 
+| :--- | :--- | :---: | 
 | **-h, --host** | Der Host, zu dem eine Verbindung hergestellt werden soll. | 'localhost' |
 | **-p, --port** | Der Port des Hosts. | 13050 | 
 | **-r, --reservation** | Reservierungscode für ein vorbereitetes Spiel. | / |
