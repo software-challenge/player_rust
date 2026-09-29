@@ -1,31 +1,16 @@
-use std::{fmt::Error, str::FromStr};
+use std::{str::FromStr};
 use xml::{EventReader, reader::XmlEvent};
 
-use crate::connection::parser::message::Message;
+use crate::{
+    connection::parser::message::Message,
+    game::team::Team
+};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct GameResult {
     winner_team: Option<Team>,
     regular: bool,
     reason: Box<str>,
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum Team {
-    One,
-    Two,
-}
-
-impl FromStr for Team {
-    type Err = std::fmt::Error;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match s.trim().to_lowercase().as_str() {
-            "one" => Ok(Team::One),
-            "two" => Ok(Team::Two),
-            _ => Err(Error)
-        }
-    }
 }
 
 pub fn parse_result(mut parser: EventReader<&[u8]>) -> Box<Message> {

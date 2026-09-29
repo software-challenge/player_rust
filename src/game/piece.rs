@@ -1,3 +1,7 @@
+#[cfg(test)]
+#[path = "tests/piece.rs"]
+mod tests;
+
 use std::{fmt, str::FromStr};
 
 use crate::game::{
@@ -280,85 +284,6 @@ impl FromStr for PieceType {
             "PENTO_X" => Ok(PieceType::PentoX),
             "PENTO_Y" => Ok(PieceType::PentoY),
             _ => Err(ParsePieceTypeError),
-        }
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::{Piece, PieceType};
-    use crate::{game::rotation::Rotation, game::coordinate::Coordinate};
-
-    fn sorted_xy(coordinates: Vec<Coordinate>) -> Vec<(isize, isize)> {
-        let mut xy: Vec<(isize, isize)> = coordinates
-            .into_iter()
-            .map(|coord| (coord.x, coord.y))
-            .collect();
-        xy.sort_unstable();
-        xy
-    }
-
-    #[test]
-    fn pento_r_get_coordinates_all_8_variants() {
-        let cases: Vec<(Rotation, bool, Vec<(isize, isize)>)> = vec![
-            (
-                Rotation::None,
-                false,
-                vec![(2, 0), (0, 1), (1, 1), (2, 1), (1, 2)],
-            ),
-            (
-                Rotation::Right,
-                false,
-                vec![(2, 2), (1, 0), (1, 1), (1, 2), (0, 1)],
-            ),
-            (
-                Rotation::Mirror,
-                false,
-                vec![(0, 2), (2, 1), (1, 1), (0, 1), (1, 0)],
-            ),
-            (
-                Rotation::Left,
-                false,
-                vec![(0, 0), (1, 2), (1, 1), (1, 0), (2, 1)],
-            ),
-            (
-                Rotation::None,
-                true,
-                vec![(0, 0), (2, 1), (1, 1), (0, 1), (1, 2)],
-            ),
-            (
-                Rotation::Right,
-                true,
-                vec![(0, 2), (1, 0), (1, 1), (1, 2), (2, 1)],
-            ),
-            (
-                Rotation::Mirror,
-                true,
-                vec![(2, 2), (0, 1), (1, 1), (2, 1), (1, 0)],
-            ),
-            (
-                Rotation::Left,
-                true,
-                vec![(2, 0), (1, 2), (1, 1), (1, 0), (0, 1)],
-            ),
-        ];
-
-        for (rotation, is_flipped, expected) in cases {
-            let piece = Piece::new(PieceType::PentoR, rotation, is_flipped);
-            let actual = sorted_xy(piece.get_coordinates());
-
-            assert_eq!(
-                actual,
-                sorted_xy(
-                    expected
-                        .into_iter()
-                        .map(|(x, y)| Coordinate::new(x, y))
-                        .collect()
-                ),
-                "unexpected coordinates for rotation={:?}, is_flipped={}",
-                rotation,
-                is_flipped
-            );
         }
     }
 }

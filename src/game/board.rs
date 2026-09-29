@@ -1,3 +1,7 @@
+#[cfg(test)]
+#[path = "tests/board.rs"]
+mod tests;
+
 use crate::game::{
     color::Color,
     piece::{Piece},
@@ -10,10 +14,27 @@ pub struct Board {
 }
 
 impl Board {
+    /// Creates a new empty board with all cells set to None.
     pub fn new() -> Self {
         Board {
             board: [[None; BOARD_SIZE]; BOARD_SIZE],
         }
+    }
+
+    /// Returns the number of tiles of the given color on the board.
+    /// Calculates the count every time it is called, which may be inefficient for frequent calls.
+    pub fn get_colored_tiles(&self, color: &Color) -> u8 {
+        let mut num = 0;
+        for row in self.board.iter() {
+            for cell in row.iter() {
+                if let Some(cell_color) = cell {
+                    if cell_color == color {
+                        num += 1;
+                    }
+                }
+            }
+        }
+        num
     }
 
     /// Returns the Color of the given cell (x, y) on the board, or None if the cell is empty or out of bounds.
