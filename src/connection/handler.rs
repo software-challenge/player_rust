@@ -112,12 +112,12 @@ impl<S: ParserStrategy> ConnectionHandler<Joined, S> {
         write!(move_xml, "<room roomId=\"{}\">", self.get_room_id())?;
 
         if m.skip {
-            write!(move_xml, "<data class=\"sc.plugin2027.SkipMove\"><color>{}</color></data></room>", m.color.to_string())?;
+            write!(move_xml, "<data class=\"sc.plugin2027.SkipMove\"><color>{}</color></data></room>", m.color)?;
         } else {
             write!(move_xml, "<data class=\"sc.plugin2027.SetMove\"><piece color=\"{}\" kind=\"{}\" rotation=\"{}\" isFlipped=\"{}\"><position x=\"{}\" y=\"{}\"/></piece></data></room>",
-            m.color.to_string(),
+            m.color,
             m.piece,
-            m.rotation.to_string(),
+            m.rotation,
             m.is_flipped,
             m.x,
             m.y)?;
