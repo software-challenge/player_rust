@@ -17,6 +17,18 @@ impl Color {
             _ => panic!("Unknown color: {}", s),
         }
     }
+impl TryFrom<&str> for Color {
+    type Error = String;
+
+    fn try_from(s: &str) -> Result<Self, Self::Error> {
+        match s {
+            "BLUE" => Ok(Color::Blue),
+            "YELLOW" => Ok(Color::Yellow),
+            "RED" => Ok(Color::Red),
+            "GREEN" => Ok(Color::Green),
+            _ => Err(format!("Unknown color: {s}")),
+        }
+    }
 }
 
 impl std::fmt::Display for Color {
