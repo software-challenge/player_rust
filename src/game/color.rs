@@ -6,17 +6,6 @@ pub enum Color {
     Green,
 }
 
-impl Color {
-    pub fn from_string(s: &str) -> Self {
-        match s {
-            "BLUE" => Color::Blue,
-            "YELLOW" => Color::Yellow,
-            "RED" => Color::Red,
-            "GREEN" => Color::Green,
-            #[allow(clippy::panic)]
-            _ => panic!("Unknown color: {}", s),
-        }
-    }
 impl TryFrom<&str> for Color {
     type Error = String;
 
