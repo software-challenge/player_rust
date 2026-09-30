@@ -26,9 +26,10 @@ debug-recv-comm-log = []
 
 [lints.clippy]
 unwrap_used = "warn"
-expect_used = "warn"
 indexing_slicing = "warn"
 panic = "warn"
+expect_used = "allow"
+expect_fun_call = "allow"
 
 [[bench]]
 name = "xml_bench"
