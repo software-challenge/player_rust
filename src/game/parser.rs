@@ -116,8 +116,8 @@ fn parse_skip_move(reader: &mut Reader<&[u8]>) -> Result<Move, Box<dyn std::erro
     loop {
         match reader.read_event()? {
             Event::Start(c) if c.name().0 == "color" =>  next_text_is_color = true,
-            Event::Text(t) if next_text_is_color=> {
-                let color = Color::from_string(&t);
+            Event::Text(text) if next_text_is_color => {
+                let color = Color::try_from(text.as_ref()).expect(format!("Server returned invalid color: {}", text.as_ref()).as_str());
                 return Ok(Move::new(color, PieceType::Domino, 0, 0, false, Rotation::None, true));
             }
             Event::Eof => {
@@ -147,7 +147,7 @@ fn parse_set_move(reader: &mut Reader<&[u8]>) -> Result<Move, Box<dyn std::error
                 for attr in p.attributes() {
                     let attr = attr?;
                     match attr.key.0 {
-                        "color" => {color = Some(Color::from_string(attr.value.as_ref()))}
+                        "color" => {color = Some(Color::try_from(attr.value.as_ref()).expect(format!("Server returned invalid color: {}", attr.value).as_str()))}
                         "kind" => {piece_type = Some(PieceType::from_str(attr.value.as_ref()).map_err(|_| 
                         io::Error::new(io::ErrorKind::InvalidData,"Received turn data but no class"
                         ))?)}
@@ -215,7 +215,7 @@ fn _parse_game_board(reader: &mut Reader<&[u8]>) -> Result<Board, Box<dyn std::e
                     match attr.key.0 {
                         "x" => {x = Some(usize::from_str(attr.value.as_ref())?)}
                         "y" => {y = Some(usize::from_str(attr.value.as_ref())?)}
-                        "content" => {content = Some(Color::from_string(attr.value.as_ref()))}
+                        "content" => {content = Some(Color::try_from(attr.value.as_ref()).expect(format!("Server returned invalid color: {}", attr.value).as_str()))}
                         _ => {}
                     }
                 }
