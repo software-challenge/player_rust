@@ -30,6 +30,15 @@ jobs:
       - name: Run tests
         run: cargo test --workspace --verbose
 
+  readme:
+    name: README
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check if README example code is identical to examples/basic_player/main.rs
+        run: python3 .github/scripts/check_readme_example.py
+
   clippy:
     name: Clippy
     runs-on: ubuntu-latest
