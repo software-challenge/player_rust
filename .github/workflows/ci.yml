@@ -37,11 +37,32 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Cache cargo-msrv
+        id: cache-cargo-msrv
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/bin/cargo-msrv
+            ~/.cargo/registry
+            ~/.cargo/git
+          key: ${{ runner.os }}-cargo-msrv-v0.16.0
+
       - name: Install cargo-msrv
+        if: steps.cache-cargo-msrv.outputs.cache-hit != 'true'
         run: cargo install cargo-msrv --locked
 
-      - name: Verify declared minimum Rust version
+      - name: Verify declared MSRV
+        id: verify-msrv
+        continue-on-error: true
         run: cargo msrv verify -- cargo test --workspace --all-features
+
+      - name: Find actual MSRV after verification failure
+        if: ${{ failure() && steps.verify-msrv.outcome == 'failure' }}
+        run: cargo msrv find -- cargo test --workspace --all-features
+
+      - name: Fail when declared MSRV is invalid
+        if: ${{ steps.verify-msrv.outcome == 'failure' }}
+        run: exit 1
 
   readme:
     name: README
