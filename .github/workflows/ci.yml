@@ -78,7 +78,7 @@ jobs:
       - name: Check if README example code is identical to examples/basic_player/main.rs
         run: python3 .github/scripts/check_readme_example.py
 
-      - name: Check if README minimum version and edition are identical to Cargo.toml
+      - name: Check if README version and edition markers match Cargo.toml
         run: python3 .github/scripts/check_readme_version_and_edition.py
 
   clippy:

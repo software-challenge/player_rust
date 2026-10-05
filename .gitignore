@@ -3,3 +3,5 @@ buffer.xml
 incoming_xml_log.txt
 
 connection_log.xml
+
+**/__pycache__/**

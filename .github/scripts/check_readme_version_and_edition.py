@@ -28,26 +28,27 @@ def parse_cargo_metadata() -> tuple[str, str]:
     return rust_version, edition
 
 
-def parse_readme_metadata() -> tuple[str, str]:
+def parse_readme_metadata() -> tuple[list[str], list[str]]:
     text = README_PATH.read_text(encoding="utf-8")
-    section = re.search(
-        r"(?ms)^## Eigenen Spieler erstellen\s*$\n(.*?)(?=^## |\Z)",
-        text,
-    )
-    if section is None:
-        raise ValueError("Could not find the 'Eigenen Spieler erstellen' section in README.md.")
 
-    match = re.search(
-        r"mindestens\s+Version\s+(?P<version>\d+\.\d+)\s+für\s+(?P<edition>\d{4})\s+Edition",
-        section.group(1),
-        re.IGNORECASE,
-    )
-    if match is None:
-        raise ValueError(
-            "Could not find the README Rust version/edition line in the 'Eigenen Spieler erstellen' section."
+    def extract_values(name: str) -> list[str]:
+        marker = re.escape(name)
+        matches = re.findall(
+            rf"<!--\s*{marker}\s*-->(.*?)<!--\s*/{marker}\s*-->",
+            text,
+            re.DOTALL,
         )
+        if not matches:
+            raise ValueError(
+                f"Expected at least one README HTML marker pair for '{name}', found none."
+            )
 
-    return match.group("version"), match.group("edition")
+        values = [value.strip() for value in matches]
+        if any(not value for value in values):
+            raise ValueError(f"README HTML marker for '{name}' is empty.")
+        return values
+
+    return extract_values("rust-version"), extract_values("edition")
 
 
 def main() -> int:
@@ -58,20 +59,22 @@ def main() -> int:
         return 1
 
     try:
-        readme_rust_version, readme_edition = parse_readme_metadata()
+        readme_rust_versions, readme_editions = parse_readme_metadata()
     except (FileNotFoundError, ValueError) as exc:
         print(str(exc), file=sys.stderr)
         return 1
 
     mismatches: list[str] = []
-    for label, expected, actual in (
-        ("rust-version", cargo_rust_version, readme_rust_version),
-        ("edition", cargo_edition, readme_edition),
+    for label, expected, actual_values in (
+        ("rust-version", cargo_rust_version, readme_rust_versions),
+        ("edition", cargo_edition, readme_editions),
     ):
-        if actual != expected:
-            mismatches.append(
-                f"README {label} is '{actual}' but Cargo.toml declares '{expected}'."
-            )
+        for occurrence, actual in enumerate(actual_values, start=1):
+            if actual != expected:
+                mismatches.append(
+                    f"README {label} marker #{occurrence} is '{actual}' "
+                    f"but Cargo.toml declares '{expected}'."
+                )
 
     if mismatches:
         for message in mismatches:
