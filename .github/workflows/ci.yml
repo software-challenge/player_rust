@@ -30,6 +30,18 @@ jobs:
       - name: Run tests
         run: cargo test --workspace --verbose
 
+  msrv:
+    name: MSRV
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install cargo-msrv
+        run: cargo install cargo-msrv --locked
+
+      - name: Verify declared minimum Rust version
+        run: cargo msrv verify -- cargo test --workspace --all-features
+
   readme:
     name: README
     runs-on: ubuntu-latest
