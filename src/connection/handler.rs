@@ -79,6 +79,9 @@ impl<S: ParserStrategy> ConnectionHandler<Connected, S> {
         };
         
         // Receive the welcome message from the server and read it into the buffer
+        #[cfg(feature = "debug-recv-comm-log")]
+        let buffer = read_message_to_buffer(&mut self.connection, &mut self.log_file)?;
+        #[cfg(not(feature = "debug-recv-comm-log"))]
         let buffer = read_message_to_buffer(&mut self.connection)?;
 
         if buffer.is_empty() {
@@ -133,6 +136,9 @@ impl<S: ParserStrategy> ConnectionHandler<Joined, S> {
 
     /// Reads a new message from the server, parses it, and returns the parsed message
     pub fn get_new_message(&mut self) -> Result<Box<Message>, Box<dyn std::error::Error>> {
+        #[cfg(feature = "debug-recv-comm-log")]
+        let buffer: Vec<u8> = read_message_to_buffer(&mut self.connection, &mut self.log_file)?;
+        #[cfg(not(feature = "debug-recv-comm-log"))]
         let buffer: Vec<u8> = read_message_to_buffer(&mut self.connection)?;
 
         if buffer.is_empty() {
@@ -224,10 +230,16 @@ fn xml_payload_from_buffer(buffer: &[u8]) -> &[u8] {
     &buffer[start..]
 }
 
-fn read_message_to_buffer(tcp_stream: &mut TcpStream) -> Result<Vec<u8>, Box<dyn std::error::Error>> {
+fn read_message_to_buffer(
+    tcp_stream: &mut TcpStream,
+    #[cfg(feature = "debug-recv-comm-log")] log_file: &mut std::fs::File,
+) -> Result<Vec<u8>, Box<dyn std::error::Error>> {
     let mut buffer = Vec::new();
 
     loop {
+        #[cfg(feature = "debug-recv-comm-log")]
+        let number_of_new_bytes = read_to_buffer(tcp_stream, &mut buffer, log_file)?;
+        #[cfg(not(feature = "debug-recv-comm-log"))]
         let number_of_new_bytes = read_to_buffer(tcp_stream, &mut buffer)?;
 
         if number_of_new_bytes == 0 {
@@ -240,7 +252,11 @@ fn read_message_to_buffer(tcp_stream: &mut TcpStream) -> Result<Vec<u8>, Box<dyn
     }
 }
 
-fn read_to_buffer(tcp_stream: &mut TcpStream, buffer: &mut Vec<u8>) -> Result<usize, Box<dyn std::error::Error>> {
+fn read_to_buffer(
+    tcp_stream: &mut TcpStream,
+    buffer: &mut Vec<u8>,
+    #[cfg(feature = "debug-recv-comm-log")] log_file: &mut std::fs::File,
+) -> Result<usize, Box<dyn std::error::Error>> {
     let start_len = buffer.len();
     buffer.resize(start_len + 4096, 0);
 
@@ -254,9 +270,9 @@ fn read_to_buffer(tcp_stream: &mut TcpStream, buffer: &mut Vec<u8>) -> Result<us
 
             #[cfg(feature = "debug-recv-comm-log")]
             {
-            self.log_file.write_all(&buffer[start_len..start_len + b])?;
-            self.log_file.write_all(b"\n")?;
-            self.log_file.flush()?;
+                log_file.write_all(&buffer[start_len..start_len + b])?;
+                log_file.write_all(b"\n")?;
+                log_file.flush()?;
             }
 
             Ok(b)
