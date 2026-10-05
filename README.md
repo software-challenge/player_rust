@@ -30,6 +30,17 @@ auf Discord wenden.
 
 In `examples` können Beispiel-Implementierungen für Spieler gefunden werden.
 
+## Veröffentlichung (Maintainer)
+
+Veröffentlichungen werden über den GitHub-Actions-Workflow **Release** gestartet:
+
+1. Öffne im Repository **Actions → Release → Run workflow** und wähle den Branch `main`.
+2. Gib die neue Version im Format `season.breaking.fixes` ein, zum Beispiel `27.0.6`. Die dritte Zahl zählt gemeinsame Fixes und Features.
+3. Der Workflow prüft, dass die Version noch nicht auf crates.io oder als GitHub-Tag existiert, aktualisiert `Cargo.toml` und `Cargo.lock` und führt Tests, README-Prüfung, Clippy, Build und `cargo publish --dry-run` aus.
+4. Nur wenn alle Prüfungen erfolgreich sind, wird die Versionsänderung nach `main` gepusht, das Paket auf crates.io veröffentlicht und ein GitHub-Release mit dem Tag `v<version>` angelegt.
+
+Vor der ersten Veröffentlichung muss im Repository unter **Settings → Secrets and variables → Actions** ein Secret namens `CARGO_REGISTRY_TOKEN` mit einem crates.io-Veröffentlichungstoken angelegt werden. Der Workflow benötigt außerdem Schreibzugriff auf `main`; Branch-Protection-Regeln müssen dem `GITHUB_TOKEN` diesen Push erlauben.
+
 ## Eigenen Spieler erstellen
 
 1. Installiert Rust (mindestens Version 1.85 für 2024 edition) und Cargo (wird mit Rust installiert).
