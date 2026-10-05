@@ -137,6 +137,9 @@ jobs:
       - name: Verify package
         run: cargo publish --dry-run --locked --allow-dirty
 
+      - name: Prepare release notes
+        run: python3 .github/scripts/create_release_notes.py "$RELEASE_VERSION"
+
       - name: Authenticate with crates.io
         uses: rust-lang/crates-io-auth-action@v1
         id: auth
@@ -165,4 +168,4 @@ jobs:
           gh release create "v$RELEASE_VERSION" \
             --target "$RELEASE_COMMIT" \
             --title "v$RELEASE_VERSION" \
-            --generate-notes
+            --notes-file release-notes.md
