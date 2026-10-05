@@ -2,6 +2,10 @@
 
 ## Allgemein
 
+> [!WARNING]
+>
+> Diese Bibliothek befindet sich noch in der Entwicklung. Es können noch kleinere Änderungen an der Schnittstelle auftreten. Sollte das der Fall sein, werden wir im Release darauf hinweisen.
+
 Das ist die offizielle Rust-Bibliothek für die Programmierung von Spielern für die [Software-Challenge Germany](https://software-challenge.de/) auf [crates.io](https://crates.io/crates/socha).
 
 ## Features
