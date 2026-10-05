@@ -8,3 +8,40 @@
 
 # Fixes
 - #25
+
+
+## [27.0.4]
+
+# Changes
+- Replace xml-rs with quick-xml for better performance
+
+# Fixes 
+
+
+## [27.0.3]
+
+# Changes
+- Tests
+- Performance update for calculating points
+- Fix readme
+
+# Fixes 
+
+## [27.0.2]
+
+# Changes
+- Functions to calculate points by team and color in game state
+- Function to calculate tiles of specified color
+- Refactoring
+
+# Fixes
+- #12 
+
+## [27.0.1]
+
+# Changes
+- Added some potentially missing derives
+- Refactored code that switches unnecessarily between isize and usize
+
+# Fixes
+- #5 
