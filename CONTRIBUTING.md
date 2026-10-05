@@ -15,3 +15,12 @@ Dafür musss die neue Version angegeben werden, der Workflow aktualisiert automa
 Es werden dann verschiedene Tests ausgeführt um zu verifizieren, dass die neue Version funktioniert.
 Es wird außerdem vorrausgesetzt, dass es in ``CHANGELOG.md`` einen Eintrag für die neue Version gibt, in dem tatsächlich Änderungen stehen. Sollte dies nicht der Fall sein kann nicht gepublished werden.
 Wenn alle Vorraussetzungen erfüllt sind, pusht der Workflow die geupdateten Cargo Dateien in den main-Branch und veröffentlicht die neue Version auf Crates.io und Github.
+
+### Versionierung
+
+saison.breaking-changes.fixes-features-and-co
+
+Zum Beispiel bei `27.1.2`:
+- 27: Saison 2026/27
+- 1:  Es wurde eine Änderung an der Schüler API gemacht
+- 2:  Nach dieser Änderungen wurden zwei Versionen mit normalen Änderungen veröffentlicht
