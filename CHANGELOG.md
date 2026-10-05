@@ -1,5 +1,15 @@
 # Changelog
 
+## [27.0.6]
+
+# Changes
+- Adds more CI tests
+- Adds deployment action
+- Corrected the minimum rust version 
+
+# Fixes
+- #28
+
 ## [27.0.5]
 
 # Changes
