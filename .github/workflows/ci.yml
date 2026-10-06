@@ -28,13 +28,13 @@ jobs:
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
 
       - name: Test default features
-        run: cargo test --workspace --verbose
+        run: cargo test --locked --workspace --verbose
 
       - name: Test without default features
-        run: cargo test --workspace --no-default-features --verbose
+        run: cargo test --locked --workspace --no-default-features --verbose
 
       - name: Test all features
-        run: cargo test --workspace --all-features --verbose
+        run: cargo test --locked --workspace --all-features --verbose
 
   msrv:
     name: MSRV
@@ -59,11 +59,11 @@ jobs:
       - name: Verify declared MSRV
         id: verify-msrv
         continue-on-error: true
-        run: cargo msrv verify -- cargo test --workspace --all-features
+        run: cargo msrv verify -- cargo test --locked --workspace --all-features
 
       - name: Find actual MSRV after verification failure
         if: ${{ steps.verify-msrv.outcome == 'failure' }}
-        run: cargo msrv find -- cargo test --workspace --all-features
+        run: cargo msrv find -- cargo test --locked --workspace --all-features
 
       - name: Fail when declared MSRV is invalid
         if: ${{ steps.verify-msrv.outcome == 'failure' }}
@@ -103,7 +103,7 @@ jobs:
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
 
       - name: Clippy
-        run: cargo clippy --workspace --lib --tests -- -D warnings
+        run: cargo clippy --locked --workspace --lib --tests -- -D warnings
 
   build:
     name: Build
@@ -126,7 +126,7 @@ jobs:
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
 
       - name: Build (debug)
-        run: cargo build --workspace --verbose
+        run: cargo build --locked --workspace --verbose
 
   example-integration:
     name: Example integration test
@@ -248,7 +248,7 @@ jobs:
               > "$logs/random-player-$example.log" 2>&1 &
             random_player_pid=$!
 
-            timeout --signal=TERM 240s cargo run --all-features --example "$example" -- --port 13051 \
+            timeout --signal=TERM 240s cargo run --locked --all-features --example "$example" -- --port 13051 \
               > "$logs/$example.log" 2>&1
             wait "$random_player_pid"
             random_player_pid=
