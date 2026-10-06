@@ -130,3 +130,117 @@ jobs:
 
       - name: Build (debug)
         run: cargo build --workspace --verbose
+
+  example-integration:
+    name: Example integration test
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: actions-rust-lang/setup-rust-toolchain@v2
+        with:
+          toolchain: stable
+
+      - name: Install Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - name: Download latest backend test assets
+        id: backend
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          release="$(curl --fail --silent --show-error --retry 3 \
+            https://api.github.com/repos/software-challenge/backend/releases/latest)"
+          server_url="$(jq -er '.assets[] | select(.name == "software-challenge-server.zip") | .browser_download_url' <<< "$release")"
+          random_player_url="$(jq -er '.assets[] | select((.name | startswith("randomplayer-blokus-")) and (.name | endswith(".jar"))) | .browser_download_url' <<< "$release")"
+
+          backend_dir="$RUNNER_TEMP/backend"
+          mkdir -p "$backend_dir/server"
+          curl --fail --location --silent --show-error --retry 3 "$server_url" \
+            --output "$backend_dir/server.zip"
+          curl --fail --location --silent --show-error --retry 3 "$random_player_url" \
+            --output "$backend_dir/randomplayer.jar"
+          unzip -q "$backend_dir/server.zip" -d "$backend_dir/server"
+
+          server_jar="$(find "$backend_dir/server" -type f -name server.jar -print -quit)"
+          if [[ -z "$server_jar" ]]; then
+            echo "::error::The latest backend server archive did not contain server.jar."
+            exit 1
+          fi
+
+          echo "server_dir=$(dirname "$server_jar")" >> "$GITHUB_OUTPUT"
+          echo "random_player_jar=$backend_dir/randomplayer.jar" >> "$GITHUB_OUTPUT"
+
+      - name: Run basic_player against the test server
+        env:
+          SERVER_DIR: ${{ steps.backend.outputs.server_dir }}
+          RANDOM_PLAYER_JAR: ${{ steps.backend.outputs.random_player_jar }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          logs="$RUNNER_TEMP/example-integration-logs"
+          mkdir -p "$logs"
+          server_pid=
+          random_player_pid=
+
+          cleanup() {
+            status=$?
+            for pid in "$random_player_pid" "$server_pid"; do
+              if [[ -n "$pid" ]]; then
+                kill "$pid" 2>/dev/null || true
+                wait "$pid" 2>/dev/null || true
+              fi
+            done
+            if [[ "$status" -ne 0 ]]; then
+              for log in "$logs"/*.log; do
+                if [[ -f "$log" ]]; then
+                  echo "::group::$(basename "$log")"
+                  cat "$log"
+                  echo "::endgroup::"
+                fi
+              done
+            fi
+          }
+          trap cleanup EXIT
+
+          (
+            cd "$SERVER_DIR"
+            java -Dfile.encoding=UTF-8 -Dlogback.configurationFile=logback.xml \
+              -jar server.jar --port 13051
+          ) > "$logs/server.log" 2>&1 &
+          server_pid=$!
+
+          server_ready=false
+          for _ in {1..30}; do
+            if ! kill -0 "$server_pid" 2>/dev/null; then
+              echo "::error::The backend test server exited before becoming ready."
+              exit 1
+            fi
+            if (echo > /dev/tcp/127.0.0.1/13051) 2>/dev/null; then
+              server_ready=true
+              break
+            fi
+            sleep 1
+          done
+          if [[ "$server_ready" != true ]]; then
+            echo "::error::The backend test server did not listen on port 13051 within 30 seconds."
+            exit 1
+          fi
+
+          timeout --signal=TERM 240s java -jar "$RANDOM_PLAYER_JAR" --port 13051 \
+            > "$logs/random-player.log" 2>&1 &
+          random_player_pid=$!
+
+          timeout --signal=TERM 240s cargo run --example basic_player -- --port 13051 \
+            > "$logs/basic-player.log" 2>&1
+          wait "$random_player_pid"
+          random_player_pid=
+
+          cat "$logs/basic-player.log"
