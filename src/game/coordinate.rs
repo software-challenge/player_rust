@@ -71,6 +71,7 @@ pub fn normalize_coordinates(coordinates: &mut [Coordinate]) {
     };
 
     let (mut min_x, mut min_y) = (first.x, first.y);
+    #[allow(clippy::indexing_slicing)]
     for coord in &coordinates[1..] {
         min_x = min_x.min(coord.x);
         min_y = min_y.min(coord.y);
