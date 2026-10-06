@@ -223,7 +223,7 @@ jobs:
               echo "::error::The backend test server exited before becoming ready."
               exit 1
             fi
-            if (echo > /dev/tcp/127.0.0.1/13051) 2>/dev/null; then
+            if grep -q "Listening on port 13051 for incoming connections." "$logs/server.log"; then
               server_ready=true
               break
             fi
