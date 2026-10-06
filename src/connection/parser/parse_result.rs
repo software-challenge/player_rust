@@ -53,10 +53,10 @@ pub struct Entry {
     pub score: Score,
 }
 
-/// A player identified by name and team (both are attributes).
+/// A player identified by name and team; unnamed players omit the name attribute.
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
 pub struct Player {
-    #[serde(rename = "@name")]
+    #[serde(rename = "@name", default)]
     pub name: String,
 
     #[serde(rename = "@team")]
@@ -87,4 +87,47 @@ pub struct Winner {
 
 pub fn parse_result(xml: &str) -> Box<Message> {
     Box::from(Message::Result(from_str(xml).expect("Failed to parse game result")))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn parse_result_allows_players_without_display_names() {
+        let xml = r#"
+            <data class="result">
+              <definition>
+                <fragment name="winner">
+                  <aggregation>SUM</aggregation>
+                  <relevantForRanking>true</relevantForRanking>
+                </fragment>
+              </definition>
+              <scores>
+                <entry>
+                  <player team="ONE"/>
+                  <score><part>1</part></score>
+                </entry>
+                <entry>
+                  <player team="TWO"/>
+                  <score><part>0</part></score>
+                </entry>
+              </scores>
+              <winner team="ONE" regular="true" reason="winner"/>
+            </data>
+        "#;
+
+        let Message::Result(Some(result)) = *parse_result(xml) else {
+            panic!("Expected a parsed game result");
+        };
+
+        assert_eq!(result.scores.entries.len(), 2);
+        assert!(
+            result
+                .scores
+                .entries
+                .iter()
+                .all(|entry| entry.player.name.is_empty())
+        );
+    }
 }
