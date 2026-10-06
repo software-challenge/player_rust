@@ -133,8 +133,9 @@ jobs:
 
   example-integration:
     name: Example integration test
+    description: Run the examples against the latest backend test server and random player.
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
 
@@ -177,7 +178,7 @@ jobs:
           echo "server_dir=$(dirname "$server_jar")" >> "$GITHUB_OUTPUT"
           echo "random_player_jar=$backend_dir/randomplayer.jar" >> "$GITHUB_OUTPUT"
 
-      - name: Run basic_player against the test server
+      - name: Run all examples against the test server
         env:
           SERVER_DIR: ${{ steps.backend.outputs.server_dir }}
           RANDOM_PLAYER_JAR: ${{ steps.backend.outputs.random_player_jar }}
@@ -234,13 +235,28 @@ jobs:
             exit 1
           fi
 
-          timeout --signal=TERM 240s java -jar "$RANDOM_PLAYER_JAR" --port 13051 \
-            > "$logs/random-player.log" 2>&1 &
-          random_player_pid=$!
+          mapfile -t examples < <(
+            cargo metadata --no-deps --format-version 1 |
+              jq -r --arg manifest "$GITHUB_WORKSPACE/Cargo.toml" \
+                '.packages[] | select(.manifest_path == $manifest) | .targets[] | select(.kind | index("example")) | .name' |
+              sort
+          )
+          if (( ${#examples[@]} == 0 )); then
+            echo "::error::Cargo did not report any example targets to test."
+            exit 1
+          fi
 
-          timeout --signal=TERM 240s cargo run --example basic_player -- --port 13051 \
-            > "$logs/basic-player.log" 2>&1
-          wait "$random_player_pid"
-          random_player_pid=
+          for example in "${examples[@]}"; do
+            echo "::group::Testing example: $example"
+            timeout --signal=TERM 240s java -jar "$RANDOM_PLAYER_JAR" --port 13051 \
+              > "$logs/random-player-$example.log" 2>&1 &
+            random_player_pid=$!
 
-          cat "$logs/basic-player.log"
+            timeout --signal=TERM 240s cargo run --all-features --example "$example" -- --port 13051 \
+              > "$logs/$example.log" 2>&1
+            wait "$random_player_pid"
+            random_player_pid=
+
+            cat "$logs/$example.log"
+            echo "::endgroup::"
+          done
