@@ -1,5 +1,14 @@
 # Changelog
 
+## [27.1.0]
+
+# Changes
+- Moved the API documentation from the README to Rust Docs comments
+
+# Breaking API changes
+
+# Fixes
+
 ## [27.0.6]
 
 # Changes
