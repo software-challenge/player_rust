@@ -436,11 +436,6 @@ Wenn die Zahl keinem dieser Werte entspricht, wird ein Fehler zurückgegeben.
 Mit ``to_string`` kann eine Rotation wieder in einen String umgewandelt werden.
 Das Ergebnis ist immer der jeweilige String in Großbuchstaben: ``"NONE"``, ``"RIGHT"``, ``"MIRROR"`` oder ``"LEFT"``.
 
-## Spiel spezifische Dateien im Library
-
-- game/*
-- connection/parser/*
-
 ## Nutzung und Anpassung
 
 Für die Teilnahme an der Software-Challenge dürfen alle Dateien aus diesem Repository beliebig verwendet und verändert werden.
