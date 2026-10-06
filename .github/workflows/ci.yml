@@ -81,8 +81,8 @@ jobs:
       - name: Check if README version and edition markers match Cargo.toml
         run: python3 .github/scripts/check_readme_version_and_edition.py
 
-  clippy:
-    name: Clippy
+  quality:
+    name: Code quality
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v5
@@ -101,6 +101,10 @@ jobs:
             ~/.cargo/git
             target
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: Formatting (disabled until existing formatting is fixed)
+        if: ${{ false }}
+        run: cargo fmt --all -- --check
 
       - name: Clippy
         run: cargo clippy --locked --workspace --lib --tests -- -D warnings
