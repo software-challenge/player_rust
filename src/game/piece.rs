@@ -35,11 +35,11 @@ impl Piece {
         let base_coordinates = self.piece_type.base_coordinates();
         let mut transformed_coordinates: Vec<Coordinate> = base_coordinates.to_vec();
 
-        transformed_coordinates = rotate_coordinates(transformed_coordinates, &self.rotation);  
+        rotate_coordinates(&mut transformed_coordinates, &self.rotation);
         if self.is_flipped { 
-            transformed_coordinates = flip_coordinates(transformed_coordinates);
+            flip_coordinates(&mut transformed_coordinates);
         }
-        transformed_coordinates = normalize_coordinates(&transformed_coordinates);
+        normalize_coordinates(&mut transformed_coordinates);
 
         transformed_coordinates
     }
@@ -131,11 +131,11 @@ impl PieceType {
             for &rotation in &[Rotation::None, Rotation::Right, Rotation::Mirror, Rotation::Left] {
                 let mut transformed_coordinates: Vec<Coordinate> = base_coordinates.to_vec();
 
-                transformed_coordinates = rotate_coordinates(transformed_coordinates, &rotation);  
+                rotate_coordinates(&mut transformed_coordinates, &rotation);
                 if flip { 
-                    transformed_coordinates = flip_coordinates(transformed_coordinates);
+                    flip_coordinates(&mut transformed_coordinates);
                 }
-                transformed_coordinates = normalize_coordinates(&transformed_coordinates);
+                normalize_coordinates(&mut transformed_coordinates);
 
                 if filter {
                     // Check if the transformed coordinates already exist in the variants vector
