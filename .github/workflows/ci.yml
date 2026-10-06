@@ -158,7 +158,7 @@ jobs:
           release="$(curl --fail --silent --show-error --retry 3 \
             https://api.github.com/repos/software-challenge/backend/releases/latest)"
           server_url="$(jq -er '.assets[] | select(.name == "software-challenge-server.zip") | .browser_download_url' <<< "$release")"
-          random_player_url="$(jq -er '.assets[] | select((.name | startswith("randomplayer-blokus-")) and (.name | endswith(".jar"))) | .browser_download_url' <<< "$release")"
+          random_player_url="$(jq -er '.assets[] | select((.name | startswith("randomplayer")) and (.name | endswith(".jar"))) | .browser_download_url' <<< "$release")"
 
           backend_dir="$RUNNER_TEMP/backend"
           mkdir -p "$backend_dir/server"
