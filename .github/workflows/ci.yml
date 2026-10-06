@@ -54,7 +54,7 @@ jobs:
 
       - name: Install cargo-msrv
         if: steps.cache-cargo-msrv.outputs.cache-hit != 'true'
-        run: cargo install cargo-msrv --locked
+        run: cargo install cargo-msrv --version 0.16.0 --locked
 
       - name: Verify declared MSRV
         id: verify-msrv
