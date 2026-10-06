@@ -12,6 +12,9 @@ Die Datei `parser.rs` enthält den Parser, der die Kommunikation mit dem Server 
 
 Die Dateien `board.rs`, `gamerulelogic.rs` und `gamestate.rs` enthalten zentrale Bestandteile der Spielimplementierung. Sie sollten bei der Entwicklung neuer Spiele nicht gelöscht werden, damit die API langfristig möglichst einheitlich bleibt.
 
+Neue spielbezogene Typen und Funktionen, die Teil der öffentlichen API sein sollen, müssen außerdem in `prelude.rs` exportiert werden, damit sie über `socha::prelude::*` verfügbar sind.
+Es sollte bei Anpassungen an dieser Datei überprüft werden, ob die Teilnehmer wie gewünscht Zugriff auf die API haben.
+
 Für alle Anpassungen an ein neues Spiel sollten unbedingt passende Tests hinzugefügt werden.
 
 ### Parser
