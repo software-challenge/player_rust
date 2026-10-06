@@ -134,6 +134,8 @@ jobs:
 
       - name: Build documentation
         run: cargo doc --locked --no-deps
+        env:
+          RUSTDOCFLAGS: -D warnings
 
   example-integration:
     name: Example integration test
