@@ -1,5 +1,23 @@
 # Entwicklerdokumentation
 
+## Commits
+
+Commits sollten in folgendem Format geschrieben werden: `prefix: Kurze Beschreibung`.
+Der Prefix wird vollständig kleingeschrieben. Die Beschreibung beginnt mit einem Großbuchstaben.
+
+Wir verwenden folgende Prefixe. Wenn keiner passt, verwende den am besten passenden oder ergänze einen neuen Prefix im gleichen Format.
+
+| **Prefix** | **Beschreibung** |
+| :--- | :--- | 
+| feat | Ergänzt eine neue Funktion oder Funktionalität. |
+| fix | Behebt einen Fehler oder eine Warnung im Code. |
+| refactor | Strukturiert oder verbessert den Code, ohne dessen Verhalten zu ändern. |
+| perf | Verbessert die Performance des betroffenen Codes, ohne dessen Verhalten zu ändern. |
+| test | Fügt Tests hinzu, ändert oder entfernt sie. |
+| build | Ändert den Build-Prozess, Abhängigkeiten oder die CI-Konfiguration. |
+| docs | Änderungen an der Readme, der Dokumentation oder ähnlichem. |
+| chore | Umfasst sonstige Wartungsarbeiten und Änderungen, die keinem anderen Prefix zuzuordnen sind. |
+
 ## Ordnerstruktur
 
 TBD
