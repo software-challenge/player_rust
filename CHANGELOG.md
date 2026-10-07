@@ -3,6 +3,7 @@
 ## [27.1.0]
 
 # Changes
+- Adds tests for the parser
 - Adds tests for examples to the CI
    - Because the tests are running games against the Java random player they are effectifly also tests for the client.
 - Cleans up the CI and ommits duplicate runs

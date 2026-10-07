@@ -66,7 +66,7 @@ pub struct Player {
 /// A list of scored parts (e.g. `<part>2</part><part>102</part>`).
 #[derive(Debug, Clone, PartialEq, Eq, Default, Deserialize)]
 pub struct Score {
-    #[serde(rename = "$text", default)]
+    #[serde(rename = "part", default)]
     pub parts: Vec<u64>,
 }
 
@@ -94,40 +94,86 @@ mod tests {
     use super::*;
 
     #[test]
-    fn parse_result_allows_players_without_display_names() {
+    fn test_parse_result_valid_xml() {
         let xml = r#"
             <data class="result">
-              <definition>
-                <fragment name="winner">
-                  <aggregation>SUM</aggregation>
-                  <relevantForRanking>true</relevantForRanking>
-                </fragment>
-              </definition>
-              <scores>
-                <entry>
-                  <player team="ONE"/>
-                  <score><part>1</part></score>
-                </entry>
-                <entry>
-                  <player team="TWO"/>
-                  <score><part>0</part></score>
-                </entry>
-              </scores>
-              <winner team="ONE" regular="true" reason="winner"/>
+                <definition>
+                    <fragment name="Siegpunkte">
+                    <aggregation>SUM</aggregation>
+                    <relevantForRanking>true</relevantForRanking>
+                    </fragment>
+                    <fragment name="Punkte">
+                    <aggregation>AVERAGE</aggregation>
+                    <relevantForRanking>true</relevantForRanking>
+                    </fragment>
+                </definition>
+                <scores>
+                    <entry>
+                    <player name="Spieler 1" team="ONE"/>
+                    <score>
+                        <part>2</part>
+                        <part>164</part>
+                    </score>
+                    </entry>
+                    <entry>
+                    <player name="Spieler 2" team="TWO"/>
+                    <score>
+                        <part>0</part>
+                        <part>82</part>
+                    </score>
+                    </entry>
+                </scores>
+                <winner team="ONE" regular="true" reason="Spieler 1 hat am meisten Punkte erzielt."/>
             </data>
-        "#;
+            "#;
 
-        let Message::Result(Some(result)) = *parse_result(xml) else {
-            panic!("Expected a parsed game result");
-        };
+        let result = parse_result(xml);
 
-        assert_eq!(result.scores.entries.len(), 2);
-        assert!(
-            result
-                .scores
-                .entries
-                .iter()
-                .all(|entry| entry.player.name.is_empty())
+        assert_eq!(
+            result.as_ref(),
+            &Message::Result(Some(GameResult {
+                definition: Definition {
+                    fragments: vec![
+                        Fragment {
+                            name: "Siegpunkte".to_owned(),
+                            aggregation: "SUM".to_owned(),
+                            relevant_for_ranking: true,
+                        },
+                        Fragment {
+                            name: "Punkte".to_owned(),
+                            aggregation: "AVERAGE".to_owned(),
+                            relevant_for_ranking: true,
+                        },
+                    ],
+                },
+                scores: Scores {
+                    entries: vec![
+                        Entry {
+                            player: Player {
+                                name: "Spieler 1".to_owned(),
+                                team: Team::One,
+                            },
+                            score: Score {
+                                parts: vec![2, 164]
+                            },
+                        },
+                        Entry {
+                            player: Player {
+                                name: "Spieler 2".to_owned(),
+                                team: Team::Two,
+                            },
+                            score: Score {
+                                parts: vec![0, 82]
+                            },
+                        },
+                    ],
+                },
+                winner: Winner {
+                    team: Some(Team::One),
+                    regular: true,
+                    reason: Some("Spieler 1 hat am meisten Punkte erzielt.".to_owned()),
+                },
+            }))
         );
     }
 }
