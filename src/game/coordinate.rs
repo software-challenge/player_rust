@@ -64,48 +64,38 @@ impl Coordinate {
     }
 }
 
-/// Normalizes the coordinates by translating them so that the minimum x and y values become (0, 0).
-pub fn normalize_coordinates(coordinates: &Vec<Coordinate>) -> Vec<Coordinate> {
-    let mut min_x = isize::MAX;
-    let mut min_y = isize::MAX;
+/// Normalizes the coordinates in place so that their minimum x and y values become (0, 0).
+/// Overwrites the original coordinates with the normalized values.
+pub fn normalize_coordinates(coordinates: &mut [Coordinate]) {
+    let Some(first) = coordinates.first() else {
+        return;
+    };
 
-    for coord in coordinates {
-        if coord.x < min_x {
-            min_x = coord.x;
-        }
-        
-        if coord.y < min_y {
-            min_y = coord.y;
-        }
+    let (mut min_x, mut min_y) = (first.x, first.y);
+    for coord in coordinates.iter().skip(1) {
+        min_x = min_x.min(coord.x);
+        min_y = min_y.min(coord.y);
     }
 
-    let mut normalized_coordinates: Vec<Coordinate> = Vec::new();
     for coord in coordinates {
-        normalized_coordinates.push(Coordinate { x: coord.x - min_x, y: coord.y - min_y });
+        coord.x -= min_x;
+        coord.y -= min_y;
     }
-
-    normalized_coordinates
 }
 
-/// Rotates the coordinates by the specified rotation (clockwise) relative to the coordinate origin.
+/// Rotates the coordinates in place clockwise relative to the coordinate origin.
 /// Does not normalize the coordinates after rotation, so the minimum x and y values may not be (0, 0).
-pub fn rotate_coordinates(coordinates: Vec<Coordinate>, rotation: &Rotation) -> Vec<Coordinate> {
-    let mut rotated_coordinates: Vec<Coordinate> = Vec::new();
-
+/// Overwrites the original coordinates with the normalized values.
+pub fn rotate_coordinates(coordinates: &mut [Coordinate], rotation: &Rotation) {
     for coord in coordinates {
-        rotated_coordinates.push(coord.rotate(rotation));
+        *coord = coord.rotate(rotation);
     }
-
-    rotated_coordinates
 }
 
-/// Flips the coordinates on the vertical axis (y-axis) relative to the coordinate origin.
-pub fn flip_coordinates(coordinates: Vec<Coordinate>) -> Vec<Coordinate> {
-    let mut flipped_coordinates: Vec<Coordinate> = Vec::new();
-
+/// Flips the coordinates in place on the vertical axis (y-axis) relative to the coordinate origin.
+/// Overwrites the original coordinates with the normalized values.
+pub fn flip_coordinates(coordinates: &mut [Coordinate]) {
     for coord in coordinates {
-        flipped_coordinates.push(coord.flip_on_vertical());
+        *coord = coord.flip_on_vertical();
     }
-
-    flipped_coordinates
 }
