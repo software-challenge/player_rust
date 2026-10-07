@@ -53,10 +53,10 @@ pub struct Entry {
     pub score: Score,
 }
 
-/// A player identified by name and team (both are attributes).
+/// A player identified by name and team; unnamed players omit the name attribute.
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
 pub struct Player {
-    #[serde(rename = "@name")]
+    #[serde(rename = "@name", default)]
     pub name: String,
 
     #[serde(rename = "@team")]
