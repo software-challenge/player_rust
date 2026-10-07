@@ -4,16 +4,16 @@
 
 # Changes
 - Refactored coordinate helper functions for better performance
+- Adds tests for the parser
+- Adds tests for examples to the CI
+   - Because the tests are running games against the Java random player they are effectifly also tests for the client.
+- Cleans up the CI and ommits duplicate runs
 
 # Breaking API changes
 - The coordinate helper functions now mutate the given vector. See for example [here](https://github.com/software-challenge/player_rust/commit/cffcc9abeb560dd41ee372d6f34acb4c07aee02d#diff-69c63c0aa0c9b3c376b7e9df60c2982dfb31c1beb01040042cca4ca80124c76f). 
 
 # Fixes
 - [#40](https://github.com/software-challenge/player_rust/issues/40)
-- Adds tests for the parser
-- Adds tests for examples to the CI
-   - Because the tests are running games against the Java random player they are effectifly also tests for the client.
-- Cleans up the CI and ommits duplicate runs
 - Edge case communication error
 
 ## [27.0.6]
