@@ -20,7 +20,45 @@ Wir verwenden folgende Prefixe. Wenn keiner passt, verwende den am besten passen
 
 ## Ordnerstruktur
 
-TBD
+```
+src/
+├── lib.rs            # declares the modules, nothing else
+├── client.rs         # the Client trait + the game loop (game-agnostic)
+├── prelude.rs        # re-exports the public API for convenient importing
+├── result.rs         # the Result
+│
+├── connection/       # everything about conversationing to the server
+│   ├── mod.rs
+│   ├── handler.rs    # ConnectionHandler (TCP, joining, reading, sending)
+│   └── parser/       # the wire-protocol parsers (game-agnostic)
+│       ├── mod.rs
+│       ├── message.rs        # the Message enum
+│       ├── parser_strategy.rs# the ParserStrategy trait
+│       ├── parse_joined.rs   # parses the join/welcome message
+│       └── parse_result.rs   # parses the game-result message
+│
+├── common/           # shared, game-independent building blocks
+│   ├── mod.rs
+│   ├── direction.rs  # e.g. Rotation / Direction
+│   ├── coordinate.rs # e.g. Coordinate
+│   └── ...           # anything reusable by most (not all) games
+│
+├── game/             # EVERYTHING specific to one game
+│   ├── mod.rs
+│   ├── parser.rs     # the concrete ParserStrategy for this game
+│   ├── board.rs
+│   ├── piece.rs
+│   ├── color.rs
+│   ├── team.rs
+│   ├── move.rs
+│   ├── gamestate.rs
+│   ├── gamerulelogic.rs
+│   └── constants.rs
+│
+└── util/             # developer-facing tooling, not part of the game
+    ├── mod.rs
+    └── cmdl_args.rs  # command-line argument parsing
+```
 
 ## Ein neues Spiel implementieren
 
