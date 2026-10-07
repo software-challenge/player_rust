@@ -65,6 +65,7 @@ impl Coordinate {
 }
 
 /// Normalizes the coordinates in place so that their minimum x and y values become (0, 0).
+/// Overwrites the original coordinates with the normalized values.
 pub fn normalize_coordinates(coordinates: &mut [Coordinate]) {
     let Some(first) = coordinates.first() else {
         return;
@@ -85,6 +86,7 @@ pub fn normalize_coordinates(coordinates: &mut [Coordinate]) {
 
 /// Rotates the coordinates in place clockwise relative to the coordinate origin.
 /// Does not normalize the coordinates after rotation, so the minimum x and y values may not be (0, 0).
+/// Overwrites the original coordinates with the normalized values.
 pub fn rotate_coordinates(coordinates: &mut [Coordinate], rotation: &Rotation) {
     for coord in coordinates {
         *coord = coord.rotate(rotation);
@@ -92,6 +94,7 @@ pub fn rotate_coordinates(coordinates: &mut [Coordinate], rotation: &Rotation) {
 }
 
 /// Flips the coordinates in place on the vertical axis (y-axis) relative to the coordinate origin.
+/// Overwrites the original coordinates with the normalized values.
 pub fn flip_coordinates(coordinates: &mut [Coordinate]) {
     for coord in coordinates {
         *coord = coord.flip_on_vertical();
