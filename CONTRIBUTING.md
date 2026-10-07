@@ -22,30 +22,30 @@ Wir verwenden folgende Prefixe. Wenn keiner passt, verwende den am besten passen
 
 ```
 src/
-├── lib.rs            # declares the modules, nothing else
-├── client.rs         # the Client trait + the game loop (game-agnostic)
-├── prelude.rs        # re-exports the public API for convenient importing
-├── result.rs         # the Result
+├── lib.rs            # deklariert die Module, sonst nichts
+├── client.rs         # das Client-Trait + die Spielschleife (spielunabhängig)
+├── prelude.rs        # re-exportiert die öffentliche API für einfachen Import
+├── result.rs         # das Resultat
 │
-├── connection/       # everything about conversationing to the server
+├── connection/       # alles rund um die Kommunikation mit dem Server
 │   ├── mod.rs
-│   ├── handler.rs    # ConnectionHandler (TCP, joining, reading, sending)
-│   └── parser/       # the wire-protocol parsers (game-agnostic)
+│   ├── handler.rs    # ConnectionHandler (TCP, Verbinden, Lesen, Senden)
+│   └── parser/       # die Protokoll-Parser (spielunabhängig)
 │       ├── mod.rs
-│       ├── message.rs        # the Message enum
-│       ├── parser_strategy.rs# the ParserStrategy trait
-│       ├── parse_joined.rs   # parses the join/welcome message
-│       └── parse_result.rs   # parses the game-result message
+│       ├── message.rs         # das Enum Message
+│       ├── parser_strategy.rs # das Trait ParserStrategy
+│       ├── parse_joined.rs    # verarbeitet die Join-/Welcome-Nachricht
+│       └── parse_result.rs    # verarbeitet die Spiel-Ergebnisnachricht
 │
-├── common/           # shared, game-independent building blocks
+├── common/           # gemeinsam genutzte, spielunabhängige Bausteine
 │   ├── mod.rs
-│   ├── direction.rs  # e.g. Rotation / Direction
-│   ├── coordinate.rs # e.g. Coordinate
-│   └── ...           # anything reusable by most (not all) games
+│   ├── direction.rs  # z. B. Rotation / Richtung
+│   ├── coordinate.rs # z. B. Coordinate
+│   └── ...           # alles, das von den meisten (aber nicht allen) Spielen wiederverwendet wird
 │
-├── game/             # EVERYTHING specific to one game
+├── game/             # ALLES, das für ein bestimmtes Spiel spezifisch ist
 │   ├── mod.rs
-│   ├── parser.rs     # the concrete ParserStrategy for this game
+│   ├── parser.rs     # der konkrete ParserStrategy für dieses Spiel
 │   ├── board.rs
 │   ├── piece.rs
 │   ├── color.rs
@@ -55,9 +55,9 @@ src/
 │   ├── gamerulelogic.rs
 │   └── constants.rs
 │
-└── util/             # developer-facing tooling, not part of the game
+└── util/             # entwicklerorientierte Werkzeuge, kein Teil des Spiels
     ├── mod.rs
-    └── cmdl_args.rs  # command-line argument parsing
+    └── cmdl_args.rs  # Analyse der Befehlszeilenargumente
 ```
 
 ## Ein neues Spiel implementieren
