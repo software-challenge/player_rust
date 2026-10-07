@@ -302,7 +302,7 @@ fn read_to_buffer(
 
 #[cfg(test)]
 mod tests {
-    use crate::connection::handler::{buffer_ends_with_room_tag, xml_payload_from_buffer};
+    use crate::connection::handler::{take_room_message, xml_payload_from_buffer};
     use crate::{connection::parser::message::Message, game::parser::Blokus2026};
 
     #[test]
