@@ -286,7 +286,8 @@ fn read_to_buffer(
 
 #[cfg(test)]
 mod tests {
-use crate::connection::handler::{buffer_ends_with_room_tag, xml_payload_from_buffer};
+    use crate::connection::handler::{buffer_ends_with_room_tag, xml_payload_from_buffer};
+    use crate::{connection::parser::message::Message, game::parser::Blokus2026};
 
     #[test]
     fn extracts_xml_payload_from_room_message() {
@@ -314,5 +315,48 @@ use crate::connection::handler::{buffer_ends_with_room_tag, xml_payload_from_buf
         buffer.truncate(payload.len());
 
         assert!(!buffer_ends_with_room_tag(&buffer));
+    }
+
+    #[test]
+    fn parses_move_request_message() {
+        let xml = br#"<room roomId="room123"><data class="moveRequest"/></room>"#;
+
+        let message = super::ConnectionHandler::<super::Joined, Blokus2026>::parse_message(xml)
+            .expect("valid move request should parse");
+
+        assert_eq!(message.as_ref(), &Message::MoveRequest);
+    }
+
+    #[test]
+    fn parses_result_message() {
+        let xml = br#"<room roomId="room123"><data class="result"><definition/><scores/><winner regular="false"/></data></room>"#;
+
+        let message = super::ConnectionHandler::<super::Joined, Blokus2026>::parse_message(xml)
+            .expect("valid result message should parse");
+
+        assert!(matches!(
+            message.as_ref(),
+            Message::Result(Some(_))
+        ));
+    }
+
+    #[test]
+    fn rejects_unknown_data_class() {
+        let xml = br#"<room roomId="room123"><data class="unknown"/></room>"#;
+
+        let error = super::ConnectionHandler::<super::Joined, Blokus2026>::parse_message(xml)
+            .expect_err("unknown data classes should be rejected");
+
+        assert!(error.to_string().contains("Unknown class attribute value: unknown"));
+    }
+
+    #[test]
+    fn rejects_message_without_data_element() {
+        let xml = br#"<room roomId="room123"/>"#;
+
+        let error = super::ConnectionHandler::<super::Joined, Blokus2026>::parse_message(xml)
+            .expect_err("messages without a data element should be rejected");
+
+        assert!(error.to_string().contains("could not find <data start tag"));
     }
 }
