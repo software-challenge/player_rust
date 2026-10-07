@@ -553,4 +553,100 @@ use crate::game::{
 
         assert!(*last_move == last_movetarget, "Last moves are not the same")
     }
-}       
+
+    #[test]
+    fn parse_memento_skip_move() {
+        let xml = r#"
+            <state turn="2">
+              <lastMove class="sc.plugin2027.SkipMove">
+                <color>GREEN</color>
+              </lastMove>
+            </state>"#;
+
+        let message = Blokus2026::parse_memento(xml).expect("skip move should parse");
+        let expected = Message::MementoLastMove(
+            Some(2),
+            Some(Move::new(
+                Color::Green,
+                PieceType::Domino,
+                0,
+                0,
+                false,
+                None,
+                true,
+            )),
+        );
+
+        assert_eq!(*message, expected);
+    }
+
+    #[test]
+    fn parse_memento_set_move_with_other_values() {
+        let xml = r#"
+            <state turn="3">
+              <lastMove class="sc.plugin2027.SetMove">
+                <piece color="YELLOW" kind="TRIO_L" rotation="RIGHT" isFlipped="false">
+                  <position x="3" y="5"/>
+                </piece>
+              </lastMove>
+            </state>"#;
+
+        let message = Blokus2026::parse_memento(xml).expect("set move should parse");
+        let expected = Message::MementoLastMove(
+            Some(3),
+            Some(Move::new(
+                Color::Yellow,
+                PieceType::TrioL,
+                3,
+                5,
+                false,
+                crate::game::rotation::Rotation::Right,
+                false,
+            )),
+        );
+
+        assert_eq!(*message, expected);
+    }
+
+    #[test]
+    fn parse_memento_rejects_xml_without_state() {
+        let error = Blokus2026::parse_memento("<room/>")
+            .expect_err("XML without a state should be rejected");
+
+        assert!(error.to_string().contains("No valid memento"));
+    }
+
+    #[test]
+    fn parse_memento_rejects_initial_state_without_starting_piece() {
+        let xml = r#"<state startTeam="ONE" turn="0" round="1"></state>"#;
+
+        let error = Blokus2026::parse_memento(xml)
+            .expect_err("initial state without a starting piece should be rejected");
+
+        assert!(error.to_string().contains("No starting piece"));
+    }
+
+    #[test]
+    fn parse_memento_rejects_last_move_without_move_data() {
+        let xml = r#"<state turn="1"></state>"#;
+
+        let error = Blokus2026::parse_memento(xml)
+            .expect_err("last move without move data should be rejected");
+
+        assert!(error.to_string().contains("No lastMove received"));
+    }
+
+    #[test]
+    fn parse_memento_rejects_set_move_with_invalid_rotation() {
+        let xml = r#"
+            <state turn="1">
+              <lastMove class="sc.plugin2027.SetMove">
+                <piece color="BLUE" kind="PENTO_W" rotation="INVALID" isFlipped="true">
+                  <position x="0" y="16"/>
+                </piece>
+              </lastMove>
+            </state>"#;
+
+        assert!(Blokus2026::parse_memento(xml).is_err());
+    }
+}
