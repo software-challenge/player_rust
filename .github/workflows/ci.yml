@@ -139,7 +139,7 @@ jobs:
         run: cargo build --locked --workspace --verbose
 
       - name: Build documentation
-        run: cargo doc --locked --no-deps
+        run: cargo doc --locked --workspace --all-features --no-deps
         env:
           RUSTDOCFLAGS: -D warnings
 
