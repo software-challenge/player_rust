@@ -1,5 +1,10 @@
 # Changelog
 
+## [27.1.0]
+
+# Changes
+- Adds tests for the parser
+
 ## [27.0.6]
 
 # Changes
