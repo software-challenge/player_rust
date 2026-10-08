@@ -23,7 +23,6 @@
 - [#40](https://github.com/software-challenge/player_rust/issues/40)
 - Edge case communication error
 
-
 ## [27.0.6]
 
 # Changes
