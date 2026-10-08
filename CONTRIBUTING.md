@@ -47,30 +47,29 @@ src/
 │   ├── mod.rs
 │   └── <spielname>/  # alles, das für dieses Spiel spezifisch ist (Beispiel Blokus 27)
 │       ├── mod.rs
-│       ├── parser.rs # der konkrete ParserStrategy für dieses Spiel
+│       ├── parser.rs* # der konkrete ParserStrategy für dieses Spiel
 │       ├── board.rs
 │       ├── piece.rs
 │       ├── color.rs
 │       ├── team.rs
 │       ├── move.rs
-│       ├── gamestate.rs
-│       ├── gamerulelogic.rs
+│       ├── gamestate.rs*
+│       ├── gamerulelogic.rs*
 │       └── constants.rs
 │
 └── util/             # entwicklerorientierte Werkzeuge, kein Teil des Spiels
     ├── mod.rs
     └── cmdl_args.rs  # Analyse der Befehlszeilenargumente
 ```
+*muss in jedem Spiel vorhanden sein
 
 Unter `games/` können mehrere Spielimplementierungen liegen. Für den Release wird jeweils nur das aktivierte Spiel verwendet.
 
 ## Ein neues Spiel implementieren
 
-Für die Implementierung eines neuen Spiels werden die Dateien im jeweiligen Unterordner von `games` angelegt oder angepasst (siehe [Ordnerstruktur](#ordnerstruktur)).
+Für die Implementierung eines neuen Spiels werden die Dateien im jeweiligen Unterordner von `games` angelegt (siehe [Ordnerstruktur](#ordnerstruktur)).
 
 Die Datei `parser.rs` enthält den Parser, der die Kommunikation mit dem Server in Spieldaten umwandelt. Weitere Informationen dazu stehen im Abschnitt [Parser](#parser).
-
-Die Dateien `board.rs`, `gamerulelogic.rs` und `gamestate.rs` enthalten zentrale Bestandteile der Spielimplementierung. Sie sollten bei der Entwicklung neuer Spiele nicht gelöscht werden, damit die API langfristig möglichst einheitlich bleibt.
 
 Neue spielbezogene Typen und Funktionen, die Teil der öffentlichen API sein sollen, müssen außerdem in `prelude.rs` exportiert werden, damit sie über `socha::prelude::*` verfügbar sind.
 Es sollte bei Anpassungen an dieser Datei überprüft werden, ob die Teilnehmer wie gewünscht Zugriff auf die API haben.
