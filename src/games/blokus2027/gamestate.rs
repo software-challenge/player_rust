@@ -2,21 +2,19 @@
 #[path = "tests/gamestate.rs"]
 mod tests;
 
-use crate::game::{
-    board::Board,
-    color::Color,
-    gamerulelogic,
-    r#move::Move,
-    piece::{
-        Piece, 
-        PieceType
-    }
-};
-/// Full snapshot of the current game state.
-///
-/// In addition to the board and the active player, the state also keeps track of
-/// each team's remaining pieces, the current turn/round, and per-color scoring
-/// information.
+use crate::{
+    common::team::Team, 
+    games::blokus2027::{
+        board::Board,
+        color::Color,
+        gamerulelogic,
+        r#move::Move,
+        piece::{
+            Piece, 
+            PieceType
+        },
+}};
+/// Holds all information of a games state.
 #[derive(Clone, PartialEq, Eq, Debug)]
 pub struct GameState {
     starting_piece: PieceType,
@@ -135,8 +133,8 @@ impl GameState {
         points
     }
 
-    /// Returns the total score for an entire team.
-    pub fn get_points_for_team(&self, team: &crate::game::team::Team) -> u8 {
+    /// Returns the points for the specified team as specified in the documentation.
+    pub fn get_points_for_team(&self, team: &Team) -> u8 {
         let team_colors = team.get_team_colors();
         let mut total_points = 0;
 

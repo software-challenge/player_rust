@@ -4,7 +4,7 @@ mod tests;
 
 use std::{fmt, str::FromStr};
 
-use crate::game::{
+use crate::games::blokus2027::{
     coordinate::{
         Coordinate, 
         flip_coordinates, 

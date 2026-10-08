@@ -1,8 +1,8 @@
 use crate::{connection::{
                 handler::ConnectionHandler, 
                 parser::message::Message
-            }, game::{
-                gamestate::GameState, r#move::Move, parser::Blokus2026
+            }, games::active::{
+                gamestate::GameState, r#move::Move, parser::Blokus2027
             }
         };
 
@@ -27,7 +27,7 @@ pub trait Client {
 /// This helper configures the network connection and dispatches server messages
 /// to the `Client` trait methods until the match ends.
 pub fn start_client_from_commandline_args<C: Client>(mut client: C) -> Result<(), Box<dyn std::error::Error>> {
-    let mut connection = ConnectionHandler::new_from_commandline_args(Blokus2026)?;
+    let mut connection = ConnectionHandler::new_from_commandline_args(Blokus2027)?;
 
     let mut local_game_state: Option<GameState> = None;
 

@@ -21,6 +21,10 @@ serde = {version = "1.0.229", features = ["derive"]}
 criterion = { version = "0.8.2", features = ["html_reports"] }
 
 [features]
+default = ["game-blokus2027"]
+
+game-blokus2027 = []
+
 debug = ["debug-print", "debug-recv-comm-log"]
 debug-print = []
 debug-recv-comm-log = []

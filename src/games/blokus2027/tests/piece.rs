@@ -1,5 +1,5 @@
 use super::{Piece, PieceType};
-use crate::{game::rotation::Rotation, game::coordinate::Coordinate};
+use crate::{games::blokus2027::rotation::Rotation, games::blokus2027::coordinate::Coordinate};
 
 fn sorted_xy(coordinates: Vec<Coordinate>) -> Vec<(isize, isize)> {
     let mut xy: Vec<(isize, isize)> = coordinates

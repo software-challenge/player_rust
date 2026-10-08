@@ -2,7 +2,7 @@ use std::{fmt::Error, str::FromStr};
 
 use serde::Deserialize;
 
-use crate::game::color::Color::{self, Blue, Yellow, Red, Green};
+use crate::games::blokus2027::color::Color::{self, Blue, Yellow, Red, Green};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize)]
 pub enum Team {

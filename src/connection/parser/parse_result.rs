@@ -1,6 +1,6 @@
 use crate::{
     connection::parser::message::Message,
-    game::team::Team
+    common::team::Team,
 };
 
 use serde::Deserialize;

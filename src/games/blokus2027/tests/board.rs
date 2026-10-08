@@ -1,5 +1,5 @@
 use super::Board;
-use crate::game::{color::Color, constants::BOARD_SIZE, piece::{Piece, PieceType}, rotation::Rotation};
+use crate::games::blokus2027::{color::Color, constants::BOARD_SIZE, piece::{Piece, PieceType}, rotation::Rotation};
 
 #[test]
 fn test_board_initialization() {

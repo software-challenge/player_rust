@@ -4,6 +4,7 @@
 
 # Changes
 - Moved the API documentation from the README to Rust Docs comments
+- Changed folder structure to retain games in the future
 
 # Fixes
 

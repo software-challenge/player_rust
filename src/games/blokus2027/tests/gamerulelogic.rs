@@ -1,4 +1,4 @@
-use crate::game::{
+use crate::games::blokus2027::{
     board::Board,
     color::Color,
     coordinate::Coordinate,

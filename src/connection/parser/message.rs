@@ -1,6 +1,6 @@
 use crate::{
     connection::parser::parse_result::GameResult, 
-    game::{
+    games::active::{
         gamestate::GameState, 
         r#move::Move
     }

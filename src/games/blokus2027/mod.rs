@@ -7,5 +7,4 @@ pub mod constants;
 pub mod coordinate;
 pub mod color;
 pub mod rotation;
-pub mod team;
 pub mod parser;

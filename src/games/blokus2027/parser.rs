@@ -9,17 +9,18 @@ use quick_xml::{
 };
 
 use crate::{
+    common::team::Team,
     connection::parser::{
         message::Message, 
         parser_strategy::ParserStrategy
-    }, game::{
-        board::Board, color::Color, gamestate::GameState, r#move::Move, piece::{ALL_PIECE_TYPES, PieceType}, rotation::Rotation, team::Team
+    }, games::blokus2027::{
+        board::Board, color::Color, gamestate::GameState, r#move::Move, piece::{ALL_PIECE_TYPES, PieceType}, rotation::Rotation,
     }
 };
 
-pub struct Blokus2026;
+pub struct Blokus2027;
 
-impl ParserStrategy for Blokus2026 {
+impl ParserStrategy for Blokus2027 {
     fn parse_memento(xml: &str) -> Result<Box<Message>, Box<dyn std::error::Error>> {
         let mut starting_piece: Option<PieceType> = None;
         let mut start_team: Option<Team> = None;
@@ -289,18 +290,19 @@ fn _parse_pieces(reader: &mut Reader<&[u8]>) -> Result<(Vec<PieceType>, Vec<Piec
 mod tests {
     use crate::connection::parser::message::Message;
 use crate::connection::parser::parser_strategy::ParserStrategy;
-use crate::game::piece::ALL_PIECE_TYPES;
-use crate::game::piece::PieceType::PentoW;
-use crate::game::rotation::Rotation::None;
-use crate::game::{
+use crate::games::blokus2027::piece::ALL_PIECE_TYPES;
+use crate::games::blokus2027::piece::PieceType::PentoW;
+use crate::games::blokus2027::rotation::Rotation::None;
+use crate::games::blokus2027::{
         board::Board,
         color::Color,
         gamestate::GameState,
         piece::PieceType,
         r#move::Move,
+        rotation::Rotation,
     };
 
-    use super::Blokus2026;
+    use super::Blokus2027;
 
     #[test]
     fn parse_memento_initial() {
@@ -412,7 +414,7 @@ use crate::game::{
           </data>
         </room>"#;
 
-        let gamestate = Blokus2026::parse_memento(core::str::from_utf8(xml).unwrap()).unwrap();
+        let gamestate = Blokus2027::parse_memento(core::str::from_utf8(xml).unwrap()).unwrap();
 
         println!("{:?}", gamestate);
 
@@ -543,7 +545,7 @@ use crate::game::{
               </data>
             </room>"#;
 
-        let last_move = Blokus2026::parse_memento(core::str::from_utf8(xml).unwrap()).unwrap();
+        let last_move = Blokus2027::parse_memento(core::str::from_utf8(xml).unwrap()).unwrap();
 
         println!("{:?}", last_move);
 
@@ -563,7 +565,7 @@ use crate::game::{
               </lastMove>
             </state>"#;
 
-        let message = Blokus2026::parse_memento(xml).expect("skip move should parse");
+        let message = Blokus2027::parse_memento(xml).expect("skip move should parse");
         let expected = Message::MementoLastMove(
             Some(2),
             Some(Move::new(
@@ -591,7 +593,7 @@ use crate::game::{
               </lastMove>
             </state>"#;
 
-        let message = Blokus2026::parse_memento(xml).expect("set move should parse");
+        let message = Blokus2027::parse_memento(xml).expect("set move should parse");
         let expected = Message::MementoLastMove(
             Some(3),
             Some(Move::new(
@@ -600,7 +602,7 @@ use crate::game::{
                 3,
                 5,
                 false,
-                crate::game::rotation::Rotation::Right,
+                Rotation::Right,
                 false,
             )),
         );
@@ -610,7 +612,7 @@ use crate::game::{
 
     #[test]
     fn parse_memento_rejects_xml_without_state() {
-        let error = Blokus2026::parse_memento("<room/>")
+        let error = Blokus2027::parse_memento("<room/>")
             .expect_err("XML without a state should be rejected");
 
         assert!(error.to_string().contains("No valid memento"));
@@ -620,7 +622,7 @@ use crate::game::{
     fn parse_memento_rejects_initial_state_without_starting_piece() {
         let xml = r#"<state startTeam="ONE" turn="0" round="1"></state>"#;
 
-        let error = Blokus2026::parse_memento(xml)
+        let error = Blokus2027::parse_memento(xml)
             .expect_err("initial state without a starting piece should be rejected");
 
         assert!(error.to_string().contains("No starting piece"));
@@ -630,7 +632,7 @@ use crate::game::{
     fn parse_memento_rejects_last_move_without_move_data() {
         let xml = r#"<state turn="1"></state>"#;
 
-        let error = Blokus2026::parse_memento(xml)
+        let error = Blokus2027::parse_memento(xml)
             .expect_err("last move without move data should be rejected");
 
         assert!(error.to_string().contains("No lastMove received"));
@@ -647,6 +649,6 @@ use crate::game::{
               </lastMove>
             </state>"#;
 
-        assert!(Blokus2026::parse_memento(xml).is_err());
+        assert!(Blokus2027::parse_memento(xml).is_err());
     }
 }

@@ -3,7 +3,7 @@ use socha::{
     ConnectionHandler, 
     Joined
   }, 
-  game::parser::Blokus2026
+  games::blokus2027::parser::Blokus2027
 };
 
 use std::hint::black_box;
@@ -14,7 +14,7 @@ use criterion::{
 };
 
 fn xml_test_fn(xml: &[u8]) {
-    let _ = ConnectionHandler::<Joined, Blokus2026>::parse_message(xml);
+    let _ = ConnectionHandler::<Joined, Blokus2027>::parse_message(xml);
 }
 
 fn xml_result_benchmark(c: &mut Criterion) {

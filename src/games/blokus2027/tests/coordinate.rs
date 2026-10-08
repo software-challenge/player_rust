@@ -1,5 +1,5 @@
 use super::{Coordinate, normalize_coordinates, rotate_coordinates, flip_coordinates};
-use crate::game::rotation::Rotation;
+use crate::games::blokus2027::rotation::Rotation;
 
 #[test]
 fn test_coordinate_equality() {
