@@ -53,10 +53,10 @@ pub struct Entry {
     pub score: Score,
 }
 
-/// A player identified by name and team (both are attributes).
+/// A player identified by name and team; unnamed players omit the name attribute.
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
 pub struct Player {
-    #[serde(rename = "@name")]
+    #[serde(rename = "@name", default)]
     pub name: String,
 
     #[serde(rename = "@team")]
@@ -66,7 +66,7 @@ pub struct Player {
 /// A list of scored parts (e.g. `<part>2</part><part>102</part>`).
 #[derive(Debug, Clone, PartialEq, Eq, Default, Deserialize)]
 pub struct Score {
-    #[serde(rename = "$text", default)]
+    #[serde(rename = "part", default)]
     pub parts: Vec<u64>,
 }
 
@@ -87,4 +87,93 @@ pub struct Winner {
 
 pub fn parse_result(xml: &str) -> Box<Message> {
     Box::from(Message::Result(from_str(xml).expect("Failed to parse game result")))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_parse_result_valid_xml() {
+        let xml = r#"
+            <data class="result">
+                <definition>
+                    <fragment name="Siegpunkte">
+                    <aggregation>SUM</aggregation>
+                    <relevantForRanking>true</relevantForRanking>
+                    </fragment>
+                    <fragment name="Punkte">
+                    <aggregation>AVERAGE</aggregation>
+                    <relevantForRanking>true</relevantForRanking>
+                    </fragment>
+                </definition>
+                <scores>
+                    <entry>
+                    <player name="Spieler 1" team="ONE"/>
+                    <score>
+                        <part>2</part>
+                        <part>164</part>
+                    </score>
+                    </entry>
+                    <entry>
+                    <player name="Spieler 2" team="TWO"/>
+                    <score>
+                        <part>0</part>
+                        <part>82</part>
+                    </score>
+                    </entry>
+                </scores>
+                <winner team="ONE" regular="true" reason="Spieler 1 hat am meisten Punkte erzielt."/>
+            </data>
+            "#;
+
+        let result = parse_result(xml);
+
+        assert_eq!(
+            result.as_ref(),
+            &Message::Result(Some(GameResult {
+                definition: Definition {
+                    fragments: vec![
+                        Fragment {
+                            name: "Siegpunkte".to_owned(),
+                            aggregation: "SUM".to_owned(),
+                            relevant_for_ranking: true,
+                        },
+                        Fragment {
+                            name: "Punkte".to_owned(),
+                            aggregation: "AVERAGE".to_owned(),
+                            relevant_for_ranking: true,
+                        },
+                    ],
+                },
+                scores: Scores {
+                    entries: vec![
+                        Entry {
+                            player: Player {
+                                name: "Spieler 1".to_owned(),
+                                team: Team::One,
+                            },
+                            score: Score {
+                                parts: vec![2, 164]
+                            },
+                        },
+                        Entry {
+                            player: Player {
+                                name: "Spieler 2".to_owned(),
+                                team: Team::Two,
+                            },
+                            score: Score {
+                                parts: vec![0, 82]
+                            },
+                        },
+                    ],
+                },
+                winner: Winner {
+                    team: Some(Team::One),
+                    regular: true,
+                    reason: Some("Spieler 1 hat am meisten Punkte erzielt.".to_owned()),
+                },
+            }))
+        );
+    }
 }

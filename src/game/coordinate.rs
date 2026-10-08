@@ -75,56 +75,44 @@ impl Coordinate {
     }
 }
 
-/// Normalizes a set of coordinates so that the top-left-most cell becomes the origin.
+/// Normalizes the coordinates in place so that their minimum x and y values become (0, 0).
 ///
-/// This is useful after rotating or mirroring a piece so its local coordinate
-/// system starts at `(0, 0)` with non-negative values only.
-pub fn normalize_coordinates(coordinates: &Vec<Coordinate>) -> Vec<Coordinate> {
-    let mut min_x = isize::MAX;
-    let mut min_y = isize::MAX;
+/// Overwrites the original coordinates with the normalized values.
+pub fn normalize_coordinates(coordinates: &mut [Coordinate]) {
+    let Some(first) = coordinates.first() else {
+        return;
+    };
 
-    for coord in coordinates {
-        if coord.x < min_x {
-            min_x = coord.x;
-        }
-        
-        if coord.y < min_y {
-            min_y = coord.y;
-        }
+    let (mut min_x, mut min_y) = (first.x, first.y);
+    for coord in coordinates.iter().skip(1) {
+        min_x = min_x.min(coord.x);
+        min_y = min_y.min(coord.y);
     }
 
-    let mut normalized_coordinates: Vec<Coordinate> = Vec::new();
     for coord in coordinates {
-        normalized_coordinates.push(Coordinate { x: coord.x - min_x, y: coord.y - min_y });
+        coord.x -= min_x;
+        coord.y -= min_y;
     }
-
-    normalized_coordinates
 }
 
 /// Rotates every coordinate by the specified clockwise rotation.
 ///
-/// The returned coordinates are not normalized, so they may still have negative
+/// The rotated coordinates are not normalized, so they may still have negative
 /// values after the transformation.
-pub fn rotate_coordinates(coordinates: Vec<Coordinate>, rotation: &Rotation) -> Vec<Coordinate> {
-    let mut rotated_coordinates: Vec<Coordinate> = Vec::new();
-
+/// Overwrites the original coordinates with the normalized values.
+pub fn rotate_coordinates(coordinates: &mut [Coordinate], rotation: &Rotation) {
     for coord in coordinates {
-        rotated_coordinates.push(coord.rotate(rotation));
+        *coord = coord.rotate(rotation);
     }
-
-    rotated_coordinates
 }
 
 /// Mirrors coordinates across the vertical axis.
 ///
 /// This is the helper used when a piece is flipped before it is placed on the
 /// board.
-pub fn flip_coordinates(coordinates: Vec<Coordinate>) -> Vec<Coordinate> {
-    let mut flipped_coordinates: Vec<Coordinate> = Vec::new();
-
+/// Overwrites the original coordinates with the normalized values.
+pub fn flip_coordinates(coordinates: &mut [Coordinate]) {
     for coord in coordinates {
-        flipped_coordinates.push(coord.flip_on_vertical());
+        *coord = coord.flip_on_vertical();
     }
-
-    flipped_coordinates
 }

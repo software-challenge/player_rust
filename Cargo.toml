@@ -1,6 +1,6 @@
 [package]
 name = "socha"
-version = "27.0.6"
+version = "27.1.0"
 license = "Apache-2.0"
 description = "Offiziele Rust Bibliothek der Software Challenge Germany"
 repository = "https://github.com/software-challenge/player_rust"
