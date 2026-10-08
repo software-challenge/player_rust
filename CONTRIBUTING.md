@@ -80,6 +80,18 @@ Für alle Anpassungen an ein neues Spiel sollten unbedingt passende Tests hinzug
 
 TBD
 
+## Programmierstil
+
+### Datenkapselung
+
+Bei neuen Structs sollten Felder grundsätzlich privat bleiben und Zugriffe über eine passende öffentliche API erfolgen. So können wir Prüfungen und Regeln auch dann in den Methoden ergänzen, wenn sie heute noch nicht erforderlich sind. Die API-Nutzung in bestehenden Projekten muss dadurch voraussichtlich nicht stark verändert werden. Öffentliche Felder sollten eine bewusste Ausnahme bleiben, etwa bei einfachen Werttypen, bei denen direkter Zugriff Teil der gewünschten API ist.
+
+Beispiele aus Blokus 2027:
+
+- `Board` verbirgt sein Spielfeld und bietet Methoden zum Lesen und Ändern an.
+- `GameState` und `Piece` haben private Felder, stellen aber auch Setter bereit, die Werte derzeit ungeprüft ändern. Die Methoden bieten einen zentralen Ansatzpunkt, falls solche Änderungen künftig geprüft werden müssen.
+- `Coordinate` und `Move` haben öffentliche Felder und erlauben damit direkten Feldzugriff. Bei `Coordinate` ist das für einen einfachen Werttyp eine mögliche bewusste Ausnahme.
+
 ## Beispiele ausführen
 
 Da es sich bei diesem Projekt um eine Bibliothek handelt, lässt es sich nicht direkt ausführen.
