@@ -109,7 +109,7 @@ cargo test --workspace --verbose
 ## Was wird zum Entwickeln benötigt?
 
 Zum entwickeln dieser Bibliothek wird nur Rust und Cargo (wird automatisch mit installiert) benötigt.
-Es wird mindestens die Rust-Version <!-- rust-version -->1.88<!-- /rust-version --> benötigt.
+Es wird mindestens die Rust-Version <!-- rust-version -->1.88<!-- /rust-version --> benötigt, alle Versionen darüber, die zur <!-- edition -->2024<!-- /edition --> Edition gehören, sollten auch funktionieren.
 Ob die Rust-Version aureicht wird durch den [MSRV CI Job](#ci) bei jeder Pull Request und jeden Commit auf main überprüft.
 
 ## CI

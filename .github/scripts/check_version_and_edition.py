@@ -53,14 +53,15 @@ def parse_file_metadata(path: Path, *names: str) -> dict[str, list[str]]:
     return metadata
 
 
-def parse_document_metadata() -> tuple[list[str], list[str], list[str]]:
+def parse_document_metadata() -> tuple[list[str], list[str], list[str], list[str]]:
     readme_metadata = parse_file_metadata(README_PATH, "rust-version", "edition")
-    contributing_metadata = parse_file_metadata(CONTRIBUTING_PATH, "rust-version")
+    contributing_metadata = parse_file_metadata(CONTRIBUTING_PATH, "rust-version", "edition")
 
     return (
         readme_metadata["rust-version"],
         readme_metadata["edition"],
         contributing_metadata["rust-version"],
+        contributing_metadata["edition"],
     )
 
 
@@ -72,7 +73,7 @@ def main() -> int:
         return 1
 
     try:
-        readme_rust_versions, readme_editions, contributing_rust_versions = parse_document_metadata()
+        readme_rust_versions, readme_editions, contributing_rust_versions, contributing_editions = parse_document_metadata()
     except (FileNotFoundError, ValueError) as exc:
         print(str(exc), file=sys.stderr)
         return 1
@@ -82,6 +83,7 @@ def main() -> int:
         ("README", "rust-version", cargo_rust_version, readme_rust_versions),
         ("README", "edition", cargo_edition, readme_editions),
         ("CONTRIBUTING.md", "rust-version", cargo_rust_version, contributing_rust_versions),
+        ("CONTRIBUTING.md", "edition", cargo_edition, contributing_editions),
     ):
         for occurrence, actual in enumerate(actual_values, start=1):
             if actual != expected:
@@ -96,7 +98,7 @@ def main() -> int:
         return 1
 
     print(
-        f"README and CONTRIBUTING.md rust-version and README edition match Cargo.toml: "
+        f"README and CONTRIBUTING.md rust-version and edition values match Cargo.toml: "
         f"rust-version={cargo_rust_version}, edition={cargo_edition}"
     )
     return 0
