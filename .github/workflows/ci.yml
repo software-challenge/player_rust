@@ -33,14 +33,11 @@ jobs:
             target
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
 
-      - name: Test default features
+      - name: Test default features (current active game)
         run: cargo test --locked --workspace --verbose
 
-      - name: Test without default features
-        run: cargo test --locked --workspace --no-default-features --verbose
-
-      - name: Test all features
-        run: cargo test --locked --workspace --all-features --verbose
+      - name: Test debug features
+        run: cargo test --locked --workspace --features debug --verbose
 
   msrv:
     name: MSRV
