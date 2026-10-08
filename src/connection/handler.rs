@@ -31,6 +31,7 @@ pub struct Joined {
 #[derive(Debug)]
 pub struct ConnectionHandler<State, S: ParserStrategy> {
     connection: TcpStream,
+    receive_buffer: Vec<u8>,
     #[cfg(feature = "debug-recv-comm-log")]
     log_file: std::fs::File,
     strategy: S,
@@ -49,6 +50,7 @@ impl<S: ParserStrategy> ConnectionHandler<(), S> {
 
         Ok(ConnectionHandler{
             connection: TcpStream::connect(address)?,
+            receive_buffer: Vec::new(),
             #[cfg(feature = "debug-recv-comm-log")]
             log_file: OpenOptions::new()
                 .create(true)
@@ -79,7 +81,14 @@ impl<S: ParserStrategy> ConnectionHandler<Connected, S> {
         };
         
         // Receive the welcome message from the server and read it into the buffer
-        let buffer = read_message_to_buffer(&mut self.connection)?;
+        #[cfg(feature = "debug-recv-comm-log")]
+        let buffer = read_message_to_buffer(
+            &mut self.connection,
+            &mut self.receive_buffer,
+            &mut self.log_file,
+        )?;
+        #[cfg(not(feature = "debug-recv-comm-log"))]
+        let buffer = read_message_to_buffer(&mut self.connection, &mut self.receive_buffer)?;
 
         if buffer.is_empty() {
             return Err("No bytes received by the server".into()); //Err(ConnectionHandlerError::ZeroBytesReadToBuffer);
@@ -92,6 +101,7 @@ impl<S: ParserStrategy> ConnectionHandler<Connected, S> {
     
         return Ok(ConnectionHandler { 
             connection: self.connection,
+            receive_buffer: self.receive_buffer,
             #[cfg(feature = "debug-recv-comm-log")]
             log_file: self.log_file,
             state: Joined { room_id: parse_joined(raw_xml)? },
@@ -133,7 +143,14 @@ impl<S: ParserStrategy> ConnectionHandler<Joined, S> {
 
     /// Reads a new message from the server, parses it, and returns the parsed message
     pub fn get_new_message(&mut self) -> Result<Box<Message>, Box<dyn std::error::Error>> {
-        let buffer: Vec<u8> = read_message_to_buffer(&mut self.connection)?;
+        #[cfg(feature = "debug-recv-comm-log")]
+        let buffer: Vec<u8> = read_message_to_buffer(
+            &mut self.connection,
+            &mut self.receive_buffer,
+            &mut self.log_file,
+        )?;
+        #[cfg(not(feature = "debug-recv-comm-log"))]
+        let buffer: Vec<u8> = read_message_to_buffer(&mut self.connection, &mut self.receive_buffer)?;
 
         if buffer.is_empty() {
             return Err("No bytes received by the server".into()); //Err(ConnectionHandlerError::ZeroBytesReadToBuffer);
@@ -214,9 +231,15 @@ impl<S: ParserStrategy> ConnectionHandler<Joined, S> {
     }
 }
 
-/// Checks if the buffer ends with the "</room>" closing tag.
-fn buffer_ends_with_room_tag(buffer: &[u8]) -> bool {
-    buffer.ends_with(b"</room>")
+/// Removes the first complete room message and retains any following bytes.
+fn take_room_message(buffer: &mut Vec<u8>) -> Option<Vec<u8>> {
+    const ROOM_END_TAG: &[u8] = b"</room>";
+    let message_end = buffer
+        .windows(ROOM_END_TAG.len())
+        .position(|window| window == ROOM_END_TAG)?
+        + ROOM_END_TAG.len();
+    let remaining = buffer.split_off(message_end);
+    Some(std::mem::replace(buffer, remaining))
 }
 
 fn xml_payload_from_buffer(buffer: &[u8]) -> &[u8] {
@@ -224,23 +247,32 @@ fn xml_payload_from_buffer(buffer: &[u8]) -> &[u8] {
     &buffer[start..]
 }
 
-fn read_message_to_buffer(tcp_stream: &mut TcpStream) -> Result<Vec<u8>, Box<dyn std::error::Error>> {
-    let mut buffer = Vec::new();
-
+fn read_message_to_buffer(
+    tcp_stream: &mut TcpStream,
+    buffer: &mut Vec<u8>,
+    #[cfg(feature = "debug-recv-comm-log")] log_file: &mut std::fs::File,
+) -> Result<Vec<u8>, Box<dyn std::error::Error>> {
     loop {
-        let number_of_new_bytes = read_to_buffer(tcp_stream, &mut buffer)?;
+        if let Some(message) = take_room_message(buffer) {
+            return Ok(message);
+        }
+
+        #[cfg(feature = "debug-recv-comm-log")]
+        let number_of_new_bytes = read_to_buffer(tcp_stream, buffer, log_file)?;
+        #[cfg(not(feature = "debug-recv-comm-log"))]
+        let number_of_new_bytes = read_to_buffer(tcp_stream, buffer)?;
 
         if number_of_new_bytes == 0 {
             return Err("Zero Bytes Read To Buffer".into()); //Err(ConnectionHandlerError::ZeroBytesReadToBuffer);
         }
-
-        if buffer_ends_with_room_tag(&buffer) {
-            return Ok(buffer);
-        }
     }
 }
 
-fn read_to_buffer(tcp_stream: &mut TcpStream, buffer: &mut Vec<u8>) -> Result<usize, Box<dyn std::error::Error>> {
+fn read_to_buffer(
+    tcp_stream: &mut TcpStream,
+    buffer: &mut Vec<u8>,
+    #[cfg(feature = "debug-recv-comm-log")] log_file: &mut std::fs::File,
+) -> Result<usize, Box<dyn std::error::Error>> {
     let start_len = buffer.len();
     buffer.resize(start_len + 4096, 0);
 
@@ -254,9 +286,9 @@ fn read_to_buffer(tcp_stream: &mut TcpStream, buffer: &mut Vec<u8>) -> Result<us
 
             #[cfg(feature = "debug-recv-comm-log")]
             {
-            self.log_file.write_all(&buffer[start_len..start_len + b])?;
-            self.log_file.write_all(b"\n")?;
-            self.log_file.flush()?;
+                log_file.write_all(&buffer[start_len..start_len + b])?;
+                log_file.write_all(b"\n")?;
+                log_file.flush()?;
             }
 
             Ok(b)
@@ -270,7 +302,8 @@ fn read_to_buffer(tcp_stream: &mut TcpStream, buffer: &mut Vec<u8>) -> Result<us
 
 #[cfg(test)]
 mod tests {
-use crate::connection::handler::{buffer_ends_with_room_tag, xml_payload_from_buffer};
+    use crate::connection::handler::{take_room_message, xml_payload_from_buffer};
+    use crate::{connection::parser::message::Message, game::parser::Blokus2026};
 
     #[test]
     fn extracts_xml_payload_from_room_message() {
@@ -281,22 +314,74 @@ use crate::connection::handler::{buffer_ends_with_room_tag, xml_payload_from_buf
     }
 
     #[test]
-    fn detects_completed_room_message_without_zero_padding() {
-        let mut buffer = vec![0u8; 64];
-        let payload = b"<room roomId=\"abc\"><data/></room>";
-        buffer[..payload.len()].copy_from_slice(payload);
-        buffer.truncate(payload.len());
+    fn extracts_first_room_message_and_retains_trailing_bytes() {
+        let message = b"<room roomId=\"abc\"><data/></room>";
+        let trailing = b"<removedFromGame roomId=\"abc\"/>";
+        let mut buffer = [message.as_slice(), trailing.as_slice()].concat();
 
-        assert!(buffer_ends_with_room_tag(&buffer));
+        assert_eq!(take_room_message(&mut buffer), Some(message.to_vec()));
+        assert_eq!(buffer, trailing);
     }
 
     #[test]
-    fn does_not_treat_incomplete_message_as_completed_message() {
-        let mut buffer = vec![0u8; 64];
-        let payload = b"<room roomId=\"abc\"><data/>";
-        buffer[..payload.len()].copy_from_slice(payload);
-        buffer.truncate(payload.len());
+    fn extracts_coalesced_room_messages_in_order() {
+        let first = b"<room roomId=\"first\"><data/></room>";
+        let second = b"<room roomId=\"second\"><data/></room>";
+        let mut buffer = [first.as_slice(), second.as_slice()].concat();
 
-        assert!(!buffer_ends_with_room_tag(&buffer));
+        assert_eq!(take_room_message(&mut buffer), Some(first.to_vec()));
+        assert_eq!(take_room_message(&mut buffer), Some(second.to_vec()));
+        assert!(buffer.is_empty());
+    }
+
+    #[test]
+    fn leaves_incomplete_room_message_buffered() {
+        let mut buffer = b"<room roomId=\"abc\"><data/>".to_vec();
+
+        assert_eq!(take_room_message(&mut buffer), None);
+        assert_eq!(buffer, b"<room roomId=\"abc\"><data/>");
+    }
+
+    #[test]
+    fn parses_move_request_message() {
+        let xml = br#"<room roomId="room123"><data class="moveRequest"/></room>"#;
+
+        let message = super::ConnectionHandler::<super::Joined, Blokus2026>::parse_message(xml)
+            .expect("valid move request should parse");
+
+        assert_eq!(message.as_ref(), &Message::MoveRequest);
+    }
+
+    #[test]
+    fn parses_result_message() {
+        let xml = br#"<room roomId="room123"><data class="result"><definition/><scores/><winner regular="false"/></data></room>"#;
+
+        let message = super::ConnectionHandler::<super::Joined, Blokus2026>::parse_message(xml)
+            .expect("valid result message should parse");
+
+        assert!(matches!(
+            message.as_ref(),
+            Message::Result(Some(_))
+        ));
+    }
+
+    #[test]
+    fn rejects_unknown_data_class() {
+        let xml = br#"<room roomId="room123"><data class="unknown"/></room>"#;
+
+        let error = super::ConnectionHandler::<super::Joined, Blokus2026>::parse_message(xml)
+            .expect_err("unknown data classes should be rejected");
+
+        assert!(error.to_string().contains("Unknown class attribute value: unknown"));
+    }
+
+    #[test]
+    fn rejects_message_without_data_element() {
+        let xml = br#"<room roomId="room123"/>"#;
+
+        let error = super::ConnectionHandler::<super::Joined, Blokus2026>::parse_message(xml)
+            .expect_err("messages without a data element should be rejected");
+
+        assert!(error.to_string().contains("could not find <data start tag"));
     }
 }

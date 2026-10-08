@@ -58,13 +58,13 @@ fn test_coordinate_flip_on_vertical() {
 
 #[test]
 fn test_normalize_coordinates() {
-    let coords = vec![
+    let mut coords = vec![
         Coordinate::new(3, 4),
         Coordinate::new(1, 2),
         Coordinate::new(5, 6),
     ];
-    let normalized = normalize_coordinates(&coords);
-    assert_eq!(normalized, vec![
+    normalize_coordinates(&mut coords);
+    assert_eq!(coords, vec![
         Coordinate::new(2, 2),
         Coordinate::new(0, 0),
         Coordinate::new(4, 4),
@@ -72,13 +72,18 @@ fn test_normalize_coordinates() {
 }
 
 #[test]
+fn test_normalize_empty_coordinates() {
+    normalize_coordinates(&mut []);
+}
+
+#[test]
 fn test_rotate_coordinates() {
-    let coords = vec![
+    let mut coords = vec![
         Coordinate::new(1, 2),
         Coordinate::new(3, 4),
     ];
-    let rotated = rotate_coordinates(coords, &Rotation::Right);
-    assert_eq!(rotated, vec![
+    rotate_coordinates(&mut coords, &Rotation::Right);
+    assert_eq!(coords, vec![
         Coordinate::new(-2, 1),
         Coordinate::new(-4, 3),
     ]);
@@ -86,12 +91,12 @@ fn test_rotate_coordinates() {
 
 #[test]
 fn test_flip_coordinates() {
-    let coords = vec![
+    let mut coords = vec![
         Coordinate::new(1, 2),
         Coordinate::new(3, 4),
     ];
-    let flipped = flip_coordinates(coords);
-    assert_eq!(flipped, vec![
+    flip_coordinates(&mut coords);
+    assert_eq!(coords, vec![
         Coordinate::new(-1, 2),
         Coordinate::new(-3, 4),
     ]);

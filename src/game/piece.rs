@@ -14,6 +14,10 @@ use crate::game::{
     rotation::Rotation,
 };
 
+/// A concrete piece instance with a type, a rotation, and a mirror state.
+///
+/// The piece stores its local coordinates relative to the top-left origin and can
+/// be converted into board-relative coordinates through [`Piece::get_coordinates`].
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]
 pub struct Piece {
     piece_type: PieceType,
@@ -22,6 +26,7 @@ pub struct Piece {
 }
 
 impl Piece {
+    /// Creates a piece from its type, rotation, and flip state.
     pub fn new(piece_type: PieceType, rotation: Rotation, is_flipped: bool) -> Self {
         Piece {
             piece_type,
@@ -30,16 +35,19 @@ impl Piece {
         }
     }
 
-    /// Applies the rotation and flipping and returns normalized coordinates from (0,0) in positive direction
+    /// Returns the transformed coordinates of the piece, normalized to the origin.
+    ///
+    /// The coordinates are rotated and optionally mirrored and then shifted so the
+    /// smallest x/y values become `(0, 0)`.
     pub fn get_coordinates(&self) -> Vec<Coordinate> {
         let base_coordinates = self.piece_type.base_coordinates();
         let mut transformed_coordinates: Vec<Coordinate> = base_coordinates.to_vec();
 
-        transformed_coordinates = rotate_coordinates(transformed_coordinates, &self.rotation);  
+        rotate_coordinates(&mut transformed_coordinates, &self.rotation);
         if self.is_flipped { 
-            transformed_coordinates = flip_coordinates(transformed_coordinates);
+            flip_coordinates(&mut transformed_coordinates);
         }
-        transformed_coordinates = normalize_coordinates(&transformed_coordinates);
+        normalize_coordinates(&mut transformed_coordinates);
 
         transformed_coordinates
     }
@@ -69,6 +77,10 @@ impl Piece {
     }
 }
 
+/// The set of available Blokus piece shapes.
+///
+/// Each variant describes a shape and can be transformed into all legal
+/// rotations and mirrored states using [`PieceType::all_variants`].
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]
 pub enum PieceType {
     Mono,
@@ -120,9 +132,11 @@ pub const ALL_PIECE_TYPES: [PieceType; 21] = [
 
 impl PieceType {
 
-    /// Returns all variants of the piece typ
-    /// If filter is set to true, all identical variants of a piece are only returned once.
-    /// Data Format: Vector<(relative coordinates, (rotation, is flipped?))>
+    /// Returns all orientation variants of the piece type.
+    ///
+    /// Each entry contains the normalized coordinates for the shape and the
+    /// resulting `(rotation, is_flipped)` pair. When `filter` is `true`,
+    /// geometrically identical orientations are deduplicated.
     pub fn all_variants(&self, filter: bool) -> Vec<(Vec<Coordinate>, (Rotation, bool))> {
         let mut variants: Vec<(Vec<Coordinate>, (Rotation, bool))> = Vec::new();
         let base_coordinates = self.base_coordinates();
@@ -131,11 +145,11 @@ impl PieceType {
             for &rotation in &[Rotation::None, Rotation::Right, Rotation::Mirror, Rotation::Left] {
                 let mut transformed_coordinates: Vec<Coordinate> = base_coordinates.to_vec();
 
-                transformed_coordinates = rotate_coordinates(transformed_coordinates, &rotation);  
+                rotate_coordinates(&mut transformed_coordinates, &rotation);
                 if flip { 
-                    transformed_coordinates = flip_coordinates(transformed_coordinates);
+                    flip_coordinates(&mut transformed_coordinates);
                 }
-                transformed_coordinates = normalize_coordinates(&transformed_coordinates);
+                normalize_coordinates(&mut transformed_coordinates);
 
                 if filter {
                     // Check if the transformed coordinates already exist in the variants vector
@@ -150,8 +164,10 @@ impl PieceType {
         variants
     }
 
-    /// Returns the base coordinates of the piece type without any rotation or flipping.
-    /// Coordinate origin is at (0,0) and all coordinates are positive - grows to the bottom right.
+    /// Returns the untransformed local coordinates of the piece type.
+    ///
+    /// These base coordinates start at `(0, 0)` and grow only toward positive x/y
+    /// values; they do not include any rotation or flipping.
     pub fn base_coordinates(&self) -> &'static [Coordinate] {
         match self {
             PieceType::Mono => {
@@ -272,6 +288,7 @@ impl fmt::Display for PieceType {
     }
 }
 
+/// Returned when a text value does not match a valid piece type name.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct ParsePieceTypeError;
 

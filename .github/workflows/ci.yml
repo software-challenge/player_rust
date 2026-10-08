@@ -2,24 +2,30 @@ name: CI
 
 on:
   push:
+    branches: [main]
   pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
   workflow_dispatch:
+  workflow_call:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   test:
     name: Test
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Install Rust
-        uses: actions-rs/toolchain@v1
+        uses: actions-rust-lang/setup-rust-toolchain@v2
         with:
           toolchain: stable
-          override: true
 
       - name: Cache cargo
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: |
             ~/.cargo/registry
@@ -27,33 +33,74 @@ jobs:
             target
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
 
-      - name: Run tests
-        run: cargo test --workspace --verbose
+      - name: Test default features
+        run: cargo test --locked --workspace --verbose
+
+      - name: Test without default features
+        run: cargo test --locked --workspace --no-default-features --verbose
+
+      - name: Test all features
+        run: cargo test --locked --workspace --all-features --verbose
+
+  msrv:
+    name: MSRV
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Cache cargo-msrv
+        id: cache-cargo-msrv
+        uses: actions/cache@v5
+        with:
+          path: |
+            ~/.cargo/bin/cargo-msrv
+            ~/.cargo/registry
+            ~/.cargo/git
+          key: ${{ runner.os }}-cargo-msrv-v0.16.0
+
+      - name: Install cargo-msrv
+        if: steps.cache-cargo-msrv.outputs.cache-hit != 'true'
+        run: cargo install cargo-msrv --version 0.16.0 --locked
+
+      - name: Verify declared MSRV
+        id: verify-msrv
+        continue-on-error: true
+        run: cargo msrv verify -- cargo test --locked --workspace --all-features
+
+      - name: Find actual MSRV after verification failure
+        if: ${{ steps.verify-msrv.outcome == 'failure' }}
+        run: cargo msrv find -- cargo test --locked --workspace --all-features
+
+      - name: Fail when declared MSRV is invalid
+        if: ${{ steps.verify-msrv.outcome == 'failure' }}
+        run: exit 1
 
   readme:
     name: README
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Check if README example code is identical to examples/basic_player/main.rs
         run: python3 .github/scripts/check_readme_example.py
 
-  clippy:
-    name: Clippy
-    runs-on: ubuntu-latest
+      - name: Check if README version and edition markers match Cargo.toml
+        run: python3 .github/scripts/check_readme_version_and_edition.py
+
+  quality:
+    name: Code quality
+    runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Install Rust with Clippy
-        uses: actions-rs/toolchain@v1
+        uses: actions-rust-lang/setup-rust-toolchain@v2
         with:
           toolchain: stable
-          override: true
           components: clippy
 
       - name: Cache cargo
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: |
             ~/.cargo/registry
@@ -61,23 +108,26 @@ jobs:
             target
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
 
+      - name: Formatting (disabled until existing formatting is fixed)
+        if: ${{ false }}
+        run: cargo fmt --all -- --check
+
       - name: Clippy
-        run: cargo clippy --workspace --lib --tests -- -D warnings
+        run: cargo clippy --locked --workspace --lib --tests -- -D warnings
 
   build:
     name: Build
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Install Rust
-        uses: actions-rs/toolchain@v1
+        uses: actions-rust-lang/setup-rust-toolchain@v2
         with:
           toolchain: stable
-          override: true
 
       - name: Cache cargo
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: |
             ~/.cargo/registry
@@ -86,4 +136,37 @@ jobs:
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
 
       - name: Build (debug)
-        run: cargo build --workspace --verbose
+        run: cargo build --locked --workspace --verbose
+
+      - name: Build documentation
+        run: cargo doc --locked --workspace --all-features --no-deps
+        env:
+          RUSTDOCFLAGS: -D warnings
+
+  example-integration:
+    name: Example integration test
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Install Rust
+        uses: actions-rust-lang/setup-rust-toolchain@v2
+        with:
+          toolchain: stable
+
+      - name: Install Java
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - name: Download latest backend test assets
+        id: backend
+        run: bash .github/scripts/download_backend_assets.sh
+
+      - name: Run all examples against the test server
+        env:
+          SERVER_DIR: ${{ steps.backend.outputs.server_dir }}
+          RANDOM_PLAYER_JAR: ${{ steps.backend.outputs.random_player_jar }}
+        run: bash .github/scripts/test_examples.sh
