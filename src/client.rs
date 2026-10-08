@@ -6,13 +6,26 @@ use crate::{connection::{
             }
         };
 
+/// A player implementation that handles the game flow.
+///
+/// The trait is driven by the server protocol: a new `GameState` is pushed via
+/// `on_game_state_updated`, a move is requested through `on_move_request`, and
+/// the game ends with `on_game_over`.
 pub trait Client {
+    /// Called when the server asks the player to submit a move.
     fn on_move_request(&mut self) -> Option<Move>;
+
+    /// Called after the final result message is received.
     fn on_game_over(&mut self);
+
+    /// Called whenever the engine updates the current board state.
     fn on_game_state_updated(&mut self, gamestate: GameState);
 }
 
-/// Starts a new client using the commandline args to connect to the game.
+/// Starts a client instance using the command line arguments passed to the program.
+///
+/// This helper configures the network connection and dispatches server messages
+/// to the `Client` trait methods until the match ends.
 pub fn start_client_from_commandline_args<C: Client>(mut client: C) -> Result<(), Box<dyn std::error::Error>> {
     let mut connection = ConnectionHandler::new_from_commandline_args(Blokus2026)?;
 

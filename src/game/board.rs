@@ -8,6 +8,10 @@ use crate::game::{
     constants::BOARD_SIZE
 };
 
+/// The game board used by `GameState`.
+///
+/// The board is a fixed 20x20 grid with coordinates `(x, y)`, where `x` and
+/// `y` are zero-based and the origin is the upper-left corner.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Board {
     board: [[Option<Color>; BOARD_SIZE]; BOARD_SIZE],
@@ -22,8 +26,10 @@ impl Board {
         }
     }
 
-    /// Returns the number of tiles of the given color on the board.
-    /// Calculates the count every time it is called, which may be inefficient for frequent calls.
+    /// Returns the number of occupied cells for the given color.
+    ///
+    /// The count is recalculated on every call, which is convenient for simple
+    /// checks but may be inefficient if used in tight loops.
     pub fn get_colored_tiles(&self, color: &Color) -> u8 {
         let mut num = 0;
         for row in self.board.iter() {
@@ -36,7 +42,7 @@ impl Board {
         num
     }
 
-    /// Returns the Color of the given cell (x, y) on the board, or None if the cell is empty or out of bounds.
+    /// Returns the color of a board cell, or `None` when the coordinates are empty or out of bounds.
     pub fn get_cell(&self, x: usize, y: usize) -> Option<Color> {
         if x < BOARD_SIZE && y < BOARD_SIZE {
             self.board[y][x]
@@ -45,8 +51,10 @@ impl Board {
         }
     }
 
-    /// Sets the Color of the given cell (x, y) on the board and returns true if the cell was within bounds, false otherwise.
-    /// Does not perform any validation and assumes that the coordinates are valid.
+    /// Sets a board cell to the supplied color.
+    ///
+    /// This method does not validate the move and assumes that the coordinates are
+    /// already known to be valid. It returns `true` when the target was in bounds.
     pub fn set_cell(&mut self, x: usize, y: usize, color: Color) -> bool {
         if x < BOARD_SIZE && y < BOARD_SIZE {
             self.board[y][x] = Some(color);
@@ -55,8 +63,10 @@ impl Board {
         false
     }
 
-    /// Place the specified piece on the board at the given coordinates (x, y) for the specified color.
-    /// Does not perform any validation and assumes that the coordinates are valid and the piece is not placed on an occupied space.
+    /// Places a piece on the board without any legality checks.
+    ///
+    /// This is the unsafe variant used when the caller already validated the move
+    /// or when simulating a known-valid state transition.
     pub fn place_piece_unchecked(&mut self, x: usize, y: usize, color: Color, piece: Piece) {
         for coord in piece.get_coordinates() {
             let new_x = x + coord.x as usize;
@@ -66,8 +76,9 @@ impl Board {
         }
     }
 
-    /// Place the specified piece on the board at the given coordinates (x, y) for the specified color.
-    /// Returns true if the piece was placed successfully, false otherwise.
+    /// Places a piece and returns whether the operation succeeded.
+    ///
+    /// The move is rejected if any cell would be out of bounds or already occupied.
     pub fn place_piece(&mut self, x: usize, y: usize, color: Color, piece: Piece) -> bool {
         
         let mut checked_coords: Vec<(usize, usize)> = vec![];

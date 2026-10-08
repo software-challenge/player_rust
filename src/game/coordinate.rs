@@ -4,6 +4,10 @@ mod tests;
 
 use crate::game::rotation::Rotation;
 
+/// A 2D coordinate used for tile placement and piece transformations.
+///
+/// Coordinates are relative to the board origin and are commonly normalized to
+/// start at `(0, 0)` before a piece is placed.
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]
 pub struct Coordinate {
     pub x: isize,
@@ -11,32 +15,39 @@ pub struct Coordinate {
 }
 
 impl Coordinate {
+    /// Creates a new coordinate.
     pub const fn new(x: isize, y: isize) -> Self {
         Coordinate { x, y }
     }
 
+    /// Adds another coordinate to this one in place.
     pub fn add(&mut self, other: &Coordinate) {
         self.x += other.x;
         self.y += other.y;
     }
 
+    /// Subtracts another coordinate from this one in place.
     pub fn subtract(&mut self, other: &Coordinate) {
         self.x -= other.x;
         self.y -= other.y;
     }
 
+    /// Multiplies the coordinate by a scalar in place.
     pub fn multiply(&mut self, scalar: isize){
         self.x *= scalar;
         self.y *= scalar;
     }
 
+    /// Divides the coordinate by a scalar in place.
     pub fn divide(&mut self, scalar: isize) {
         self.x /= scalar;
         self.y /= scalar;
     }
 
-    /// Transforms the coordinates relative to the coordinate origin by applying the specified rotation.
-    /// The rotation is applied in a clockwise direction.
+    /// Rotates this coordinate around the origin by the given [`Rotation`].
+    ///
+    /// The rotation is applied in a clockwise direction to match the engine's
+    /// board coordinate system.
     pub fn rotate(&self, rotation: &Rotation) -> Coordinate {
         match rotation {
             Rotation::Right => {
@@ -65,6 +76,7 @@ impl Coordinate {
 }
 
 /// Normalizes the coordinates in place so that their minimum x and y values become (0, 0).
+///
 /// Overwrites the original coordinates with the normalized values.
 pub fn normalize_coordinates(coordinates: &mut [Coordinate]) {
     let Some(first) = coordinates.first() else {
@@ -83,8 +95,10 @@ pub fn normalize_coordinates(coordinates: &mut [Coordinate]) {
     }
 }
 
-/// Rotates the coordinates in place clockwise relative to the coordinate origin.
-/// Does not normalize the coordinates after rotation, so the minimum x and y values may not be (0, 0).
+/// Rotates every coordinate by the specified clockwise rotation.
+///
+/// The rotated coordinates are not normalized, so they may still have negative
+/// values after the transformation.
 /// Overwrites the original coordinates with the normalized values.
 pub fn rotate_coordinates(coordinates: &mut [Coordinate], rotation: &Rotation) {
     for coord in coordinates {
@@ -92,7 +106,10 @@ pub fn rotate_coordinates(coordinates: &mut [Coordinate], rotation: &Rotation) {
     }
 }
 
-/// Flips the coordinates in place on the vertical axis (y-axis) relative to the coordinate origin.
+/// Mirrors coordinates across the vertical axis.
+///
+/// This is the helper used when a piece is flipped before it is placed on the
+/// board.
 /// Overwrites the original coordinates with the normalized values.
 pub fn flip_coordinates(coordinates: &mut [Coordinate]) {
     for coord in coordinates {
