@@ -303,7 +303,7 @@ fn read_to_buffer(
 #[cfg(test)]
 mod tests {
     use crate::connection::handler::{take_room_message, xml_payload_from_buffer};
-    use crate::{connection::parser::message::Message, games::active::parser::Blokus2026};
+    use crate::{connection::parser::message::Message, games::active::parser::Blokus2027};
 
     #[test]
     fn extracts_xml_payload_from_room_message() {
@@ -346,7 +346,7 @@ mod tests {
     fn parses_move_request_message() {
         let xml = br#"<room roomId="room123"><data class="moveRequest"/></room>"#;
 
-        let message = super::ConnectionHandler::<super::Joined, Blokus2026>::parse_message(xml)
+        let message = super::ConnectionHandler::<super::Joined, Blokus2027>::parse_message(xml)
             .expect("valid move request should parse");
 
         assert_eq!(message.as_ref(), &Message::MoveRequest);
@@ -356,7 +356,7 @@ mod tests {
     fn parses_result_message() {
         let xml = br#"<room roomId="room123"><data class="result"><definition/><scores/><winner regular="false"/></data></room>"#;
 
-        let message = super::ConnectionHandler::<super::Joined, Blokus2026>::parse_message(xml)
+        let message = super::ConnectionHandler::<super::Joined, Blokus2027>::parse_message(xml)
             .expect("valid result message should parse");
 
         assert!(matches!(
@@ -369,7 +369,7 @@ mod tests {
     fn rejects_unknown_data_class() {
         let xml = br#"<room roomId="room123"><data class="unknown"/></room>"#;
 
-        let error = super::ConnectionHandler::<super::Joined, Blokus2026>::parse_message(xml)
+        let error = super::ConnectionHandler::<super::Joined, Blokus2027>::parse_message(xml)
             .expect_err("unknown data classes should be rejected");
 
         assert!(error.to_string().contains("Unknown class attribute value: unknown"));
@@ -379,7 +379,7 @@ mod tests {
     fn rejects_message_without_data_element() {
         let xml = br#"<room roomId="room123"/>"#;
 
-        let error = super::ConnectionHandler::<super::Joined, Blokus2026>::parse_message(xml)
+        let error = super::ConnectionHandler::<super::Joined, Blokus2027>::parse_message(xml)
             .expect_err("messages without a data element should be rejected");
 
         assert!(error.to_string().contains("could not find <data start tag"));
