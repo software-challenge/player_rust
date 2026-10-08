@@ -19,8 +19,10 @@ use crate::{games::blokus2027::{ board::Board,
                 }
             };
 
-/// Returns a vector of all possible moves for the current team in the given game state.
-/// Does not include the skip move!
+/// Returns all legal moves for the active player in the given position.
+///
+/// This helper delegates to the first-round or regular-placement generator
+/// depending on the current round and never includes a pass/skip move.
 pub fn get_possible_moves(gamestate: &GameState) -> Vec<Move> {
     if *gamestate.get_round() == 1 {
         return get_possible_start_moves(gamestate);
@@ -28,7 +30,10 @@ pub fn get_possible_moves(gamestate: &GameState) -> Vec<Move> {
     get_possible_set_moves(gamestate)
 }
 
-/// Returns a vector of all possible moves for the current team in the first round.
+/// Returns all legal opening placements for the active player in round one.
+///
+/// The starting piece must be placed along the outer border in one of the valid
+/// transformed orientations.
 pub fn get_possible_start_moves(gamestate: &GameState) -> Vec<Move> {
     let mut moves: Vec<Move> = vec![];
     let piece: &PieceType = gamestate.get_starting_piece();
@@ -106,7 +111,9 @@ pub fn get_possible_start_moves(gamestate: &GameState) -> Vec<Move> {
     moves
 }
 
-/// Returns a vector of all possible set moves for the given game state.
+/// Returns all legal regular placements for the active player after round one.
+///
+/// This function combines the valid corner fields with each remaining piece type.
 pub fn get_possible_set_moves(gamestate: &GameState) -> Vec<Move> {
     let mut moves: Vec<Move> = vec![];
 
@@ -120,8 +127,10 @@ pub fn get_possible_set_moves(gamestate: &GameState) -> Vec<Move> {
     moves
 }
 
-/// Returns a vector of all possible moves for the given piece in the given game state
-/// Only returns valid moves after round 1!
+/// Returns all legal placements for a specific piece on the supplied candidate fields.
+///
+/// This is used for the main-placement phase after the starting round and only
+/// considers board positions that already passed the corner-contact check.
 pub fn get_possible_moves_for_piece(gamestate: &GameState, piece: &PieceType, valid_fields: &[Coordinate]) -> Vec<Move> {
     let mut moves: Vec<Move> = vec![];
     let mut seen: HashSet<(usize, usize, bool, Rotation)> = HashSet::new();
@@ -163,7 +172,10 @@ pub fn get_possible_moves_for_piece(gamestate: &GameState, piece: &PieceType, va
     moves
 }
 
-/// Return a vector of all coordinates on the board that are valid for the given color to place a piece on
+/// Returns all empty board cells that are legal placement candidates for `color`.
+///
+/// A candidate must be diagonally adjacent to an existing tile of that color, not
+/// be occupied, and not touch the same color along a shared border.
 pub fn get_valid_fields(board: &Board, color: &Color) -> Vec<Coordinate> {
 
     let mut valid_fields: Vec<Coordinate> = Vec::new();
@@ -221,7 +233,7 @@ pub fn get_valid_fields(board: &Board, color: &Color) -> Vec<Coordinate> {
     valid_fields
 }
 
-/// Returns a vector of all coordinates on the board that are occupied by any piece of the given color
+/// Returns every occupied coordinate belonging to the given color.
 pub fn get_colored_fields(board: &Board, color: &Color) -> Vec<Coordinate> {
     let mut colored_fields: Vec<Coordinate> = vec![];
 
@@ -236,8 +248,12 @@ pub fn get_colored_fields(board: &Board, color: &Color) -> Vec<Coordinate> {
     colored_fields
 }
 
-/// Returns true if the given move is valid in the given game state
-/// Does not check for round 1 validity! Only returns true results after round 1! For round 1 use get_possible_start_moves() to get all valid moves
+/// Returns whether a move is legal in the current game state.
+///
+/// A skip move is immediately accepted. For non-skip moves the function checks
+/// whether the piece is still available, whether the placement is in bounds and
+/// not overlapping existing tiles, and whether the move respects the standard
+/// corner-contact rule after the first piece has been placed.
 pub fn is_valid_move(gamestate: &GameState, m: &Move) -> bool {
     // Check if the move is a skip move
     if m.skip {

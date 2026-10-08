@@ -1,5 +1,9 @@
 use std::fmt::Display;
 
+/// Rotation applied to a piece before it is placed on the board.
+///
+/// The values correspond to quarter turns in clockwise direction, with
+/// `Mirror` representing the 180° rotation variant used by the game logic.
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]
 pub enum Rotation {
     None,
@@ -20,6 +24,7 @@ impl Display for Rotation {
 }
 
 impl Rotation {
+    /// Parses a rotation from its uppercase string representation.
     pub fn from_string(rotation_string: &str) -> Result<Rotation, Box<dyn std::error::Error>> {
         match rotation_string {
             "NONE" => Ok(Rotation::None),
@@ -30,6 +35,7 @@ impl Rotation {
         }
     }
 
+    /// Parses a rotation from the integer encoding used by the protocol.
     pub fn from_number(rotation_number: u8) -> Result<Rotation, Box<dyn std::error::Error>> {
         match rotation_number {
             0 => Ok(Rotation::None),

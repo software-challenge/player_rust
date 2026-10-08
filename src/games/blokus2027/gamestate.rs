@@ -30,6 +30,7 @@ pub struct GameState {
 
 impl GameState {
 
+    /// Creates a new game state from the supplied board and piece state.
     #[allow(clippy::too_many_arguments)]
     pub fn new(starting_piece: PieceType, is_starting_team_one: bool, board: Board, turn: u8, round: u8, current_turn_color: Color, blue_pieces: Vec<PieceType>, yellow_pieces: Vec<PieceType>, red_pieces: Vec<PieceType>, green_pieces: Vec<PieceType>) -> Self {
         GameState {
@@ -45,16 +46,19 @@ impl GameState {
         }
     }
 
-    /// Applies a move to the game state without any validation.
-    /// This function assumes that the move is valid and directly updates the game state.
-    /// If the move is invalid, this function may lead to an inconsistent game state.
+    /// Applies a move without validating it.
+    ///
+    /// Use this only when the move is already known to be legal. It updates the
+    /// board and the derived state fields directly.
     pub fn apply_move_unchecked(&mut self, m: &Move, turn: u8) {
         self.board.place_piece_unchecked(m.x, m.y, m.color, Piece::new(m.piece, m.rotation, m.is_flipped));
         self.update_gamestate(m, turn);
     }
 
-    /// Applies a move to the game state with validation.
-    /// Returns true if the move was valid and applied, false otherwise.
+    /// Applies a move after validating it against the current game state.
+    ///
+    /// Returns `true` if the move was accepted and applied, or `false` if it was
+    /// illegal in the current position.
     pub fn apply_move(&mut self, m: &Move, turn: u8) -> bool {
         if !gamerulelogic::is_valid_move(self, m) {
             return false;
@@ -141,7 +145,7 @@ impl GameState {
         total_points
     }
 
-    /// Returns the points for the specified color as specified in the documentation.
+    /// Returns the accumulated score for a single color.
     pub fn get_points_for_color(&self, color: &Color) -> u8 {
         match color {
             Color::Blue => self.points[0],
@@ -151,6 +155,7 @@ impl GameState {
         }
     }
 
+    /// Returns the last move recorded for the given color, if any.
     pub fn get_last_move(&self, color: &Color) -> &Option<Move> {
         match color {
             Color::Blue => &self.last_move[0],
@@ -160,54 +165,67 @@ impl GameState {
         }
     }
 
+    /// Returns the color whose turn it is.
     pub fn get_current_turn_color(&self) -> &Color {
         &self.current_turn_color
     }
     
+    /// Sets the active player color.
     pub fn set_current_turn_color(&mut self, color: Color) {
         self.current_turn_color = color;
     }
 
+    /// Returns the current move number.
     pub fn get_turn(&self) -> &u8 {
         &self.turn
     }
 
+    /// Sets the current move number.
     pub fn set_turn(&mut self, turn: u8) {
         self.turn = turn;
     }
 
+    /// Returns the current round number.
     pub fn get_round(&self) -> &u8 {
         &self.round
     }
 
+    /// Sets the current round number.
     pub fn set_round(&mut self, round: u8) {
         self.round = round;
     }
 
+    /// Returns the starting piece type for the match.
     pub fn get_starting_piece(&self) -> &PieceType {
         &self.starting_piece
     }
 
+    /// Sets the starting piece type.
     pub fn set_starting_piece(&mut self, piece: PieceType) {
         self.starting_piece = piece;
     }
 
+    /// Returns whether team one starts the match.
     pub fn is_starting_team_one(&self) -> &bool {
         &self.is_starting_team_one
     }
 
+    /// Sets whether team one starts the match.
     pub fn set_is_starting_team_one(&mut self, is_starting_team_one: bool) {
         self.is_starting_team_one = is_starting_team_one;
     }
 
+    /// Returns a reference to the current board.
     pub fn get_board(&self) -> &Board {
         &self.board
     }
 
+    /// Replaces the entire board state.
     pub fn set_board(&mut self, board: Board) {
         self.board = board;
     }
 
+    /// Returns the remaining piece types for the given color.
     pub fn get_color_pieces(&self, color: &Color) -> &[PieceType] {
         match color {
             Color::Blue => &self.pieces[0],
@@ -217,6 +235,7 @@ impl GameState {
         }
     }
 
+    /// Replaces the remaining pieces of the given color.
     pub fn set_color_pieces(&mut self, color: &Color, pieces: Vec<PieceType>) {
         match color {
             Color::Blue => self.pieces[0] = pieces,
