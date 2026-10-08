@@ -100,11 +100,11 @@ Im Ordner `examples` befinden sich Beispielimplementierungen von Spielern. Sie k
 ## Testen
 
 Allgemeine Informationen zum Testen in Rust finden sich in der [Cargo-Dokumentation](https://doc.rust-lang.org/cargo/commands/cargo-test.html).
-Die folgenden Befehle sind für dieses Projekt besonders relevant, weil sie die Tests für alle Pakete im Workspace (`--workspace`) mit unterschiedlichen Feature-Konfigurationen ausführen. `--verbose` zeigt dabei detailliertere Ausgaben an.
+Der CI-Workflow führt folgenden Testbefehl aus. Er testet alle Pakete im Workspace (`--workspace`) mit den Standard-Features; `--verbose` zeigt detailliertere Ausgaben an.
 
-- `cargo test --workspace --verbose` führt die Tests mit den Standard-Features aus.
-- `cargo test --workspace --no-default-features --verbose` führt sie ohne optionale Features aus. Damit wird geprüft, ob das Projekt auch ohne diese Features funktioniert.
-- `cargo test --workspace --all-features --verbose` aktiviert alle Features gleichzeitig. So werden auch Codepfade und mögliche Wechselwirkungen geprüft, die bei der Standardkonfiguration nicht aktiv sind.
+```sh
+cargo test --workspace --verbose
+```
 
 ## CI
 
