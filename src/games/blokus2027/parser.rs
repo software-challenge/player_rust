@@ -9,11 +9,12 @@ use quick_xml::{
 };
 
 use crate::{
+    common::team::Team,
     connection::parser::{
         message::Message, 
         parser_strategy::ParserStrategy
     }, games::blokus2027::{
-        board::Board, color::Color, gamestate::GameState, r#move::Move, piece::{ALL_PIECE_TYPES, PieceType}, rotation::Rotation, team::Team
+        board::Board, color::Color, gamestate::GameState, r#move::Move, piece::{ALL_PIECE_TYPES, PieceType}, rotation::Rotation,
     }
 };
 

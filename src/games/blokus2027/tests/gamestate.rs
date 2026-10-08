@@ -1,11 +1,12 @@
-use crate::games::blokus2027::{
-    board::Board,
-    color::Color,
-    piece::PieceType,
-    rotation::Rotation,
-    r#move::Move,
-    team::Team,
-};
+use crate::{
+    common::team::Team, 
+    games::blokus2027::{
+        board::Board,
+        color::Color,
+        piece::PieceType,
+        rotation::Rotation,
+        r#move::Move,
+}};
 
 use super::GameState;
 

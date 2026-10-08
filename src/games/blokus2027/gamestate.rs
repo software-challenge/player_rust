@@ -2,17 +2,18 @@
 #[path = "tests/gamestate.rs"]
 mod tests;
 
-use crate::games::blokus2027::{
-    board::Board,
-    color::Color,
-    gamerulelogic,
-    r#move::Move,
-    piece::{
-        Piece, 
-        PieceType
-    },
-    team::Team,
-};
+use crate::{
+    common::team::Team, 
+    games::blokus2027::{
+        board::Board,
+        color::Color,
+        gamerulelogic,
+        r#move::Move,
+        piece::{
+            Piece, 
+            PieceType
+        },
+}};
 /// Holds all information of a games state.
 #[derive(Clone, PartialEq, Eq, Debug)]
 pub struct GameState {
