@@ -12,7 +12,7 @@ use crate::{
     connection::parser::{
         message::Message, 
         parser_strategy::ParserStrategy
-    }, game::{
+    }, games::blokus2027::{
         board::Board, color::Color, gamestate::GameState, r#move::Move, piece::{ALL_PIECE_TYPES, PieceType}, rotation::Rotation, team::Team
     }
 };
@@ -289,15 +289,16 @@ fn _parse_pieces(reader: &mut Reader<&[u8]>) -> Result<(Vec<PieceType>, Vec<Piec
 mod tests {
     use crate::connection::parser::message::Message;
 use crate::connection::parser::parser_strategy::ParserStrategy;
-use crate::game::piece::ALL_PIECE_TYPES;
-use crate::game::piece::PieceType::PentoW;
-use crate::game::rotation::Rotation::None;
-use crate::game::{
+use crate::games::blokus2027::piece::ALL_PIECE_TYPES;
+use crate::games::blokus2027::piece::PieceType::PentoW;
+use crate::games::blokus2027::rotation::Rotation::None;
+use crate::games::blokus2027::{
         board::Board,
         color::Color,
         gamestate::GameState,
         piece::PieceType,
         r#move::Move,
+        rotation::Rotation,
     };
 
     use super::Blokus2026;
@@ -600,7 +601,7 @@ use crate::game::{
                 3,
                 5,
                 false,
-                crate::game::rotation::Rotation::Right,
+                Rotation::Right,
                 false,
             )),
         );

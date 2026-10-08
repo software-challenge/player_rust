@@ -1,7 +1,7 @@
 use crate::{connection::{
                 handler::ConnectionHandler, 
                 parser::message::Message
-            }, game::{
+            }, games::active::{
                 gamestate::GameState, r#move::Move, parser::Blokus2026
             }
         };

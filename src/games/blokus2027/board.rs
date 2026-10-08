@@ -2,7 +2,7 @@
 #[path = "tests/board.rs"]
 mod tests;
 
-use crate::game::{
+use crate::games::blokus2027::{
     color::Color,
     piece::{Piece},
     constants::BOARD_SIZE

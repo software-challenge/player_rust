@@ -16,7 +16,7 @@ use crate::{
         parse_result::parse_result,
         parser_strategy::ParserStrategy
     },
-    game::r#move::Move
+    games::active::r#move::Move
 };
 
 ///Indicates that the ConnectionHandler is connected.
@@ -303,7 +303,7 @@ fn read_to_buffer(
 #[cfg(test)]
 mod tests {
     use crate::connection::handler::{take_room_message, xml_payload_from_buffer};
-    use crate::{connection::parser::message::Message, game::parser::Blokus2026};
+    use crate::{connection::parser::message::Message, games::active::parser::Blokus2026};
 
     #[test]
     fn extracts_xml_payload_from_room_message() {

@@ -3,7 +3,7 @@ use socha::{
     ConnectionHandler, 
     Joined
   }, 
-  game::parser::Blokus2026
+  games::blokus2027::parser::Blokus2026
 };
 
 use std::hint::black_box;

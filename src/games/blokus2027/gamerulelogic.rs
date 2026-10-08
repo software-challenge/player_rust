@@ -5,7 +5,7 @@ mod tests;
 
 use std::collections::HashSet;
 
-use crate::{game::{ board::Board, 
+use crate::{games::blokus2027::{ board::Board, 
                     color::Color, 
                     constants::*, 
                     gamestate::GameState, 
@@ -14,6 +14,7 @@ use crate::{game::{ board::Board,
                         Piece, 
                         PieceType
                     }, 
+                    rotation::Rotation,
                     coordinate::Coordinate
                 }
             };
@@ -123,7 +124,7 @@ pub fn get_possible_set_moves(gamestate: &GameState) -> Vec<Move> {
 /// Only returns valid moves after round 1!
 pub fn get_possible_moves_for_piece(gamestate: &GameState, piece: &PieceType, valid_fields: &[Coordinate]) -> Vec<Move> {
     let mut moves: Vec<Move> = vec![];
-    let mut seen: HashSet<(usize, usize, bool, crate::game::rotation::Rotation)> = HashSet::new();
+    let mut seen: HashSet<(usize, usize, bool, Rotation)> = HashSet::new();
 
     for field in valid_fields {
         for variant in piece.all_variants(true) {

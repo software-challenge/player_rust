@@ -2,7 +2,7 @@
 #[path = "tests/coordinate.rs"]
 mod tests;
 
-use crate::game::rotation::Rotation;
+use crate::games::blokus2027::rotation::Rotation;
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]
 pub struct Coordinate {
