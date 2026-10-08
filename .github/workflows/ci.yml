@@ -84,8 +84,8 @@ jobs:
       - name: Check if README example code is identical to examples/basic_player/main.rs
         run: python3 .github/scripts/check_readme_example.py
 
-      - name: Check if README version and edition markers match Cargo.toml
-        run: python3 .github/scripts/check_readme_version_and_edition.py
+      - name: Check if README and CONTRIBUTING version and edition markers match Cargo.toml
+        run: python3 .github/scripts/check_version_and_edition.py
 
   quality:
     name: Code quality
