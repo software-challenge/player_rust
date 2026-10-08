@@ -1,10 +1,14 @@
 pub use crate::client::*;
-pub use crate::games::blokus2027::board::Board;
-pub use crate::games::blokus2027::color::Color;
-pub use crate::games::blokus2027::constants;
-pub use crate::games::blokus2027::coordinate::{self, Coordinate};
-pub use crate::games::blokus2027::gamerulelogic;
-pub use crate::games::blokus2027::gamestate::GameState;
-pub use crate::games::blokus2027::r#move::Move;
-pub use crate::games::blokus2027::rotation::Rotation;
-pub use crate::games::blokus2027::piece::*;
+
+#[cfg(feature = "game-blokus2027")]
+pub use crate::games::blokus2027::{
+    board::Board,
+    color::Color,
+    constants,
+    coordinate::{self, Coordinate},
+    gamerulelogic,
+    gamestate::GameState,
+    piece::*,
+    r#move::Move,
+    rotation::Rotation,
+};
