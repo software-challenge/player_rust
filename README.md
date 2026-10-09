@@ -96,11 +96,6 @@ Die wichtigsten Einstiegspunkte sind:
 
 Für fast alles was ihr machen wollt, sollte durch den Import von `socha::prelude::*` alles wichtige Importiert werden.
 
-## Spiel spezifische Dateien im Library
-
-- game/*
-- connection/parser/*
-
 ## Nutzung und Anpassung
 
 Für die Teilnahme an der Software-Challenge dürfen alle Dateien aus diesem Repository beliebig verwendet und verändert werden.

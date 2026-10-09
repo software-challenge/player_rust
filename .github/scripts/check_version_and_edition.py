@@ -11,6 +11,7 @@ except ModuleNotFoundError:  # pragma: no cover
 
 ROOT = Path(__file__).resolve().parents[2]
 README_PATH = ROOT / "README.md"
+CONTRIBUTING_PATH = ROOT / "CONTRIBUTING.md"
 CARGO_PATH = ROOT / "Cargo.toml"
 
 
@@ -28,10 +29,11 @@ def parse_cargo_metadata() -> tuple[str, str]:
     return rust_version, edition
 
 
-def parse_readme_metadata() -> tuple[list[str], list[str]]:
-    text = README_PATH.read_text(encoding="utf-8")
+def parse_file_metadata(path: Path, *names: str) -> dict[str, list[str]]:
+    text = path.read_text(encoding="utf-8")
+    metadata: dict[str, list[str]] = {}
 
-    def extract_values(name: str) -> list[str]:
+    for name in names:
         marker = re.escape(name)
         matches = re.findall(
             rf"<!--\s*{marker}\s*-->(.*?)<!--\s*/{marker}\s*-->",
@@ -40,15 +42,27 @@ def parse_readme_metadata() -> tuple[list[str], list[str]]:
         )
         if not matches:
             raise ValueError(
-                f"Expected at least one README HTML marker pair for '{name}', found none."
+                f"Expected at least one marker pair for '{name}' in '{path.name}', found none."
             )
 
         values = [value.strip() for value in matches]
         if any(not value for value in values):
-            raise ValueError(f"README HTML marker for '{name}' is empty.")
-        return values
+            raise ValueError(f"HTML marker '{name}' in '{path.name}' is empty.")
+        metadata[name] = values
 
-    return extract_values("rust-version"), extract_values("edition")
+    return metadata
+
+
+def parse_document_metadata() -> tuple[list[str], list[str], list[str], list[str]]:
+    readme_metadata = parse_file_metadata(README_PATH, "rust-version", "edition")
+    contributing_metadata = parse_file_metadata(CONTRIBUTING_PATH, "rust-version", "edition")
+
+    return (
+        readme_metadata["rust-version"],
+        readme_metadata["edition"],
+        contributing_metadata["rust-version"],
+        contributing_metadata["edition"],
+    )
 
 
 def main() -> int:
@@ -59,20 +73,22 @@ def main() -> int:
         return 1
 
     try:
-        readme_rust_versions, readme_editions = parse_readme_metadata()
+        readme_rust_versions, readme_editions, contributing_rust_versions, contributing_editions = parse_document_metadata()
     except (FileNotFoundError, ValueError) as exc:
         print(str(exc), file=sys.stderr)
         return 1
 
     mismatches: list[str] = []
-    for label, expected, actual_values in (
-        ("rust-version", cargo_rust_version, readme_rust_versions),
-        ("edition", cargo_edition, readme_editions),
+    for file_name, label, expected, actual_values in (
+        ("README", "rust-version", cargo_rust_version, readme_rust_versions),
+        ("README", "edition", cargo_edition, readme_editions),
+        ("CONTRIBUTING.md", "rust-version", cargo_rust_version, contributing_rust_versions),
+        ("CONTRIBUTING.md", "edition", cargo_edition, contributing_editions),
     ):
         for occurrence, actual in enumerate(actual_values, start=1):
             if actual != expected:
                 mismatches.append(
-                    f"README {label} marker #{occurrence} is '{actual}' "
+                    f"{file_name} {label} marker #{occurrence} is '{actual}' "
                     f"but Cargo.toml declares '{expected}'."
                 )
 
@@ -82,7 +98,8 @@ def main() -> int:
         return 1
 
     print(
-        f"README rust-version and edition match Cargo.toml: rust-version={cargo_rust_version}, edition={cargo_edition}"
+        f"README and CONTRIBUTING.md rust-version and edition values match Cargo.toml: "
+        f"rust-version={cargo_rust_version}, edition={cargo_edition}"
     )
     return 0
 
