@@ -1,0 +1,60 @@
+name: Automatically create draft PR
+
+on:
+  push:
+    branches-ignore:
+      - main
+
+permissions:
+  contents: read
+  pull-requests: write
+
+# Prevent parallel pr creations.
+concurrency:
+  group: auto-draft-pr-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  create-draft-pr:
+    runs-on: ubuntu-24.04
+
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      HEAD_BRANCH: ${{ github.ref_name }}
+      BASE_BRANCH: main
+
+    steps:
+      - name: Create draft PR if none exists
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          existing_pr=$(gh pr list \
+            --head "$HEAD_BRANCH" \
+            --base "$BASE_BRANCH" \
+            --state open \
+            --json number \
+            --jq 'length')
+
+          if [[ "$existing_pr" -gt 0 ]]; then
+            echo "A open PR already exists for this branch."
+            exit 0
+          fi
+
+          # Only create a draft PR if the branch is ahead of the base branch.
+          ahead_by=$(gh api \
+            "repos/$GH_REPO/compare/$BASE_BRANCH...$HEAD_BRANCH" \
+            --jq '.ahead_by')
+
+          if [[ "$ahead_by" -eq 0 ]]; then
+            echo "The branch is not ahead of $BASE_BRANCH."
+            exit 0
+          fi
+
+          gh pr create \
+            --base "$BASE_BRANCH" \
+            --head "$HEAD_BRANCH" \
+            --draft \
+            --title "$HEAD_BRANCH" \
+            --body "Automaticly created draft PR. Please add a description and further information if necessary."
