@@ -30,11 +30,11 @@ impl Board {
     ///
     /// The count is recalculated on every call, which is convenient for simple
     /// checks but may be inefficient if used in tight loops.
-    pub fn get_colored_tiles(&self, color: &Color) -> u8 {
+    pub fn get_colored_tiles(&self, color: Color) -> u8 {
         let mut num = 0;
         for row in self.board.iter() {
             for cell in row.iter() {
-                if let Some(cell_color) = cell && cell_color == color {
+                if let Some(cell_color) = cell && *cell_color == color {
                     num += 1;
                 }
             }

@@ -23,12 +23,12 @@ fn test_set_and_get_cell() {
 #[test]
 fn test_get_colored_tiles() {
     let mut board = Board::new();
-    assert_eq!(board.get_colored_tiles(&Color::Red), 0);
+    assert_eq!(board.get_colored_tiles(Color::Red), 0);
     board.set_cell(0, 0, Color::Red);
     board.set_cell(1, 1, Color::Red);
     board.set_cell(2, 2, Color::Blue);
-    assert_eq!(board.get_colored_tiles(&Color::Red), 2);
-    assert_eq!(board.get_colored_tiles(&Color::Blue), 1);
+    assert_eq!(board.get_colored_tiles(Color::Red), 2);
+    assert_eq!(board.get_colored_tiles(Color::Blue), 1);
 }
 
 #[test]
