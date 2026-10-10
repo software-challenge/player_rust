@@ -24,7 +24,7 @@ use crate::{games::blokus2027::{ board::Board,
 /// This helper delegates to the first-round or regular-placement generator
 /// depending on the current round and never includes a pass/skip move.
 pub fn get_possible_moves(gamestate: &GameState) -> Vec<Move> {
-    if *gamestate.get_round() == 1 {
+    if gamestate.get_round() == 1 {
         return get_possible_start_moves(gamestate);
     }
     get_possible_set_moves(gamestate)
@@ -36,7 +36,7 @@ pub fn get_possible_moves(gamestate: &GameState) -> Vec<Move> {
 /// transformed orientations.
 pub fn get_possible_start_moves(gamestate: &GameState) -> Vec<Move> {
     let mut moves: Vec<Move> = vec![];
-    let piece: &PieceType = gamestate.get_starting_piece();
+    let piece: PieceType = gamestate.get_starting_piece();
 
     for variant in piece.all_variants(true) {
         let (relative_coordinates, (rotation, is_flipped)) = variant;
@@ -57,8 +57,8 @@ pub fn get_possible_start_moves(gamestate: &GameState) -> Vec<Move> {
         // Add all possible border placements
         for x in 0..(BOARD_SIZE_I - max_x) {
             let mut m = Move {
-                color: *gamestate.get_current_turn_color(),
-                piece: *piece,
+                color: gamestate.get_current_turn_color(),
+                piece,
                 x: x as usize,
                 y: 0,
                 is_flipped,
@@ -69,8 +69,8 @@ pub fn get_possible_start_moves(gamestate: &GameState) -> Vec<Move> {
             if is_valid_move(gamestate, &m) {moves.push(m)}
 
             m = Move {
-                color: *gamestate.get_current_turn_color(),
-                piece: *piece,
+                color: gamestate.get_current_turn_color(),
+                piece,
                 x: x as usize,
                 y: (BOARD_SIZE_I - max_y) as usize,
                 is_flipped,
@@ -83,8 +83,8 @@ pub fn get_possible_start_moves(gamestate: &GameState) -> Vec<Move> {
 
         for y in 0..(BOARD_SIZE_I - max_y) {
             let mut m = Move {
-                color: *gamestate.get_current_turn_color(),
-                piece: *piece,
+                color: gamestate.get_current_turn_color(),
+                piece,
                 x: 0,
                 y: y as usize,
                 is_flipped,
@@ -95,8 +95,8 @@ pub fn get_possible_start_moves(gamestate: &GameState) -> Vec<Move> {
             if is_valid_move(gamestate, &m) {moves.push(m)}
 
             m = Move {
-                color: *gamestate.get_current_turn_color(),
-                piece: *piece,
+                color: gamestate.get_current_turn_color(),
+                piece,
                 x: (BOARD_SIZE_I - max_x) as usize,
                 y: y as usize,
                 is_flipped,
@@ -117,7 +117,7 @@ pub fn get_possible_start_moves(gamestate: &GameState) -> Vec<Move> {
 pub fn get_possible_set_moves(gamestate: &GameState) -> Vec<Move> {
     let mut moves: Vec<Move> = vec![];
 
-    let valid_fields: Vec<Coordinate> = get_valid_fields(gamestate.get_board(), gamestate.get_current_turn_color());
+    let valid_fields: Vec<Coordinate> = get_valid_fields(gamestate.get_board(), &gamestate.get_current_turn_color());
 
     for piece in gamestate.get_color_pieces(gamestate.get_current_turn_color()) {
         let piece_moves = get_possible_moves_for_piece(gamestate, piece, &valid_fields);
@@ -149,7 +149,7 @@ pub fn get_possible_moves_for_piece(gamestate: &GameState, piece: &PieceType, va
                 }
 
                 let m = Move {
-                    color: *gamestate.get_current_turn_color(),
+                    color: gamestate.get_current_turn_color(),
                     piece: *piece,
                     x: origin_x as usize,
                     y: origin_y as usize,
@@ -261,7 +261,7 @@ pub fn is_valid_move(gamestate: &GameState, m: &Move) -> bool {
     }
 
     // Check if team has the piece available
-    let team_pieces = gamestate.get_color_pieces(&m.color);
+    let team_pieces = gamestate.get_color_pieces(m.color);
     if !team_pieces.contains(&m.piece) {
         return false;
     }

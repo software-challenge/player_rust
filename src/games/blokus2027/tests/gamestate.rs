@@ -33,11 +33,11 @@ fn test_initialize_game_state() {
     }
 
     // Check that the current team is Team One
-    assert_eq!(*game_state.get_current_turn_color(), Color::Blue);
+    assert_eq!(game_state.get_current_turn_color(), Color::Blue);
 
     // Check that the initial scores are zero
-    assert_eq!(game_state.get_points_for_team(&Team::One), 0);
-    assert_eq!(game_state.get_points_for_team(&Team::Two), 0);
+    assert_eq!(game_state.get_points_for_team(Team::One), 0);
+    assert_eq!(game_state.get_points_for_team(Team::Two), 0);
 }
 
 #[test]
@@ -59,13 +59,13 @@ fn test_apply_move_unchecked() {
     game_state.apply_move_unchecked(&m, 4);
 
     assert_eq!(game_state.get_board().get_cell(0, 0), Some(Color::Blue));
-    assert!(game_state.get_color_pieces(&Color::Blue).is_empty());
-    assert_eq!(game_state.get_last_move(&Color::Blue), &Some(m));
-    assert_eq!(game_state.get_points_for_color(&Color::Blue), 16);
-    assert_eq!(game_state.get_points_for_team(&Team::One), 16);
-    assert_eq!(*game_state.get_turn(), 4);
-    assert_eq!(*game_state.get_round(), 1);
-    assert_eq!(*game_state.get_current_turn_color(), Color::Blue);
+    assert!(game_state.get_color_pieces(Color::Blue).is_empty());
+    assert_eq!(game_state.get_last_move(Color::Blue), &Some(m));
+    assert_eq!(game_state.get_points_for_color(Color::Blue), 16);
+    assert_eq!(game_state.get_points_for_team(Team::One), 16);
+    assert_eq!(game_state.get_turn(), 4);
+    assert_eq!(game_state.get_round(), 1);
+    assert_eq!(game_state.get_current_turn_color(), Color::Blue);
 }
 
 #[test]
@@ -86,10 +86,10 @@ fn test_apply_move() {
 
     assert!(game_state.apply_move(&m, 1));
     assert_eq!(game_state.get_board().get_cell(0, 0), Some(Color::Blue));
-    assert_eq!(game_state.get_points_for_color(&Color::Blue), 16);
-    assert_eq!(*game_state.get_turn(), 1);
-    assert_eq!(*game_state.get_round(), 0);
-    assert_eq!(*game_state.get_current_turn_color(), Color::Yellow);
+    assert_eq!(game_state.get_points_for_color(Color::Blue), 16);
+    assert_eq!(game_state.get_turn(), 1);
+    assert_eq!(game_state.get_round(), 0);
+    assert_eq!(game_state.get_current_turn_color(), Color::Yellow);
 
     let state_after_success = game_state.clone();
     let invalid_move = Move::new(Color::Blue, PieceType::Mono, 0, 0, false, Rotation::None, false);

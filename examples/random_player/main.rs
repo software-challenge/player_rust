@@ -18,8 +18,8 @@ impl Client for RandomPlayerClient {
 
         if legal_moves.is_empty() {
             return Some(Move {
-                color: *state.get_current_turn_color(),
-                piece: *state.get_starting_piece(),
+                color: state.get_current_turn_color(),
+                piece: state.get_starting_piece(),
                 x: 0,
                 y: 0,
                 is_flipped: false,
