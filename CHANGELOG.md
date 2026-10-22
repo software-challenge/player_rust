@@ -1,5 +1,16 @@
 # Changelog
 
+## [27.2.0]
+
+# Changes
+- on_move_requests doesn't have an Option as the return type anymore
+
+# Breaking API changes
+- on_move_request now requires a move to be returned (Move is no longer wraped in Option)
+
+# Fixes
+
+
 ## [27.1.1]
 
 # Changes
