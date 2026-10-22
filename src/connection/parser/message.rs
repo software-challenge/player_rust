@@ -11,5 +11,5 @@ pub enum Message {
     MementoInitial(Box<GameState>),
     MementoLastMove(u8, Move),
     MoveRequest,
-    Result(GameResult),
+    Result(Box<GameResult>),
 }

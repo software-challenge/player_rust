@@ -131,7 +131,7 @@ mod tests {
 
         assert_eq!(
             result.as_ref(),
-            &Message::Result(GameResult {
+            &Message::Result(Box::new(GameResult {
                 definition: Definition {
                     fragments: vec![
                         Fragment {
@@ -173,7 +173,7 @@ mod tests {
                     regular: true,
                     reason: Some("Spieler 1 hat am meisten Punkte erzielt.".to_owned()),
                 },
-            })
+            }))
         );
     }
 }
