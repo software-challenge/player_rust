@@ -13,7 +13,7 @@ use crate::{connection::{
 /// the game ends with `on_game_over`.
 pub trait Client {
     /// Called when the server asks the player to submit a move.
-    fn on_move_request(&mut self) -> Option<Move>;
+    fn on_move_request(&mut self) -> Move;
 
     /// Called after the final result message is received.
     fn on_game_over(&mut self);
@@ -58,11 +58,7 @@ pub fn start_client_from_commandline_args<C: Client>(mut client: C) -> Result<()
             },
             Message::MoveRequest => {
                 let m = client.on_move_request();
-                if let Some(mv) = m {
-                    connection.send_move(&mv)?;
-                } else {
-                    eprintln!("Client did not provide a move in response to MoveRequest!");
-                }
+                connection.send_move(&m)?;
             },
             Message::Result(_) => {
                 client.on_game_over();

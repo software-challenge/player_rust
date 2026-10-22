@@ -9,7 +9,7 @@ struct RandomPlayerClient {
 }
 
 impl Client for RandomPlayerClient {
-    fn on_move_request(&mut self) -> Option<Move> {
+    fn on_move_request(&mut self) -> Move {
         println!("Received a move request!");
         println!("Current team: {:?}", self.game_state.as_ref().unwrap().get_current_turn_color());
         
@@ -17,7 +17,7 @@ impl Client for RandomPlayerClient {
         let legal_moves = gamerulelogic::get_possible_moves(state);
 
         if legal_moves.is_empty() {
-            return Some(Move {
+            return Move {
                 color: state.get_current_turn_color(),
                 piece: state.get_starting_piece(),
                 x: 0,
@@ -25,11 +25,11 @@ impl Client for RandomPlayerClient {
                 is_flipped: false,
                 rotation: Rotation::None,
                 skip: true,
-            });
+            };
         }
 
         let random_index = random_index(legal_moves.len());
-        Some(legal_moves[random_index].clone())
+        legal_moves[random_index].clone()
     }
 
     fn on_game_over(&mut self) {
