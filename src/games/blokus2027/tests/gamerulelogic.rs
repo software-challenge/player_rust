@@ -1,11 +1,5 @@
 use crate::games::blokus2027::{
-    board::Board,
-    color::Color,
-    coordinate::Coordinate,
-    gamestate::GameState,
-    piece::PieceType,
-    r#move::Move,
-    rotation::Rotation,
+    board::Board, color::Color, coordinate::Coordinate, gamestate::GameState, r#move::{Move, SetMove}, piece::PieceType, rotation::Rotation,
 };
 
 use super::{
@@ -34,15 +28,7 @@ fn invalid_when_directly_adjacent_to_own_piece() {
     board.set_cell(5, 5, Color::Blue);
 
     let state = blue_turn_state_with_board(board, vec![PieceType::Mono]);
-    let m = Move {
-        color: Color::Blue,
-        piece: PieceType::Mono,
-        x: 6,
-        y: 5,
-        is_flipped: false,
-        rotation: Rotation::None,
-        skip: false,
-    };
+    let m = Move::Set(SetMove::new(Color::Blue, PieceType::Mono, 6, 5, false, Rotation::None));
 
     assert!(!is_valid_move(&state, &m));
 }
@@ -53,15 +39,7 @@ fn valid_when_only_corner_contact_exists() {
     board.set_cell(5, 5, Color::Blue);
 
     let state = blue_turn_state_with_board(board, vec![PieceType::Mono]);
-    let m = Move {
-        color: Color::Blue,
-        piece: PieceType::Mono,
-        x: 6,
-        y: 6,
-        is_flipped: false,
-        rotation: Rotation::None,
-        skip: false,
-    };
+    let m = Move::Set(SetMove::new(Color::Blue, PieceType::Mono, 6, 6, false, Rotation::None));
 
     assert!(is_valid_move(&state, &m));
 }
@@ -72,15 +50,7 @@ fn invalid_when_no_corner_contact_after_first_move() {
     board.set_cell(5, 5, Color::Blue);
 
     let state = blue_turn_state_with_board(board, vec![PieceType::Mono]);
-    let m = Move {
-        color: Color::Blue,
-        piece: PieceType::Mono,
-        x: 10,
-        y: 10,
-        is_flipped: false,
-        rotation: Rotation::None,
-        skip: false,
-    };
+    let m = Move::Set(SetMove::new(Color::Blue, PieceType::Mono, 10, 10, false, Rotation::None));
 
     assert!(!is_valid_move(&state, &m));
 }
@@ -107,21 +77,13 @@ fn calculates_moves_where_corner_is_not_piece_origin() {
     let moves = get_possible_moves_for_piece(&state, &PieceType::PentoX, &valid_fields);
 
     assert!(
-        moves.iter().any(|m| m.x == 6 && m.y == 5),
+        moves.iter().any(|m| if let Move::Set(sm) = m {sm.x == 6 && sm.y == 5} else {false}),
         "expected a placement that aligns a non-origin PENTO_X tile to the corner"
     );
 }
 
 fn mono_move(color: Color, x: usize, y: usize) -> Move {
-    Move {
-        color,
-        piece: PieceType::Mono,
-        x,
-        y,
-        is_flipped: false,
-        rotation: Rotation::None,
-        skip: false,
-    }
+    Move::Set(SetMove::new(color, PieceType::Mono, x, y, false, Rotation::None))
 }
 
 #[test]
@@ -149,8 +111,7 @@ fn invalid_when_placement_overlaps_an_occupied_cell() {
 
 #[test]
 fn skip_move_is_always_valid() {
-    let mut move_to_skip = mono_move(Color::Blue, 20, 20);
-    move_to_skip.skip = true;
+    let move_to_skip = Move::Skip(Color::Blue);
     let state = blue_turn_state_with_board(Board::new(), vec![]);
 
     assert!(is_valid_move(&state, &move_to_skip));
@@ -201,5 +162,5 @@ fn first_round_generates_starting_piece_moves() {
     let moves = get_possible_moves(&state);
 
     assert!(!moves.is_empty());
-    assert!(moves.iter().all(|m| !m.skip));
+    assert!(moves.iter().all(|m| !matches!(m, Move::Skip(_))));
 }

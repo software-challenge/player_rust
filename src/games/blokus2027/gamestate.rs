@@ -3,13 +3,8 @@
 mod tests;
 
 use crate::{
-    common::team::Team, 
-    games::blokus2027::{
-        board::Board,
-        color::Color,
-        gamerulelogic,
-        r#move::Move,
-        piece::{
+    common::team::Team, games::blokus2027::{
+        board::Board, color::Color::{self, Blue, Green, Red, Yellow}, gamerulelogic, r#move::Move, piece::{
             Piece, 
             PieceType
         },
@@ -51,8 +46,10 @@ impl GameState {
     /// Use this only when the move is already known to be legal. It updates the
     /// board and the derived state fields directly.
     pub fn apply_move_unchecked(&mut self, m: &Move, turn: u8) {
-        self.board.place_piece_unchecked(m.x, m.y, m.color, Piece::new(m.piece, m.rotation, m.is_flipped));
-        self.update_gamestate(m, turn);
+        if let Move::Set(sm) = m {
+            self.board.place_piece_unchecked(sm.x, sm.y, sm.color, Piece::new(sm.piece, sm.rotation, sm.is_flipped));
+            self.update_gamestate(m, turn);
+        }
     }
 
     /// Applies a move after validating it against the current game state.
@@ -64,8 +61,10 @@ impl GameState {
             return false;
         }
 
-        self.board.place_piece(m.x, m.y, m.color, Piece::new(m.piece, m.rotation, m.is_flipped));
-        self.update_gamestate(m, turn);
+        if let Move::Set(sm) = m {
+            self.board.place_piece_unchecked(sm.x, sm.y, sm.color, Piece::new(sm.piece, sm.rotation, sm.is_flipped));
+            self.update_gamestate(m, turn);
+        }
 
         true
     }
@@ -73,27 +72,29 @@ impl GameState {
     /// Updates the game state after a move has been applied to the board either save or unsave.
     fn update_gamestate(&mut self, m: &Move, turn: u8) {
         // Remove used piece from the corresponding color's available pieces
-        match m.color {
-            Color::Blue => {
-                self.pieces[0].retain(|&p| p != m.piece);
+        match m {
+            Move::Set(set_move) if set_move.color == Blue => {
+                self.pieces[0].retain(|&p| p != set_move.piece);
                 self.last_move[0] = Some(*m);
-                self.points[0] = self.calculate_points_for_color(&Color::Blue);
+                self.points[0] = self.calculate_points_for_color(Color::Blue);
             },
-            Color::Yellow => {
-                self.pieces[1].retain(|&p| p != m.piece);
+            Move::Set(set_move) if set_move.color == Yellow => {
+                self.pieces[1].retain(|&p| p != set_move.piece);
                 self.last_move[1] = Some(*m);
-                self.points[1] = self.calculate_points_for_color(&Color::Yellow);
+                self.points[1] = self.calculate_points_for_color(Color::Yellow);
             },
-            Color::Red => {
-                self.pieces[2].retain(|&p| p != m.piece);
+            Move::Set(set_move) if set_move.color == Red => {
+                self.pieces[2].retain(|&p| p != set_move.piece);
                 self.last_move[2] = Some(*m);
-                self.points[2] = self.calculate_points_for_color(&Color::Red);
+                self.points[2] = self.calculate_points_for_color(Color::Red);
             },
-            Color::Green => {
-                self.pieces[3].retain(|&p| p != m.piece);
+            Move::Set(set_move) if set_move.color == Green => {
+                self.pieces[3].retain(|&p| p != set_move.piece);
                 self.last_move[3] = Some(*m);
-                self.points[3] = self.calculate_points_for_color(&Color::Green);
+                self.points[3] = self.calculate_points_for_color(Color::Green);
             },
+            Move::Skip(_) => {},
+            Move::Set(_) => unreachable!(),
         }
 
         self.turn = turn;
@@ -115,7 +116,7 @@ impl GameState {
     }
     
     // Calculates the points for a given color based on the current game state.
-    fn calculate_points_for_color(&self, color: &Color) -> u8 {
+    fn calculate_points_for_color(&self, color: Color) -> u8 {
         let mut points = self.board.get_colored_tiles(color);
 
         // Extra points for no pieces left
@@ -125,7 +126,7 @@ impl GameState {
             // Extra points for last piece being mono
             let last_move = self.get_last_move(color);
             #[allow(clippy::unwrap_used)]
-            if last_move.is_some() && last_move.unwrap().piece == PieceType::Mono {
+            if let Some(Move::Set(last_move)) = last_move && last_move.piece == PieceType::Mono {
                 points += 5;
             }
         }
@@ -134,19 +135,19 @@ impl GameState {
     }
 
     /// Returns the points for the specified team as specified in the documentation.
-    pub fn get_points_for_team(&self, team: &Team) -> u8 {
+    pub fn get_points_for_team(&self, team: Team) -> u8 {
         let team_colors = team.get_team_colors();
         let mut total_points = 0;
 
         for color in team_colors.iter() {
-            total_points += self.get_points_for_color(color);
+            total_points += self.get_points_for_color(*color);
         }
 
         total_points
     }
 
     /// Returns the accumulated score for a single color.
-    pub fn get_points_for_color(&self, color: &Color) -> u8 {
+    pub fn get_points_for_color(&self, color: Color) -> u8 {
         match color {
             Color::Blue => self.points[0],
             Color::Yellow => self.points[1],
@@ -156,7 +157,7 @@ impl GameState {
     }
 
     /// Returns the last move recorded for the given color, if any.
-    pub fn get_last_move(&self, color: &Color) -> &Option<Move> {
+    pub fn get_last_move(&self, color: Color) -> &Option<Move> {
         match color {
             Color::Blue => &self.last_move[0],
             Color::Yellow => &self.last_move[1],
@@ -166,8 +167,8 @@ impl GameState {
     }
 
     /// Returns the color whose turn it is.
-    pub fn get_current_turn_color(&self) -> &Color {
-        &self.current_turn_color
+    pub fn get_current_turn_color(&self) -> Color {
+        self.current_turn_color
     }
     
     /// Sets the active player color.
@@ -176,8 +177,8 @@ impl GameState {
     }
 
     /// Returns the current move number.
-    pub fn get_turn(&self) -> &u8 {
-        &self.turn
+    pub fn get_turn(&self) -> u8 {
+        self.turn
     }
 
     /// Sets the current move number.
@@ -186,8 +187,8 @@ impl GameState {
     }
 
     /// Returns the current round number.
-    pub fn get_round(&self) -> &u8 {
-        &self.round
+    pub fn get_round(&self) -> u8 {
+        self.round
     }
 
     /// Sets the current round number.
@@ -196,8 +197,8 @@ impl GameState {
     }
 
     /// Returns the starting piece type for the match.
-    pub fn get_starting_piece(&self) -> &PieceType {
-        &self.starting_piece
+    pub fn get_starting_piece(&self) -> PieceType {
+        self.starting_piece
     }
 
     /// Sets the starting piece type.
@@ -206,8 +207,8 @@ impl GameState {
     }
 
     /// Returns whether team one starts the match.
-    pub fn is_starting_team_one(&self) -> &bool {
-        &self.is_starting_team_one
+    pub fn is_starting_team_one(&self) -> bool {
+        self.is_starting_team_one
     }
 
     /// Sets whether team one starts the match.
@@ -226,7 +227,7 @@ impl GameState {
     }
 
     /// Returns the remaining piece types for the given color.
-    pub fn get_color_pieces(&self, color: &Color) -> &[PieceType] {
+    pub fn get_color_pieces(&self, color: Color) -> &[PieceType] {
         match color {
             Color::Blue => &self.pieces[0],
             Color::Yellow => &self.pieces[1],
@@ -236,7 +237,7 @@ impl GameState {
     }
 
     /// Replaces the remaining pieces of the given color.
-    pub fn set_color_pieces(&mut self, color: &Color, pieces: Vec<PieceType>) {
+    pub fn set_color_pieces(&mut self, color: Color, pieces: Vec<PieceType>) {
         match color {
             Color::Blue => self.pieces[0] = pieces,
             Color::Yellow => self.pieces[1] = pieces,

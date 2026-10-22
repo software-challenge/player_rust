@@ -9,12 +9,11 @@ use quick_xml::{
 };
 
 use crate::{
-    common::team::Team,
-    connection::parser::{
+    common::team::Team, connection::parser::{
         message::Message, 
         parser_strategy::ParserStrategy
     }, games::blokus2027::{
-        board::Board, color::Color, gamestate::GameState, r#move::Move, piece::{ALL_PIECE_TYPES, PieceType}, rotation::Rotation,
+        board::Board, color::Color, gamestate::GameState, r#move::{Move, SetMove}, piece::{ALL_PIECE_TYPES, PieceType}, rotation::Rotation,
     }
 };
 
@@ -119,7 +118,7 @@ fn parse_skip_move(reader: &mut Reader<&[u8]>) -> Result<Move, Box<dyn std::erro
             Event::Start(c) if c.name().0 == "color" =>  next_text_is_color = true,
             Event::Text(text) if next_text_is_color => {
                 let color = Color::try_from(text.as_ref()).expect(format!("Server returned invalid color: {}", text.as_ref()).as_str());
-                return Ok(Move::new(color, PieceType::Domino, 0, 0, false, Rotation::None, true));
+                return Ok(Move::Skip(color));
             }
             Event::Eof => {
                 return Err(Box::from(io::Error::new(io::ErrorKind::UnexpectedEof,"Turn is not 0 but no lastMove received")));
@@ -187,7 +186,7 @@ fn parse_set_move(reader: &mut Reader<&[u8]>) -> Result<Move, Box<dyn std::error
                         io::ErrorKind::NotFound,
                         "Received no piece data. Unable to form Move"
                     ))?;
-                    return Ok(Move::new(piece.color, piece.kind, x, y, piece.is_flipped, piece.rotation, false));
+                    return Ok(Move::Set(SetMove::new(piece.color, piece.kind, x, y, piece.is_flipped, piece.rotation)));
                 } else {
                     return Err(Box::from(io::Error::new(
                         io::ErrorKind::NotFound,
@@ -290,6 +289,7 @@ fn _parse_pieces(reader: &mut Reader<&[u8]>) -> Result<(Vec<PieceType>, Vec<Piec
 mod tests {
     use crate::connection::parser::message::Message;
 use crate::connection::parser::parser_strategy::ParserStrategy;
+use crate::games::blokus2027::r#move::SetMove;
 use crate::games::blokus2027::piece::ALL_PIECE_TYPES;
 use crate::games::blokus2027::piece::PieceType::PentoW;
 use crate::games::blokus2027::rotation::Rotation::None;
@@ -549,7 +549,7 @@ use crate::games::blokus2027::{
 
         println!("{:?}", last_move);
 
-        let last_movetarget = Message::MementoLastMove(1, Move::new(Color::Blue, PentoW, 0, 16, true, None, false));
+        let last_movetarget = Message::MementoLastMove(1, Move::Set(SetMove::new(Color::Blue, PentoW, 0, 16, true, None)));
 
         println!("{:?}", last_movetarget);
 
@@ -568,15 +568,7 @@ use crate::games::blokus2027::{
         let message = Blokus2027::parse_memento(xml).expect("skip move should parse");
         let expected = Message::MementoLastMove(
             2,
-            Move::new(
-                Color::Green,
-                PieceType::Domino,
-                0,
-                0,
-                false,
-                None,
-                true,
-            ),
+            Move::Skip(Color::Green,),
         );
 
         assert_eq!(*message, expected);
@@ -596,15 +588,14 @@ use crate::games::blokus2027::{
         let message = Blokus2027::parse_memento(xml).expect("set move should parse");
         let expected = Message::MementoLastMove(
             3,
-            Move::new(
+            Move::Set(SetMove::new(
                 Color::Yellow,
                 PieceType::TrioL,
                 3,
                 5,
                 false,
                 Rotation::Right,
-                false,
-            ),
+            )),
         );
 
         assert_eq!(*message, expected);

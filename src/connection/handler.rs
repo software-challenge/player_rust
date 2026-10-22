@@ -123,17 +123,18 @@ impl<S: ParserStrategy> ConnectionHandler<Joined, S> {
         let mut move_xml = String::new();
         write!(move_xml, "<room roomId=\"{}\">", self.get_room_id())?;
 
-        if m.skip {
-            write!(move_xml, "<data class=\"sc.plugin2027.SkipMove\"><color>{}</color></data></room>", m.color)?;
-        } else {
+        match m {
+            Move::Set(sm) =>  {
             write!(move_xml, "<data class=\"sc.plugin2027.SetMove\"><piece color=\"{}\" kind=\"{}\" rotation=\"{}\" isFlipped=\"{}\"><position x=\"{}\" y=\"{}\"/></piece></data></room>",
-            m.color,
-            m.piece,
-            m.rotation,
-            m.is_flipped,
-            m.x,
-            m.y)?;
-        }
+                sm.color,
+                sm.piece,
+                sm.rotation,
+                sm.is_flipped,
+                sm.x,
+                sm.y)?;
+            },
+            Move::Skip(c) => write!(move_xml, "<data class=\"sc.plugin2027.SkipMove\"><color>{}</color></data></room>", c)?
+        } 
 
         self.connection.write_all(move_xml.as_bytes())?;
         self.connection.flush()?;
