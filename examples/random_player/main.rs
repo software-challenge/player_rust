@@ -17,7 +17,7 @@ impl Client for RandomPlayerClient {
         let legal_moves = gamerulelogic::get_possible_moves(state);
 
         if legal_moves.is_empty() {
-            return Some(Move::Skip(state.get_current_turn_color()));
+            return Move::Skip(state.get_current_turn_color());
         }
 
         let random_index = random_index(legal_moves.len());
