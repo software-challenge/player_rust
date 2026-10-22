@@ -15,6 +15,16 @@ pub enum Move {
     Skip(Color)
 }
 
+impl Move {
+    pub fn new_set(color: Color, piece: PieceType, x: usize, y: usize, is_flipped: bool, rotation: Rotation) -> Move {
+        Move::Set(SetMove::new(color, piece, x, y, is_flipped, rotation))
+    }
+
+    pub fn new_skip(color: Color) -> Move {
+        Move::Skip(color)
+    }
+}
+
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]
 pub struct SetMove {
