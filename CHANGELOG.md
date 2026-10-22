@@ -15,7 +15,8 @@
 - Some functions now take variables by value and not reference (get_color_pieces, set_color_pieces)
 
 # Fixes
-
+- #37 
+- #50 
 
 ## [27.1.1]
 
