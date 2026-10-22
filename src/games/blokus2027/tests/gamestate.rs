@@ -1,11 +1,6 @@
 use crate::{
-    common::team::Team, 
-    games::blokus2027::{
-        board::Board,
-        color::Color,
-        piece::PieceType,
-        rotation::Rotation,
-        r#move::Move,
+    common::team::Team, games::blokus2027::{
+        board::Board, color::Color, r#move::{Move, SetMove}, piece::PieceType, rotation::Rotation,
 }};
 
 use super::GameState;
@@ -54,7 +49,7 @@ fn test_apply_move_unchecked() {
         Vec::new(),
         Vec::new(),
     );
-    let m = Move::new(Color::Blue, PieceType::Mono, 0, 0, false, Rotation::None, false);
+    let m = Move::Set(SetMove::new(Color::Blue, PieceType::Mono, 0, 0, false, Rotation::None));
 
     game_state.apply_move_unchecked(&m, 4);
 
@@ -82,7 +77,7 @@ fn test_apply_move() {
         Vec::new(),
         Vec::new(),
     );
-    let m = Move::new(Color::Blue, PieceType::Mono, 0, 0, false, Rotation::None, false);
+    let m = Move::Set(SetMove::new(Color::Blue, PieceType::Mono, 0, 0, false, Rotation::None));
 
     assert!(game_state.apply_move(&m, 1));
     assert_eq!(game_state.get_board().get_cell(0, 0), Some(Color::Blue));
@@ -92,7 +87,7 @@ fn test_apply_move() {
     assert_eq!(game_state.get_current_turn_color(), Color::Yellow);
 
     let state_after_success = game_state.clone();
-    let invalid_move = Move::new(Color::Blue, PieceType::Mono, 0, 0, false, Rotation::None, false);
+    let invalid_move = Move::Set(SetMove::new(Color::Blue, PieceType::Mono, 0, 0, false, Rotation::None));
 
     assert!(!game_state.apply_move(&invalid_move, 2));
     assert_eq!(game_state, state_after_success);

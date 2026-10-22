@@ -3,13 +3,8 @@
 mod tests;
 
 use crate::{
-    common::team::Team, 
-    games::blokus2027::{
-        board::Board,
-        color::Color,
-        gamerulelogic,
-        r#move::Move,
-        piece::{
+    common::team::Team, games::blokus2027::{
+        board::Board, color::Color::{self, Blue, Green, Red, Yellow}, gamerulelogic, r#move::Move, piece::{
             Piece, 
             PieceType
         },
@@ -51,8 +46,10 @@ impl GameState {
     /// Use this only when the move is already known to be legal. It updates the
     /// board and the derived state fields directly.
     pub fn apply_move_unchecked(&mut self, m: &Move, turn: u8) {
-        self.board.place_piece_unchecked(m.x, m.y, m.color, Piece::new(m.piece, m.rotation, m.is_flipped));
-        self.update_gamestate(m, turn);
+        if let Move::Set(sm) = m {
+            self.board.place_piece_unchecked(sm.x, sm.y, sm.color, Piece::new(sm.piece, sm.rotation, sm.is_flipped));
+            self.update_gamestate(m, turn);
+        }
     }
 
     /// Applies a move after validating it against the current game state.
@@ -64,8 +61,10 @@ impl GameState {
             return false;
         }
 
-        self.board.place_piece(m.x, m.y, m.color, Piece::new(m.piece, m.rotation, m.is_flipped));
-        self.update_gamestate(m, turn);
+        if let Move::Set(sm) = m {
+            self.board.place_piece_unchecked(sm.x, sm.y, sm.color, Piece::new(sm.piece, sm.rotation, sm.is_flipped));
+            self.update_gamestate(m, turn);
+        }
 
         true
     }
@@ -73,27 +72,29 @@ impl GameState {
     /// Updates the game state after a move has been applied to the board either save or unsave.
     fn update_gamestate(&mut self, m: &Move, turn: u8) {
         // Remove used piece from the corresponding color's available pieces
-        match m.color {
-            Color::Blue => {
-                self.pieces[0].retain(|&p| p != m.piece);
+        match m {
+            Move::Set(set_move) if set_move.color == Blue => {
+                self.pieces[0].retain(|&p| p != set_move.piece);
                 self.last_move[0] = Some(*m);
                 self.points[0] = self.calculate_points_for_color(Color::Blue);
             },
-            Color::Yellow => {
-                self.pieces[1].retain(|&p| p != m.piece);
+            Move::Set(set_move) if set_move.color == Yellow => {
+                self.pieces[1].retain(|&p| p != set_move.piece);
                 self.last_move[1] = Some(*m);
                 self.points[1] = self.calculate_points_for_color(Color::Yellow);
             },
-            Color::Red => {
-                self.pieces[2].retain(|&p| p != m.piece);
+            Move::Set(set_move) if set_move.color == Red => {
+                self.pieces[2].retain(|&p| p != set_move.piece);
                 self.last_move[2] = Some(*m);
                 self.points[2] = self.calculate_points_for_color(Color::Red);
             },
-            Color::Green => {
-                self.pieces[3].retain(|&p| p != m.piece);
+            Move::Set(set_move) if set_move.color == Green => {
+                self.pieces[3].retain(|&p| p != set_move.piece);
                 self.last_move[3] = Some(*m);
                 self.points[3] = self.calculate_points_for_color(Color::Green);
             },
+            Move::Skip(_) => {},
+            Move::Set(_) => unreachable!(),
         }
 
         self.turn = turn;
@@ -125,7 +126,7 @@ impl GameState {
             // Extra points for last piece being mono
             let last_move = self.get_last_move(color);
             #[allow(clippy::unwrap_used)]
-            if last_move.is_some() && last_move.unwrap().piece == PieceType::Mono {
+            if let Some(Move::Set(last_move)) = last_move && last_move.piece == PieceType::Mono {
                 points += 5;
             }
         }
