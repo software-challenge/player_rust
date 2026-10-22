@@ -131,7 +131,7 @@ mod tests {
 
         assert_eq!(
             result.as_ref(),
-            &Message::Result(Some(GameResult {
+            &Message::Result(Box::new(GameResult {
                 definition: Definition {
                     fragments: vec![
                         Fragment {

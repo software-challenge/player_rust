@@ -51,7 +51,7 @@ impl ParserStrategy for Blokus2027 {
 
                     if turn != 0 {
                         let last_move = parse_last_move(&mut reader)?; 
-                        return Ok(Box::from(Message::MementoLastMove(Some(turn), Some(last_move))));
+                        return Ok(Box::from(Message::MementoLastMove(turn, last_move)));
                     } else {
                         //let board = _parse_game_board(&mut reader)?;
                         //let pieces = _parse_pieces(&mut reader)?;
@@ -74,7 +74,7 @@ impl ParserStrategy for Blokus2027 {
                            COLOR_ORDER_TWO[(turn % 4) as usize]
                         };      
 
-                        return Ok(Box::from(Message::MementoInitial(Some(GameState::new(starting_piece, is_statrting_team_one, Board::new(), turn, round, current_turn_color, ALL_PIECE_TYPES.to_vec(), ALL_PIECE_TYPES.to_vec(), ALL_PIECE_TYPES.to_vec(), ALL_PIECE_TYPES.to_vec())))));
+                        return Ok(Box::from(Message::MementoInitial(Box::new(GameState::new(starting_piece, is_statrting_team_one, Board::new(), turn, round, current_turn_color, ALL_PIECE_TYPES.to_vec(), ALL_PIECE_TYPES.to_vec(), ALL_PIECE_TYPES.to_vec(), ALL_PIECE_TYPES.to_vec())))));
                     }
                 },
                 Event::Start(e) if e.name().0 == "lastMove" => {
@@ -418,7 +418,7 @@ use crate::games::blokus2027::{
 
         println!("{:?}", gamestate);
 
-        let gamestate_target = Message::MementoInitial(Some(GameState::new(PieceType::PentoW, true, Board::new(), 0, 1, Color::Blue, ALL_PIECE_TYPES.to_vec(), ALL_PIECE_TYPES.to_vec(), ALL_PIECE_TYPES.to_vec(), ALL_PIECE_TYPES.to_vec())));
+        let gamestate_target = Message::MementoInitial(Box::new(GameState::new(PieceType::PentoW, true, Board::new(), 0, 1, Color::Blue, ALL_PIECE_TYPES.to_vec(), ALL_PIECE_TYPES.to_vec(), ALL_PIECE_TYPES.to_vec(), ALL_PIECE_TYPES.to_vec())));
 
         println!("{:?}", gamestate_target);
 
@@ -549,7 +549,7 @@ use crate::games::blokus2027::{
 
         println!("{:?}", last_move);
 
-        let last_movetarget = Message::MementoLastMove(Some(1), Some(Move::Set(SetMove::new(Color::Blue, PentoW, 0, 16, true, None))));
+        let last_movetarget = Message::MementoLastMove(1, Move::Set(SetMove::new(Color::Blue, PentoW, 0, 16, true, None)));
 
         println!("{:?}", last_movetarget);
 
@@ -567,8 +567,8 @@ use crate::games::blokus2027::{
 
         let message = Blokus2027::parse_memento(xml).expect("skip move should parse");
         let expected = Message::MementoLastMove(
-            Some(2),
-            Some(Move::Skip(Color::Green,)),
+            2,
+            Move::Skip(Color::Green,),
         );
 
         assert_eq!(*message, expected);
@@ -587,15 +587,15 @@ use crate::games::blokus2027::{
 
         let message = Blokus2027::parse_memento(xml).expect("set move should parse");
         let expected = Message::MementoLastMove(
-            Some(3),
-            Some(Move::Set(SetMove::new(
+            3,
+            Move::Set(SetMove::new(
                 Color::Yellow,
                 PieceType::TrioL,
                 3,
                 5,
                 false,
                 Rotation::Right,
-            ))),
+            )),
         );
 
         assert_eq!(*message, expected);
