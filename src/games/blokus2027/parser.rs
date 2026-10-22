@@ -75,7 +75,7 @@ impl ParserStrategy for Blokus2027 {
                            COLOR_ORDER_TWO[(turn % 4) as usize]
                         };      
 
-                        return Ok(Box::from(Message::MementoInitial(GameState::new(starting_piece, is_statrting_team_one, Board::new(), turn, round, current_turn_color, ALL_PIECE_TYPES.to_vec(), ALL_PIECE_TYPES.to_vec(), ALL_PIECE_TYPES.to_vec(), ALL_PIECE_TYPES.to_vec()))));
+                        return Ok(Box::from(Message::MementoInitial(Box::new(GameState::new(starting_piece, is_statrting_team_one, Board::new(), turn, round, current_turn_color, ALL_PIECE_TYPES.to_vec(), ALL_PIECE_TYPES.to_vec(), ALL_PIECE_TYPES.to_vec(), ALL_PIECE_TYPES.to_vec())))));
                     }
                 },
                 Event::Start(e) if e.name().0 == "lastMove" => {
@@ -418,7 +418,7 @@ use crate::games::blokus2027::{
 
         println!("{:?}", gamestate);
 
-        let gamestate_target = Message::MementoInitial(GameState::new(PieceType::PentoW, true, Board::new(), 0, 1, Color::Blue, ALL_PIECE_TYPES.to_vec(), ALL_PIECE_TYPES.to_vec(), ALL_PIECE_TYPES.to_vec(), ALL_PIECE_TYPES.to_vec()));
+        let gamestate_target = Message::MementoInitial(Box::new(GameState::new(PieceType::PentoW, true, Board::new(), 0, 1, Color::Blue, ALL_PIECE_TYPES.to_vec(), ALL_PIECE_TYPES.to_vec(), ALL_PIECE_TYPES.to_vec(), ALL_PIECE_TYPES.to_vec())));
 
         println!("{:?}", gamestate_target);
 

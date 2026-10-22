@@ -35,8 +35,8 @@ pub fn start_client_from_commandline_args<C: Client>(mut client: C) -> Result<()
         let message = connection.get_new_message()?;
         match *message {
             Message::MementoInitial(game_state) => {
-                local_game_state = Some(game_state.clone());
-                client.on_game_state_updated(game_state);
+                local_game_state = Some(*game_state.clone());
+                client.on_game_state_updated(*game_state);
             },
             Message::MementoLastMove(turn, last_move) => {
                 if let Some(game_state) = &mut local_game_state {
