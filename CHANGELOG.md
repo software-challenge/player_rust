@@ -1,5 +1,14 @@
 # Changelog
 
+## [27.2.0]
+
+# Changes
+
+# Breaking API changes
+- on_move_request now requires a move to be returned (Move is no longer wraped in Option)
+
+# Fixes
+
 ## [27.1.1]
 
 # Changes
