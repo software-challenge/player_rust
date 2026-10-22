@@ -9,8 +9,8 @@ use crate::{
 #[allow(clippy::large_enum_variant)]
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Message {
-    MementoInitial(Option<GameState>),
-    MementoLastMove(Option<u8>, Option<Move>),
+    MementoInitial(GameState),
+    MementoLastMove(u8, Move),
     MoveRequest,
-    Result(Option<GameResult>),
+    Result(GameResult),
 }

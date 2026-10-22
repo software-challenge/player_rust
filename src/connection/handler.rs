@@ -361,7 +361,7 @@ mod tests {
 
         assert!(matches!(
             message.as_ref(),
-            Message::Result(Some(_))
+            Message::Result(_)
         ));
     }
 
