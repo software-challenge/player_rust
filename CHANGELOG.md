@@ -3,20 +3,25 @@
 ## [27.2.0]
 
 # Changes
-- on_move_requests doesn't have an Option as the return type anymore
-- Move is now an enum with a Skip and Set variant
-- Some functions now return by value and not reference (get_colored_tiles, calculate_points_for_color, get_points_for_team, get_points_for_color, get_last_move, get_last_move, get_turn, get_round, get_starting_piece, is_starting_team_one)
-- Some functions now take variables by value and not reference (get_color_pieces, set_color_pieces)
+- Developer documentation
+- `on_move_requests` doesn't have an Option as the return type anymore
+- `Move` is now an enum with a `Skip` and `Set` variant
+- Some functions now return by value and not reference (`get_colored_tiles`, `calculate_points_for_color`, `get_points_for_team`, `get_points_for_color`, `get_last_move`, `get_last_move`, `get_turn`, `get_round`, `get_starting_piece`, `is_starting_team_one`)
+- Some functions now take variables by value and not reference (`get_color_pieces`, `set_color_pieces`)
 
 # Breaking API changes
-- on_move_request now requires a move to be returned (Move is no longer wraped in Option)
-- Move is now an enum, use Move::Set(SetMove) for set moves and Move::Skip(Color) to skip
-- Some functions now return by value and not reference (get_colored_tiles, calculate_points_for_color, get_points_for_team, get_points_for_color, get_last_move, get_last_move, get_turn, get_round, get_starting_piece, is_starting_team_one)
-- Some functions now take variables by value and not reference (get_color_pieces, set_color_pieces)
+- `on_move_request` now requires a move to be returned (`Move` is no longer wraped in Option)
+- Move is now an enum, use `Move::Set(SetMove)` for set moves and `Move::Skip(Color)` to skip
+- Some functions now return by value and not reference (`get_colored_tiles`, `calculate_points_for_color`, `get_points_for_team`, `get_points_for_color`, `get_last_move`, `get_last_move`, `get_turn`, `get_round`, `get_starting_piece`, `is_starting_team_one`)
+- Some functions now take variables by value and not reference (`get_color_pieces`, `set_color_pieces`)
 
 # Fixes
-- #37 
-- #50 
+- #8
+- #22
+- #37
+- #38
+- #50
+- #51
 
 ## [27.1.1]
 
