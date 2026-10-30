@@ -1,9 +1,9 @@
 use crate::{connection::{
                 handler::ConnectionHandler, 
                 parser::message::Message
-            }, games::active::{
+            }, games::{active::{
                 gamestate::GameState, r#move::Move, parser::Blokus2027
-            }
+            }, blokus2027::{piece}}
         };
 
 /// A player implementation that handles the game flow.
@@ -30,6 +30,8 @@ pub fn start_client_from_commandline_args<C: Client>(mut client: C) -> Result<()
     let mut connection = ConnectionHandler::new_from_commandline_args(Blokus2027)?;
 
     let mut local_game_state: Option<GameState> = None;
+
+    piece::populate_piece_variants();
 
     loop {
         let message = connection.get_new_message()?;
