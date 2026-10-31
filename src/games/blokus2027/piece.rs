@@ -2,7 +2,7 @@
 #[path = "tests/piece.rs"]
 mod tests;
 
-use std::{fmt, str::FromStr};
+use std::{fmt, str::FromStr, cell::RefCell};
 
 use crate::games::blokus2027::{
     coordinate::{
@@ -16,7 +16,7 @@ use crate::games::blokus2027::{
 
 // Calculate all variants on initialization
 thread_local!(
-    static PIECE_VARIANTS: std::cell::RefCell<Vec<Vec<Coordinate>>> = std::cell::RefCell::new(vec![]);
+    static PIECE_VARIANTS: RefCell<Vec<Vec<Coordinate>>> = const { RefCell::new(vec![]) };
 );
 
 pub fn populate_piece_variants() {
@@ -80,21 +80,9 @@ impl Piece {
     /// The coordinates are rotated and optionally mirrored and then shifted so the
     /// smallest x/y values become `(0, 0)`.
     pub fn get_coordinates(&self) -> Vec<Coordinate> {
-        /*
-        let base_coordinates = self.piece_type.base_coordinates();
-        let mut transformed_coordinates: Vec<Coordinate> = base_coordinates.to_vec();
-
-        rotate_coordinates(&mut transformed_coordinates, &self.rotation);
-        if self.is_flipped {
-            flip_coordinates(&mut transformed_coordinates);
-        }
-        normalize_coordinates(&mut transformed_coordinates);
-
-        transformed_coordinates
-        */
-
         let index = piece_orientation_to_index(*self.is_flipped(), self.rotation, self.piece_type);
-
+        // Indexing is save here, because the index cant be larger then the array
+        #[allow(clippy::indexing_slicing)]
         PIECE_VARIANTS.with(|s_variants| s_variants.borrow()[index].clone())
     }
 
