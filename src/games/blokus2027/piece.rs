@@ -2,7 +2,7 @@
 #[path = "tests/piece.rs"]
 mod tests;
 
-use std::{fmt, str::FromStr};
+use std::{fmt, str::FromStr, cell::{Cell, RefCell}};
 
 use crate::games::blokus2027::{
     coordinate::{
@@ -13,6 +13,63 @@ use crate::games::blokus2027::{
     },
     rotation::Rotation,
 };
+
+// Calculate all variants on initialization
+thread_local!(
+    static PIECE_VARIANTS: RefCell<Vec<Vec<Coordinate>>> = const { RefCell::new(Vec::new()) };
+    static PIECE_VARIANTS_INITIALIZED: Cell<bool> = const { Cell::new(false) };
+);
+
+fn generate_piece_variants() -> Vec<Vec<Coordinate>> {
+    let mut variants: Vec<Vec<Coordinate>> = Vec::with_capacity(2 * ROTATION_NUM * ALL_PIECE_TYPES.len());
+
+    // Important: Do not change the order of is_flipped, rotation, piece_type.
+    // This must match the enum discriminant ordering used by PieceType as usize.
+    for is_flipped in [false, true] {
+        for rotation in [Rotation::None, Rotation::Right, Rotation::Mirror, Rotation::Left] {
+            for piece_type in ALL_PIECE_TYPES {
+                let base_coordinates = piece_type.base_coordinates();
+                let mut transformed_coordinates: Vec<Coordinate> = base_coordinates.to_vec();
+
+                rotate_coordinates(&mut transformed_coordinates, &rotation);
+                if is_flipped {
+                    flip_coordinates(&mut transformed_coordinates);
+                }
+                normalize_coordinates(&mut transformed_coordinates);
+
+                variants.push(transformed_coordinates);
+            }
+        }
+    }
+
+    variants
+}
+
+#[cfg(test)]
+fn ensure_piece_variants_initialized() {
+    PIECE_VARIANTS_INITIALIZED.with(|initialized| {
+        if !initialized.get() {
+            populate_piece_variants();
+            initialized.set(true);
+        }
+    });
+}
+
+/// Called when a client is initialized before the game acutally starts
+/// Generates all piece variants and stores them on the heap
+pub fn populate_piece_variants() {
+    PIECE_VARIANTS.with(|s_variants| {
+        *s_variants.borrow_mut() = generate_piece_variants();
+    });
+}
+
+const ROTATION_NUM: usize = 4; // Amount of different rotations
+
+// Maps piece variant to the corresponding memory position.
+// The piece index must follow the generation order: flip, rotation, then piece type.
+fn piece_orientation_to_index(is_flipped: bool, rotation: Rotation, piece_type: PieceType) -> usize {
+    ((is_flipped as usize) * ROTATION_NUM + (rotation as usize)) * ALL_PIECE_TYPES.len() + (piece_type as usize)
+}
 
 /// A concrete piece instance with a type, a rotation, and a mirror state.
 ///
@@ -28,6 +85,9 @@ pub struct Piece {
 impl Piece {
     /// Creates a piece from its type, rotation, and flip state.
     pub fn new(piece_type: PieceType, rotation: Rotation, is_flipped: bool) -> Self {
+        #[cfg(test)]
+        ensure_piece_variants_initialized();
+
         Piece {
             piece_type,
             rotation,
@@ -40,16 +100,10 @@ impl Piece {
     /// The coordinates are rotated and optionally mirrored and then shifted so the
     /// smallest x/y values become `(0, 0)`.
     pub fn get_coordinates(&self) -> Vec<Coordinate> {
-        let base_coordinates = self.piece_type.base_coordinates();
-        let mut transformed_coordinates: Vec<Coordinate> = base_coordinates.to_vec();
-
-        rotate_coordinates(&mut transformed_coordinates, &self.rotation);
-        if self.is_flipped { 
-            flip_coordinates(&mut transformed_coordinates);
-        }
-        normalize_coordinates(&mut transformed_coordinates);
-
-        transformed_coordinates
+        let index = piece_orientation_to_index(*self.is_flipped(), self.rotation, self.piece_type);
+        // Indexing is save here, because the index cant be larger then the array
+        #[allow(clippy::indexing_slicing)]
+        PIECE_VARIANTS.with(|s_variants| s_variants.borrow()[index].clone())
     }
 
     pub fn get_piece_type(&self) -> &PieceType {
@@ -81,6 +135,7 @@ impl Piece {
 ///
 /// Each variant describes a shape and can be transformed into all legal
 /// rotations and mirrored states using [`PieceType::all_variants`].
+#[repr(usize)]
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]
 pub enum PieceType {
     Mono,
