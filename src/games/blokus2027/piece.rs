@@ -2,7 +2,10 @@
 #[path = "tests/piece.rs"]
 mod tests;
 
-use std::{fmt, str::FromStr, cell::{Cell, RefCell}};
+use std::{fmt, str::FromStr, cell::RefCell};
+
+#[cfg(test)]
+use std::cell::Cell;
 
 use crate::games::blokus2027::{
     coordinate::{
@@ -15,10 +18,10 @@ use crate::games::blokus2027::{
 };
 
 // Calculate all variants on initialization
-thread_local!(
-    static PIECE_VARIANTS: RefCell<Vec<Vec<Coordinate>>> = const { RefCell::new(Vec::new()) };
-    static PIECE_VARIANTS_INITIALIZED: Cell<bool> = const { Cell::new(false) };
-);
+thread_local!(static PIECE_VARIANTS: RefCell<Vec<Vec<Coordinate>>> = const { RefCell::new(Vec::new()) });
+
+#[cfg(test)]
+thread_local! {static PIECE_VARIANTS_INITIALIZED: Cell<bool> = const { Cell::new(false) }}
 
 fn generate_piece_variants() -> Vec<Vec<Coordinate>> {
     let mut variants: Vec<Vec<Coordinate>> = Vec::with_capacity(2 * ROTATION_NUM * ALL_PIECE_TYPES.len());
@@ -45,6 +48,7 @@ fn generate_piece_variants() -> Vec<Vec<Coordinate>> {
     variants
 }
 
+// Needed for tests so not every test has to call populate piece variants
 #[cfg(test)]
 fn ensure_piece_variants_initialized() {
     PIECE_VARIANTS_INITIALIZED.with(|initialized| {
