@@ -2,7 +2,7 @@
 #[path = "tests/piece.rs"]
 mod tests;
 
-use std::{fmt, str::FromStr, cell::RefCell};
+use std::{fmt, str::FromStr, cell::{Cell, RefCell}};
 
 use crate::games::blokus2027::{
     coordinate::{
@@ -16,10 +16,11 @@ use crate::games::blokus2027::{
 
 // Calculate all variants on initialization
 thread_local!(
-    static PIECE_VARIANTS: RefCell<Vec<Vec<Coordinate>>> = const { RefCell::new(vec![]) };
+    static PIECE_VARIANTS: RefCell<Vec<Vec<Coordinate>>> = const { RefCell::new(Vec::new()) };
+    static PIECE_VARIANTS_INITIALIZED: Cell<bool> = const { Cell::new(false) };
 );
 
-pub fn populate_piece_variants() {
+fn generate_piece_variants() -> Vec<Vec<Coordinate>> {
     let mut variants: Vec<Vec<Coordinate>> = Vec::with_capacity(2 * ROTATION_NUM * ALL_PIECE_TYPES.len());
 
     // Important: Do not change the order of is_flipped, rotation, piece_type.
@@ -41,8 +42,24 @@ pub fn populate_piece_variants() {
         }
     }
 
+    variants
+}
+
+#[cfg(test)]
+fn ensure_piece_variants_initialized() {
+    PIECE_VARIANTS_INITIALIZED.with(|initialized| {
+        if !initialized.get() {
+            populate_piece_variants();
+            initialized.set(true);
+        }
+    });
+}
+
+/// Called when a client is initialized before the game acutally starts
+/// Generates all piece variants and stores them on the heap
+pub fn populate_piece_variants() {
     PIECE_VARIANTS.with(|s_variants| {
-        *s_variants.borrow_mut() = variants;
+        *s_variants.borrow_mut() = generate_piece_variants();
     });
 }
 
@@ -68,6 +85,9 @@ pub struct Piece {
 impl Piece {
     /// Creates a piece from its type, rotation, and flip state.
     pub fn new(piece_type: PieceType, rotation: Rotation, is_flipped: bool) -> Self {
+        #[cfg(test)]
+        ensure_piece_variants_initialized();
+
         Piece {
             piece_type,
             rotation,
