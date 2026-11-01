@@ -14,7 +14,7 @@ use crate::{
         message::Message, 
         parse_joined::parse_joined, 
         parse_result::parse_result,
-        parser_strategy::ParserStrategy
+        parser_strategy::{ParserStrategy, MementoReturn}
     },
     games::active::r#move::Move
 };
@@ -190,7 +190,10 @@ impl<S: ParserStrategy> ConnectionHandler<Joined, S> {
                                 io::ErrorKind::InvalidData,
                                 "could not find class atrr on data tag"))??.value {
                         "memento" => {
-                            return S::parse_memento(&xml_str[data_start..=data_end])
+                            return match S::parse_memento(&xml_str[data_start..=data_end])? {
+                                MementoReturn::GameState(game_state) => Ok(Box::from(Message::MementoInitial(game_state))),
+                                MementoReturn::LastMove(turn, last_move) => Ok(Box::from(Message::MementoLastMove(turn, last_move))),
+                            }
                         },
                         "result" => {
                             return Ok(parse_result(&xml_str[data_start..=data_end]))
