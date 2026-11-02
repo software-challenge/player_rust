@@ -1,4 +1,4 @@
-use crate::games::blokus2027::{gamestate::GameState, r#move::Move};
+use crate::games::active::{gamestate::GameState, r#move::Move};
 
 /// The result of parsing a memento.
 #[derive(Debug, Clone, PartialEq, Eq)]
