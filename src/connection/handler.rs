@@ -1,7 +1,7 @@
 #![allow(clippy::indexing_slicing)]
 
 use std::{
-    fmt::Write as _, io::{self, Read, Write}, net::TcpStream
+    io::{self, Read, Write}, net::TcpStream
 };
 
 #[cfg(feature = "debug-recv-comm-log")]
@@ -118,23 +118,11 @@ impl<S: ParserStrategy> ConnectionHandler<Joined, S> {
     }
 
     /// Sends a move to the server in XML format.
+    ///
+    /// The move-specific serialization is provided by the game's
+    /// [`ParserStrategy`](super::parser::parser_strategy::ParserStrategy).
     pub fn send_move(&mut self, m: &Move) -> Result<(), Box<dyn std::error::Error>> {
-
-        let mut move_xml = String::new();
-        write!(move_xml, "<room roomId=\"{}\">", self.get_room_id())?;
-
-        match m {
-            Move::Set(sm) =>  {
-            write!(move_xml, "<data class=\"sc.plugin2027.SetMove\"><piece color=\"{}\" kind=\"{}\" rotation=\"{}\" isFlipped=\"{}\"><position x=\"{}\" y=\"{}\"/></piece></data></room>",
-                sm.color,
-                sm.piece,
-                sm.rotation,
-                sm.is_flipped,
-                sm.x,
-                sm.y)?;
-            },
-            Move::Skip(c) => write!(move_xml, "<data class=\"sc.plugin2027.SkipMove\"><color>{}</color></data></room>", c)?
-        } 
+        let move_xml = self.strategy.move_to_xml(self.get_room_id(), m);
 
         self.connection.write_all(move_xml.as_bytes())?;
         self.connection.flush()?;
@@ -304,7 +292,7 @@ fn read_to_buffer(
 #[cfg(test)]
 mod tests {
     use crate::connection::handler::{take_room_message, xml_payload_from_buffer};
-    use crate::{connection::parser::message::Message, games::active::parser::Blokus2027};
+    use crate::{connection::parser::message::Message, games::active::Parser};
 
     #[test]
     fn extracts_xml_payload_from_room_message() {
@@ -347,7 +335,7 @@ mod tests {
     fn parses_move_request_message() {
         let xml = br#"<room roomId="room123"><data class="moveRequest"/></room>"#;
 
-        let message = super::ConnectionHandler::<super::Joined, Blokus2027>::parse_message(xml)
+        let message = super::ConnectionHandler::<super::Joined, Parser>::parse_message(xml)
             .expect("valid move request should parse");
 
         assert_eq!(message.as_ref(), &Message::MoveRequest);
@@ -357,7 +345,7 @@ mod tests {
     fn parses_result_message() {
         let xml = br#"<room roomId="room123"><data class="result"><definition/><scores/><winner regular="false"/></data></room>"#;
 
-        let message = super::ConnectionHandler::<super::Joined, Blokus2027>::parse_message(xml)
+        let message = super::ConnectionHandler::<super::Joined, Parser>::parse_message(xml)
             .expect("valid result message should parse");
 
         assert!(matches!(
@@ -370,7 +358,7 @@ mod tests {
     fn rejects_unknown_data_class() {
         let xml = br#"<room roomId="room123"><data class="unknown"/></room>"#;
 
-        let error = super::ConnectionHandler::<super::Joined, Blokus2027>::parse_message(xml)
+        let error = super::ConnectionHandler::<super::Joined, Parser>::parse_message(xml)
             .expect_err("unknown data classes should be rejected");
 
         assert!(error.to_string().contains("Unknown class attribute value: unknown"));
@@ -380,7 +368,7 @@ mod tests {
     fn rejects_message_without_data_element() {
         let xml = br#"<room roomId="room123"/>"#;
 
-        let error = super::ConnectionHandler::<super::Joined, Blokus2027>::parse_message(xml)
+        let error = super::ConnectionHandler::<super::Joined, Parser>::parse_message(xml)
             .expect_err("messages without a data element should be rejected");
 
         assert!(error.to_string().contains("could not find <data start tag"));
