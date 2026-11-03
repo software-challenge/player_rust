@@ -8,3 +8,4 @@ pub mod coordinate;
 pub mod color;
 pub mod rotation;
 pub mod parser;
+pub mod initialize;
