@@ -1,10 +1,15 @@
-use crate::{connection::{
-                handler::ConnectionHandler, 
-                parser::message::Message
-            }, games::active::{
-                gamestate::GameState, r#move::Move, parser::Blokus2027, initialize
-            }
-        };
+use crate::{
+    connection::{
+        handler::ConnectionHandler,
+        parser::message::Message,
+    },
+    games::active::{
+        gamestate::GameState,
+        initialize,
+        r#move::Move,
+        Parser,
+    },
+};
 
 /// A player implementation that handles the game flow.
 ///
@@ -29,7 +34,7 @@ pub trait Client {
 pub fn start_client_from_commandline_args<C: Client>(mut client: C) -> Result<(), Box<dyn std::error::Error>> {
     initialize::initialize(&mut client);
 
-    let mut connection = ConnectionHandler::new_from_commandline_args(Blokus2027)?;
+    let mut connection = ConnectionHandler::new_from_commandline_args(Parser)?;
 
     let mut local_game_state: Option<GameState> = None;
 
@@ -42,10 +47,6 @@ pub fn start_client_from_commandline_args<C: Client>(mut client: C) -> Result<()
             },
             Message::MementoLastMove(turn, last_move) => {
                 if let Some(game_state) = &mut local_game_state {
-                    #[cfg(feature = "debug-print")]
-                    if let Move::Set(set_move) = last_move{
-                        println!("Applying last move: {} {} {} {} {}", set_move.piece, set_move.x, set_move.y, set_move.is_flipped, set_move.rotation);
-                    }
                     game_state.apply_move_unchecked(&last_move, turn);
                     client.on_game_state_updated(game_state.clone());
                 } else {
