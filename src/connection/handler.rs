@@ -120,7 +120,7 @@ impl<S: ParserStrategy> ConnectionHandler<Joined, S> {
     /// Sends a move to the server in XML format.
     ///
     /// The move-specific serialization is provided by the game's
-    /// [`ParserStrategy`](super::parser::parser_strategy::ParserStrategy).
+    /// `ParserStrategy`.
     pub fn send_move(&mut self, m: &Move) -> Result<(), Box<dyn std::error::Error>> {
         let move_xml = self.strategy.move_to_xml(self.get_room_id(), m);
 
