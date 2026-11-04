@@ -8,7 +8,6 @@ pub mod coordinate;
 pub mod color;
 pub mod rotation;
 pub mod parser;
-pub mod initialize;
 pub mod team;
 
 /// The protocol parser of this game, so generic code can name it without

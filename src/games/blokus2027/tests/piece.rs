@@ -1,5 +1,17 @@
-use super::{Piece, PieceType};
+use super::{generate_piece_variants, PIECE_VARIANTS, Piece, PieceType};
 use crate::{games::blokus2027::rotation::Rotation, games::blokus2027::coordinate::Coordinate};
+
+/// The compile-time variant table must match the runtime generation
+/// entry by entry.
+#[test]
+fn test_const_variant_table_matches_runtime_generation() {
+    let generated = generate_piece_variants();
+    assert_eq!(PIECE_VARIANTS.len(), generated.len());
+
+    for (index, (&(coords, len), expected)) in PIECE_VARIANTS.iter().zip(generated.iter()).enumerate() {
+        assert_eq!(&coords[..len], expected, "variant {index} differs from runtime generation");
+    }
+}
 
 fn sorted_xy(coordinates: Vec<Coordinate>) -> Vec<(isize, isize)> {
     let mut xy: Vec<(isize, isize)> = coordinates

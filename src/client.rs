@@ -5,7 +5,6 @@ use crate::{
     },
     games::active::{
         gamestate::GameState,
-        initialize,
         r#move::Move,
         Parser,
     },
@@ -32,8 +31,6 @@ pub trait Client {
 /// This helper configures the network connection and dispatches server messages
 /// to the `Client` trait methods until the match ends.
 pub fn start_client_from_commandline_args<C: Client>(mut client: C) -> Result<(), Box<dyn std::error::Error>> {
-    initialize::initialize(&mut client);
-
     let mut connection = ConnectionHandler::new_from_commandline_args(Parser)?;
 
     let mut local_game_state: Option<GameState> = None;
