@@ -2,10 +2,7 @@
 #[path = "tests/piece.rs"]
 mod tests;
 
-use std::{fmt, str::FromStr, cell::RefCell};
-
-#[cfg(test)]
-use std::cell::Cell;
+use std::{fmt, str::FromStr, sync::OnceLock};
 
 use crate::games::blokus2027::{
     coordinate::{
@@ -17,11 +14,10 @@ use crate::games::blokus2027::{
     rotation::Rotation,
 };
 
-// Calculate all variants on initialization
-thread_local!(static PIECE_VARIANTS: RefCell<Vec<Vec<Coordinate>>> = const { RefCell::new(Vec::new()) });
-
-#[cfg(test)]
-thread_local! {static PIECE_VARIANTS_INITIALIZED: Cell<bool> = const { Cell::new(false) }}
+// All piece variants, calculated once and stored on the heap. The client is
+// single-threaded, and the variants must be ready before the client connects
+// to the server (see `populate_piece_variants`).
+static PIECE_VARIANTS: OnceLock<Vec<Vec<Coordinate>>> = OnceLock::new();
 
 fn generate_piece_variants() -> Vec<Vec<Coordinate>> {
     let mut variants: Vec<Vec<Coordinate>> = Vec::with_capacity(2 * ROTATION_NUM * ALL_PIECE_TYPES.len());
@@ -48,23 +44,13 @@ fn generate_piece_variants() -> Vec<Vec<Coordinate>> {
     variants
 }
 
-// Needed for tests so not every test has to call populate piece variants
-#[cfg(test)]
-fn ensure_piece_variants_initialized() {
-    PIECE_VARIANTS_INITIALIZED.with(|initialized| {
-        if !initialized.get() {
-            populate_piece_variants();
-            initialized.set(true);
-        }
-    });
-}
-
-/// Called when a client is initialized before the game acutally starts
-/// Generates all piece variants and stores them on the heap
+/// Called when a client is initialized before the game actually starts.
+/// Generates all piece variants and stores them on the heap.
+///
+/// The variants must be ready before the client connects to the server;
+/// calling this more than once is a no-op.
 pub fn populate_piece_variants() {
-    PIECE_VARIANTS.with(|s_variants| {
-        *s_variants.borrow_mut() = generate_piece_variants();
-    });
+    let _ = PIECE_VARIANTS.set(generate_piece_variants());
 }
 
 const ROTATION_NUM: usize = 4; // Amount of different rotations
@@ -89,9 +75,6 @@ pub struct Piece {
 impl Piece {
     /// Creates a piece from its type, rotation, and flip state.
     pub fn new(piece_type: PieceType, rotation: Rotation, is_flipped: bool) -> Self {
-        #[cfg(test)]
-        ensure_piece_variants_initialized();
-
         Piece {
             piece_type,
             rotation,
@@ -105,9 +88,12 @@ impl Piece {
     /// smallest x/y values become `(0, 0)`.
     pub fn get_coordinates(&self) -> Vec<Coordinate> {
         let index = piece_orientation_to_index(*self.is_flipped(), self.rotation, self.piece_type);
-        // Indexing is save here, because the index cant be larger then the array
+        // Fills the variants on first use if they were not populated yet
+        // (e.g. when the piece is used without going through the client).
+        let variants = PIECE_VARIANTS.get_or_init(generate_piece_variants);
+        // Indexing is safe here, because the index cannot be larger than the array.
         #[allow(clippy::indexing_slicing)]
-        PIECE_VARIANTS.with(|s_variants| s_variants.borrow()[index].clone())
+        variants[index].clone()
     }
 
     pub fn get_piece_type(&self) -> &PieceType {
