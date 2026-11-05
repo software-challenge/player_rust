@@ -4,7 +4,7 @@ mod tests;
 
 use crate::{
     common::team::Team, games::blokus2027::{
-        board::Board, color::Color::{self, Blue, Green, Red, Yellow}, gamerulelogic, r#move::Move, piece::{
+        board::Board, color::Color::self, gamerulelogic, r#move::Move, piece::{
             Piece, 
             PieceType
         },
@@ -73,28 +73,12 @@ impl GameState {
     fn update_gamestate(&mut self, m: &Move, turn: u8) {
         // Remove used piece from the corresponding color's available pieces
         match m {
-            Move::Set(set_move) if set_move.color == Blue => {
-                self.pieces[0].retain(|&p| p != set_move.piece);
-                self.last_move[0] = Some(*m);
-                self.points[0] = self.calculate_points_for_color(Color::Blue);
-            },
-            Move::Set(set_move) if set_move.color == Yellow => {
-                self.pieces[1].retain(|&p| p != set_move.piece);
-                self.last_move[1] = Some(*m);
-                self.points[1] = self.calculate_points_for_color(Color::Yellow);
-            },
-            Move::Set(set_move) if set_move.color == Red => {
-                self.pieces[2].retain(|&p| p != set_move.piece);
-                self.last_move[2] = Some(*m);
-                self.points[2] = self.calculate_points_for_color(Color::Red);
-            },
-            Move::Set(set_move) if set_move.color == Green => {
-                self.pieces[3].retain(|&p| p != set_move.piece);
-                self.last_move[3] = Some(*m);
-                self.points[3] = self.calculate_points_for_color(Color::Green);
+            Move::Set(set_move) => {
+                self.pieces[set_move.color as usize].retain(|&p| p != set_move.piece);
+                self.last_move[set_move.color as usize] = Some(*m);
+                self.points[set_move.color as usize] = self.calculate_points_for_color(set_move.color);
             },
             Move::Skip(_) => {},
-            Move::Set(_) => unreachable!(),
         }
 
         self.turn = turn;
