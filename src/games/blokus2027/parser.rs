@@ -244,12 +244,9 @@ fn _parse_game_board(reader: &mut Reader<&[u8]>) -> Result<Board, Box<dyn std::e
 // blue, yellow, red, green
 #[allow(clippy::type_complexity)]
 fn _parse_pieces(reader: &mut Reader<&[u8]>) -> Result<(Vec<PieceType>, Vec<PieceType>, Vec<PieceType>, Vec<PieceType>), Box<dyn std::error::Error>> {
-    let mut blue_pieces =  Vec::new();
-    let mut yellow_pieces =  Vec::new();
-    let mut red_pieces =  Vec::new();
-    let mut green_pieces =  Vec::new();
+    let mut pieces = [Vec::new(), Vec::new(), Vec::new(), Vec::new()];
 
-    let mut current_colore = Color::Blue;
+    let mut current_color = Color::Blue;
     let mut exit_counter = 0;
     loop {
         match reader.read_event()? {
@@ -257,24 +254,19 @@ fn _parse_pieces(reader: &mut Reader<&[u8]>) -> Result<(Vec<PieceType>, Vec<Piec
                 let piece = PieceType::from_str(t.as_ref()).map_err(|_| 
                         io::Error::new(io::ErrorKind::InvalidData,format!("Cannot create PieceType from: {:?}", t)
                 ))?;
-                match current_colore {
-                    Color::Blue => blue_pieces.push(piece),
-                    Color::Yellow => yellow_pieces.push(piece),
-                    Color::Red => red_pieces.push(piece),
-                    Color::Green => green_pieces.push(piece),
-                };
+                pieces[current_color.as_index()].push(piece);
             }
             Event::Start(b) if b.name().0 == "blueShapes" => {
-                current_colore = Color::Blue;
+                current_color = Color::Blue;
             },
             Event::Start(y) if y.name().0 == "yellowShapes" => {
-                current_colore = Color::Yellow;
+                current_color = Color::Yellow;
             },
              Event::Start(r) if r.name().0 == "redShapes" => {
-                current_colore = Color::Red;
+                current_color = Color::Red;
             },
             Event::Start(g) if g.name().0 == "greenShapes" => {
-                current_colore = Color::Green;
+                current_color = Color::Green;
             },
             Event::End(e) if e.name().0 != "shape" => {
                 exit_counter += 1;
@@ -286,7 +278,7 @@ fn _parse_pieces(reader: &mut Reader<&[u8]>) -> Result<(Vec<PieceType>, Vec<Piec
             _ => {}
         }
     }
-    Ok((blue_pieces, yellow_pieces, red_pieces, green_pieces))
+    Ok((pieces[0].clone(), pieces[1].clone(), pieces[2].clone(), pieces[3].clone()))
 }
 
 #[cfg(test)]

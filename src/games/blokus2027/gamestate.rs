@@ -77,9 +77,9 @@ impl GameState {
             // and the 3 arrays have a length of 4
             #[allow(clippy::indexing_slicing)]
             Move::Set(set_move) => {
-                self.pieces[set_move.color as usize].retain(|&p| p != set_move.piece);
-                self.last_move[set_move.color as usize] = Some(*m);
-                self.points[set_move.color as usize] = self.calculate_points_for_color(set_move.color);
+                self.pieces[set_move.color.as_index()].retain(|&p| p != set_move.piece);
+                self.last_move[set_move.color.as_index()] = Some(*m);
+                self.points[set_move.color.as_index()] = self.calculate_points_for_color(set_move.color);
             },
             Move::Skip(_) => {},
         }
@@ -135,22 +135,12 @@ impl GameState {
 
     /// Returns the accumulated score for a single color.
     pub fn get_points_for_color(&self, color: Color) -> u8 {
-        match color {
-            Color::Blue => self.points[0],
-            Color::Yellow => self.points[1],
-            Color::Red => self.points[2],
-            Color::Green => self.points[3],
-        }
+        self.points[color.as_index()]
     }
 
     /// Returns the last move recorded for the given color, if any.
     pub fn get_last_move(&self, color: Color) -> &Option<Move> {
-        match color {
-            Color::Blue => &self.last_move[0],
-            Color::Yellow => &self.last_move[1],
-            Color::Red => &self.last_move[2],
-            Color::Green => &self.last_move[3],
-        }
+        &self.last_move[color.as_index()]
     }
 
     /// Returns the color whose turn it is.
@@ -217,13 +207,13 @@ impl GameState {
     #[allow(clippy::indexing_slicing)]
     /// Returns the remaining piece types for the given color.
     pub fn get_color_pieces(&self, color: Color) -> &[PieceType] {
-        &self.pieces[color as usize]
+        &self.pieces[color.as_index()]
     }
 
     // Index slicing is save here because color can only be a number from 0 to 3 and the array has a length of 4
     #[allow(clippy::indexing_slicing)]
     /// Replaces the remaining pieces of the given color.
     pub fn set_color_pieces(&mut self, color: Color, pieces: Vec<PieceType>) {
-        self.pieces[color as usize] = pieces
+        self.pieces[color.as_index()] = pieces
     }
 }
