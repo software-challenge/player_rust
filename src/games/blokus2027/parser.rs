@@ -254,6 +254,7 @@ fn _parse_pieces(reader: &mut Reader<&[u8]>) -> Result<(Vec<PieceType>, Vec<Piec
                 let piece = PieceType::from_str(t.as_ref()).map_err(|_| 
                         io::Error::new(io::ErrorKind::InvalidData,format!("Cannot create PieceType from: {:?}", t)
                 ))?;
+                #[allow(clippy::indexing_slicing)]
                 pieces[current_color.as_index()].push(piece);
             }
             Event::Start(b) if b.name().0 == "blueShapes" => {

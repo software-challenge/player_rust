@@ -25,6 +25,15 @@ pub struct GameState {
 
 impl GameState {
 
+    fn color_index(color: Color) -> usize {
+        match color {
+            Color::Blue => 0,
+            Color::Yellow => 1,
+            Color::Red => 2,
+            Color::Green => 3,
+        }
+    }
+
     /// Creates a new game state from the supplied board and piece state.
     #[allow(clippy::too_many_arguments)]
     pub fn new(starting_piece: PieceType, is_starting_team_one: bool, board: Board, turn: u8, round: u8, current_turn_color: Color, blue_pieces: Vec<PieceType>, yellow_pieces: Vec<PieceType>, red_pieces: Vec<PieceType>, green_pieces: Vec<PieceType>) -> Self {
@@ -73,10 +82,13 @@ impl GameState {
     fn update_gamestate(&mut self, m: &Move, turn: u8) {
         // Remove used piece from the corresponding color's available pieces
         match m {
+            // Index slicing is save here because color can only be a number from 0 to 3
+            // and the 3 arrays have a length of 4
+            #[allow(clippy::indexing_slicing)]
             Move::Set(set_move) => {
-                self.pieces[set_move.color.as_index()].retain(|&p| p != set_move.piece);
-                self.last_move[set_move.color.as_index()] = Some(*m);
-                self.points[set_move.color.as_index()] = self.calculate_points_for_color(set_move.color);
+                self.pieces[set_move.color as usize].retain(|&p| p != set_move.piece);
+                self.last_move[set_move.color as usize] = Some(*m);
+                self.points[set_move.color as usize] = self.calculate_points_for_color(set_move.color);
             },
             Move::Skip(_) => {},
         }
@@ -130,14 +142,16 @@ impl GameState {
         total_points
     }
 
+    #[allow(clippy::indexing_slicing)]
     /// Returns the accumulated score for a single color.
     pub fn get_points_for_color(&self, color: Color) -> u8 {
-        self.points[color.as_index()]
+        self.points[Self::color_index(color)]
     }
 
+    #[allow(clippy::indexing_slicing)]
     /// Returns the last move recorded for the given color, if any.
     pub fn get_last_move(&self, color: Color) -> &Option<Move> {
-        &self.last_move[color.as_index()]
+        &self.last_move[Self::color_index(color)]
     }
 
     /// Returns the color whose turn it is.
@@ -200,13 +214,17 @@ impl GameState {
         self.board = board;
     }
 
+    // Index slicing is save here because color can only be a number from 0 to 3 and the array has a length of 4
+    #[allow(clippy::indexing_slicing)]
     /// Returns the remaining piece types for the given color.
     pub fn get_color_pieces(&self, color: Color) -> &[PieceType] {
-        &self.pieces[color.as_index()]
+        &self.pieces[Self::color_index(color)]
     }
 
+    // Index slicing is save here because color can only be a number from 0 to 3 and the array has a length of 4
+    #[allow(clippy::indexing_slicing)]
     /// Replaces the remaining pieces of the given color.
     pub fn set_color_pieces(&mut self, color: Color, pieces: Vec<PieceType>) {
-        self.pieces[color.as_index()] = pieces
+        self.pieces[Self::color_index(color)] = pieces
     }
 }
