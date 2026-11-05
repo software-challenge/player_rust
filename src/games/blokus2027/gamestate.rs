@@ -213,17 +213,17 @@ impl GameState {
         self.board = board;
     }
 
+    // Index slicing is save here because color can only be a number from 0 to 3 and the array has a length of 4
+    #[allow(clippy::indexing_slicing)]
     /// Returns the remaining piece types for the given color.
     pub fn get_color_pieces(&self, color: Color) -> &[PieceType] {
-        // Index slicing is save here because color can only be a number from 0 to 3 and the array has a length of 4
-        #[allow(clippy::indexing_slicing)]
         &self.pieces[color as usize]
     }
 
+    // Index slicing is save here because color can only be a number from 0 to 3 and the array has a length of 4
+    #[allow(clippy::indexing_slicing)]
     /// Replaces the remaining pieces of the given color.
     pub fn set_color_pieces(&mut self, color: Color, pieces: Vec<PieceType>) {
-        // Index slicing is save here because color can only be a number from 0 to 3 and the array has a length of 4
-        #[allow(clippy::indexing_slicing)]
         self.pieces[color as usize] = pieces
     }
 }
