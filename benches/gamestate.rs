@@ -1,4 +1,4 @@
-use socha:: games::active::{board::Board, color::Color, gamerulelogic, gamestate::GameState, r#move::{Move, SetMove}, piece::{self, PieceType}, rotation::Rotation};
+use socha:: games::active::{board::Board, color::Color, gamestate::GameState, r#move::{Move, SetMove}, piece::{self, PieceType}, rotation::Rotation};
 
 use criterion::{
   criterion_group, 

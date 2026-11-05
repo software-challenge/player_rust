@@ -215,21 +215,11 @@ impl GameState {
 
     /// Returns the remaining piece types for the given color.
     pub fn get_color_pieces(&self, color: Color) -> &[PieceType] {
-        match color {
-            Color::Blue => &self.pieces[0],
-            Color::Yellow => &self.pieces[1],
-            Color::Red => &self.pieces[2],
-            Color::Green => &self.pieces[3],
-        }
+        &self.pieces[color as usize]
     }
 
     /// Replaces the remaining pieces of the given color.
     pub fn set_color_pieces(&mut self, color: Color, pieces: Vec<PieceType>) {
-        match color {
-            Color::Blue => self.pieces[0] = pieces,
-            Color::Yellow => self.pieces[1] = pieces,
-            Color::Red => self.pieces[2] = pieces,
-            Color::Green => self.pieces[3] = pieces,
-        }
+        self.pieces[color as usize] = pieces
     }
 }
