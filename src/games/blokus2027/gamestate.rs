@@ -73,9 +73,6 @@ impl GameState {
     fn update_gamestate(&mut self, m: &Move, turn: u8) {
         // Remove used piece from the corresponding color's available pieces
         match m {
-            // Index slicing is save here because color can only be a number from 0 to 3
-            // and the 3 arrays have a length of 4
-            #[allow(clippy::indexing_slicing)]
             Move::Set(set_move) => {
                 self.pieces[set_move.color.as_index()].retain(|&p| p != set_move.piece);
                 self.last_move[set_move.color.as_index()] = Some(*m);
