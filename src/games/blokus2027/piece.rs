@@ -302,6 +302,7 @@ impl PieceType {
             Vec::with_capacity(2 * ROTATION_NUM);
 
         for &flip in &[false, true] {
+            #[allow(clippy::indexing_slicing)] // The loop values and piece discriminant map within the variant table, and len is bounded by MAX_VARIANT_COORDS.
             for &rotation in &[
                 Rotation::None,
                 Rotation::Right,
