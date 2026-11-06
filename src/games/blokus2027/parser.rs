@@ -1,4 +1,5 @@
 use std::{
+    fmt::Write as _,
     io, 
     str::FromStr
 };
@@ -24,6 +25,28 @@ use crate::{
 pub struct Blokus2027;
 
 impl ParserStrategy for Blokus2027 {
+    fn move_to_xml(&self, room_id: &str, r#move: &Move) -> String {
+        let mut move_xml = String::new();
+        let _ = write!(move_xml, "<room roomId=\"{}\">", room_id);
+
+        match r#move {
+            Move::Set(sm) => {
+                let _ = write!(move_xml, "<data class=\"sc.plugin2027.SetMove\"><piece color=\"{}\" kind=\"{}\" rotation=\"{}\" isFlipped=\"{}\"><position x=\"{}\" y=\"{}\"/></piece></data></room>",
+                    sm.color,
+                    sm.piece,
+                    sm.rotation,
+                    sm.is_flipped,
+                    sm.x,
+                    sm.y);
+            },
+            Move::Skip(c) => {
+                let _ = write!(move_xml, "<data class=\"sc.plugin2027.SkipMove\"><color>{}</color></data></room>", c);
+            }
+        }
+
+        move_xml
+    }
+
     fn parse_memento(xml: &str) -> Result<MementoReturn, Box<dyn std::error::Error>> {
         let mut starting_piece: Option<PieceType> = None;
         let mut start_team: Option<Team> = None;
