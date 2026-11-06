@@ -2,6 +2,8 @@
 #[path = "tests/gamestate.rs"]
 mod tests;
 
+use std::cell::Cell;
+
 use crate::{
     common::team::Team, games::blokus2027::{
         board::Board, color::Color::self, gamerulelogic, r#move::Move, piece::{
@@ -18,7 +20,7 @@ pub struct GameState {
     turn: u8,
     round: u8,
     current_turn_color: Color,
-    points: [u8; 4], // points for each color; blue, yellow, red, green
+    points: [Cell<Option<u8>>; 4], // cached points per color; blue, yellow, red, green
     last_move: [Option<Move>; 4], // last move of each color; blue, yellow, red, green
     pieces: [Vec<PieceType>; 4] // blue, yellow, red, green
 }
@@ -44,7 +46,7 @@ impl GameState {
             turn,
             round,
             current_turn_color,
-            points: [0, 0, 0, 0],
+            points: std::array::from_fn(|_| Cell::new(Some(0))),
             last_move: [None, None, None, None],
             pieces: [blue_pieces, yellow_pieces, red_pieces, green_pieces],
         }
@@ -88,7 +90,7 @@ impl GameState {
             Move::Set(set_move) => {
                 self.pieces[set_move.color as usize].retain(|&p| p != set_move.piece);
                 self.last_move[set_move.color as usize] = Some(*m);
-                self.points[set_move.color as usize] = self.calculate_points_for_color(set_move.color);
+                self.points[set_move.color as usize].set(None);
             },
             Move::Skip(_) => {},
         }
@@ -145,7 +147,15 @@ impl GameState {
     #[allow(clippy::indexing_slicing)]
     /// Returns the accumulated score for a single color.
     pub fn get_points_for_color(&self, color: Color) -> u8 {
-        self.points[Self::color_index(color)]
+        let index = Self::color_index(color);
+
+        if let Some(points) = self.points[index].get() {
+            return points;
+        }
+
+        let points = self.calculate_points_for_color(color);
+        self.points[index].set(Some(points));
+        points
     }
 
     #[allow(clippy::indexing_slicing)]
@@ -212,6 +222,9 @@ impl GameState {
     /// Replaces the entire board state.
     pub fn set_board(&mut self, board: Board) {
         self.board = board;
+        for score in &self.points {
+            score.set(None);
+        }
     }
 
     // Index slicing is save here because color can only be a number from 0 to 3 and the array has a length of 4
@@ -225,6 +238,7 @@ impl GameState {
     #[allow(clippy::indexing_slicing)]
     /// Replaces the remaining pieces of the given color.
     pub fn set_color_pieces(&mut self, color: Color, pieces: Vec<PieceType>) {
-        self.pieces[Self::color_index(color)] = pieces
+        self.pieces[Self::color_index(color)] = pieces;
+        self.points[Self::color_index(color)].set(None);
     }
 }
