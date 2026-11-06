@@ -4,14 +4,11 @@ mod tests;
 
 use std::{fmt, str::FromStr};
 
-use crate::games::blokus2027::{
-    coordinate::{
-        Coordinate, 
-        flip_coordinates, 
-        rotate_coordinates, 
-        normalize_coordinates
-    },
-    rotation::Rotation,
+use crate::games::blokus2027::{coordinate::Coordinate, rotation::Rotation};
+
+#[cfg(test)]
+use crate::games::blokus2027::coordinate::{
+    flip_coordinates, normalize_coordinates, rotate_coordinates,
 };
 
 const ROTATION_NUM: usize = 4; // Amount of different rotations
@@ -301,18 +298,19 @@ impl PieceType {
     /// resulting `(rotation, is_flipped)` pair. When `filter` is `true`,
     /// geometrically identical orientations are deduplicated.
     pub fn all_variants(&self, filter: bool) -> Vec<(Vec<Coordinate>, (Rotation, bool))> {
-        let mut variants: Vec<(Vec<Coordinate>, (Rotation, bool))> = Vec::new();
-        let base_coordinates = self.base_coordinates();
+        let mut variants: Vec<(Vec<Coordinate>, (Rotation, bool))> =
+            Vec::with_capacity(2 * ROTATION_NUM);
 
         for &flip in &[false, true] {
-            for &rotation in &[Rotation::None, Rotation::Right, Rotation::Mirror, Rotation::Left] {
-                let mut transformed_coordinates: Vec<Coordinate> = base_coordinates.to_vec();
-
-                rotate_coordinates(&mut transformed_coordinates, &rotation);
-                if flip { 
-                    flip_coordinates(&mut transformed_coordinates);
-                }
-                normalize_coordinates(&mut transformed_coordinates);
+            for &rotation in &[
+                Rotation::None,
+                Rotation::Right,
+                Rotation::Mirror,
+                Rotation::Left,
+            ] {
+                let index = piece_orientation_to_index(flip, rotation, *self);
+                let (coordinates, len) = PIECE_VARIANTS[index];
+                let transformed_coordinates = coordinates[..len].to_vec();
 
                 if filter {
                     // Check if the transformed coordinates already exist in the variants vector
@@ -321,7 +319,7 @@ impl PieceType {
                     }
                 }   
 
-                variants.push((transformed_coordinates, (rotation, flip)))
+                variants.push((transformed_coordinates, (rotation, flip)));
             }
         }
         variants

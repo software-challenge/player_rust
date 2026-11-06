@@ -1,5 +1,8 @@
-use super::{generate_piece_variants, PIECE_VARIANTS, Piece, PieceType};
-use crate::{games::blokus2027::rotation::Rotation, games::blokus2027::coordinate::Coordinate};
+use super::{
+    generate_piece_variants, piece_orientation_to_index, Piece, PieceType, ALL_PIECE_TYPES,
+    PIECE_VARIANTS,
+};
+use crate::{games::blokus2027::coordinate::Coordinate, games::blokus2027::rotation::Rotation};
 
 /// The compile-time variant table must match the runtime generation
 /// entry by entry.
@@ -114,6 +117,45 @@ fn pento_r_all_variants_generates_all_unique_orientations() {
                 is_flipped
             );
         }
+    }
+}
+
+#[test]
+fn all_piece_type_variants_use_compile_time_table_in_existing_order() {
+    let rotations = [
+        Rotation::None,
+        Rotation::Right,
+        Rotation::Mirror,
+        Rotation::Left,
+    ];
+
+    for piece_type in ALL_PIECE_TYPES {
+        let variants = piece_type.all_variants(false);
+        assert_eq!(variants.len(), 8, "wrong variant count for {piece_type}");
+
+        for (index, (coordinates, (rotation, is_flipped))) in variants.iter().enumerate() {
+            assert_eq!(*rotation, rotations[index % rotations.len()]);
+            assert_eq!(*is_flipped, index >= rotations.len());
+
+            let table_index = piece_orientation_to_index(*is_flipped, *rotation, piece_type);
+            let (expected_coordinates, len) = PIECE_VARIANTS[table_index];
+            assert_eq!(
+                coordinates,
+                &expected_coordinates[..len],
+                "wrong coordinates for {piece_type}, rotation={rotation:?}, flipped={is_flipped}"
+            );
+        }
+
+        let mut expected_filtered = Vec::new();
+        for variant in &variants {
+            if !expected_filtered
+                .iter()
+                .any(|(coordinates, _)| coordinates == &variant.0)
+            {
+                expected_filtered.push(variant.clone());
+            }
+        }
+        assert_eq!(piece_type.all_variants(true), expected_filtered);
     }
 }
 
