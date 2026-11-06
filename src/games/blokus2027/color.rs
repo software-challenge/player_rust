@@ -10,6 +10,18 @@ pub enum Color {
     Green,
 }
 
+impl Color {
+    /// Returns the index used by the fixed-size color arrays in this game state.
+    pub fn as_index(self) -> usize {
+        match self {
+            Color::Blue => 0,
+            Color::Yellow => 1,
+            Color::Red => 2,
+            Color::Green => 3,
+        }
+    }
+}
+
 impl TryFrom<&str> for Color {
     type Error = String;
 
