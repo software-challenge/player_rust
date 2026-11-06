@@ -51,10 +51,12 @@ const fn build_piece_variants() -> [([Coordinate; MAX_VARIANT_COORDS], usize); P
             while piece_idx < ALL_PIECE_TYPES.len() {
                 let (mut coords, len) = PIECE_BASES[piece_idx];
                 let mut i = 0;
+
                 while i < len {
                     coords[i] = coords[i].rotate(&ROTATIONS[rotation_idx]);
                     i += 1;
                 }
+
                 if FLIPS[flip_idx] {
                     let mut i = 0;
                     while i < len {
@@ -62,6 +64,7 @@ const fn build_piece_variants() -> [([Coordinate; MAX_VARIANT_COORDS], usize); P
                         i += 1;
                     }
                 }
+
                 let index = ((flip_idx * ROTATION_NUM) + rotation_idx) * ALL_PIECE_TYPES.len() + piece_idx;
                 variants[index] = (normalize_variant(coords, len), len);
                 piece_idx += 1;
@@ -218,6 +221,7 @@ pub enum PieceType {
     PentoY,
 }
 
+/// A array containing all piece types
 pub const ALL_PIECE_TYPES: [PieceType; 21] = [
     PieceType::Mono,
     PieceType::Domino,
