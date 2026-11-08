@@ -7,10 +7,10 @@ use std::cell::Cell;
 use crate::{
     common::team::Team, games::blokus2027::{
         board::Board, color::Color::self, gamerulelogic, r#move::Move, piece::{
-            Piece, 
-            PieceType
+            Piece, PieceType
         },
 }};
+
 /// Holds all information of a games state.
 #[derive(Clone, PartialEq, Eq, Debug)]
 pub struct GameState {
@@ -88,7 +88,11 @@ impl GameState {
             // and the 3 arrays have a length of 4
             #[allow(clippy::indexing_slicing)]
             Move::Set(set_move) => {
-                self.pieces[set_move.color as usize].retain(|&p| p != set_move.piece);
+                let index = self.pieces[set_move.color as usize].iter()
+                    .position(|x| *x == set_move.piece);
+                if let Some(index) = index {
+                    self.pieces[set_move.color as usize].swap_remove(index);
+                }
                 self.last_move[set_move.color as usize] = Some(*m);
                 self.points[set_move.color as usize].set(None);
             },
