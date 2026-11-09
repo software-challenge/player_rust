@@ -18,6 +18,8 @@ exclude = [
 [dependencies]
 quick-xml = {version = "0.42.0", features = ["serialize"]}
 serde = {version = "1.0.229", features = ["derive"]}
+
+[dev-dependencies]
 criterion = { version = "0.8.2", features = ["html_reports"] }
 
 [features]
@@ -25,8 +27,7 @@ default = ["game-blokus2027"]
 
 game-blokus2027 = []
 
-debug = ["debug-print", "debug-recv-comm-log"]
-debug-print = []
+debug = ["debug-recv-comm-log"]
 debug-recv-comm-log = []
 
 [lints.clippy]

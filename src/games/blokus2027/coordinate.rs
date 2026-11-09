@@ -48,7 +48,7 @@ impl Coordinate {
     ///
     /// The rotation is applied in a clockwise direction to match the engine's
     /// board coordinate system.
-    pub fn rotate(&self, rotation: &Rotation) -> Coordinate {
+    pub const fn rotate(&self, rotation: &Rotation) -> Coordinate {
         match rotation {
             Rotation::Right => {
                 // Board coordinates increase downward, so clockwise is (x, y) -> (-y, x).
@@ -70,7 +70,7 @@ impl Coordinate {
     }
 
     /// Flips the coordinates on the vetical axis (y-axis) relative to the coordinate origin.
-    pub fn flip_on_vertical(&self) -> Coordinate {
+    pub const fn flip_on_vertical(&self) -> Coordinate {
         Coordinate { x: -self.x, y: self.y }
     }
 }
