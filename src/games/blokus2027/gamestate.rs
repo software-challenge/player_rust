@@ -26,16 +26,6 @@ pub struct GameState {
 }
 
 impl GameState {
-
-    fn color_index(color: Color) -> usize {
-        match color {
-            Color::Blue => 0,
-            Color::Yellow => 1,
-            Color::Red => 2,
-            Color::Green => 3,
-        }
-    }
-
     /// Creates a new game state from the supplied board and piece state.
     #[allow(clippy::too_many_arguments)]
     pub fn new(starting_piece: PieceType, is_starting_team_one: bool, board: Board, turn: u8, round: u8, current_turn_color: Color, blue_pieces: Vec<PieceType>, yellow_pieces: Vec<PieceType>, red_pieces: Vec<PieceType>, green_pieces: Vec<PieceType>) -> Self {
@@ -151,21 +141,19 @@ impl GameState {
     #[allow(clippy::indexing_slicing)]
     /// Returns the accumulated score for a single color.
     pub fn get_points_for_color(&self, color: Color) -> u8 {
-        let index = Self::color_index(color);
-
-        if let Some(points) = self.points[index].get() {
+        if let Some(points) = self.points[color.as_index()].get() {
             return points;
         }
 
         let points = self.calculate_points_for_color(color);
-        self.points[index].set(Some(points));
+        self.points[color.as_index()].set(Some(points));
         points
     }
 
     #[allow(clippy::indexing_slicing)]
     /// Returns the last move recorded for the given color, if any.
     pub fn get_last_move(&self, color: Color) -> &Option<Move> {
-        &self.last_move[Self::color_index(color)]
+        &self.last_move[color.as_index()]
     }
 
     /// Returns the color whose turn it is.
@@ -235,14 +223,14 @@ impl GameState {
     #[allow(clippy::indexing_slicing)]
     /// Returns the remaining piece types for the given color.
     pub fn get_color_pieces(&self, color: Color) -> &[PieceType] {
-        &self.pieces[Self::color_index(color)]
+        &self.pieces[color.as_index()]
     }
 
     // Index slicing is save here because color can only be a number from 0 to 3 and the array has a length of 4
     #[allow(clippy::indexing_slicing)]
     /// Replaces the remaining pieces of the given color.
     pub fn set_color_pieces(&mut self, color: Color, pieces: Vec<PieceType>) {
-        self.pieces[Self::color_index(color)] = pieces;
-        self.points[Self::color_index(color)].set(None);
+        self.pieces[color.as_index()] = pieces;
+        self.points[color.as_index()].set(None);
     }
 }
