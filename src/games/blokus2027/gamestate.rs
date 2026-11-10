@@ -2,13 +2,15 @@
 #[path = "tests/gamestate.rs"]
 mod tests;
 
+use std::cell::Cell;
+
 use crate::{
     common::team::Team, games::blokus2027::{
-        board::Board, color::Color::{self, Blue, Green, Red, Yellow}, gamerulelogic, r#move::Move, piece::{
-            Piece, 
-            PieceType
+        board::Board, color::Color::self, gamerulelogic, r#move::Move, piece::{
+            Piece, PieceType
         },
 }};
+
 /// Holds all information of a games state.
 #[derive(Clone, PartialEq, Eq, Debug)]
 pub struct GameState {
@@ -18,13 +20,12 @@ pub struct GameState {
     turn: u8,
     round: u8,
     current_turn_color: Color,
-    points: [u8; 4], // points for each color; blue, yellow, red, green
+    points: [Cell<Option<u8>>; 4], // cached points per color; blue, yellow, red, green
     last_move: [Option<Move>; 4], // last move of each color; blue, yellow, red, green
     pieces: [Vec<PieceType>; 4] // blue, yellow, red, green
 }
 
 impl GameState {
-
     /// Creates a new game state from the supplied board and piece state.
     #[allow(clippy::too_many_arguments)]
     pub fn new(starting_piece: PieceType, is_starting_team_one: bool, board: Board, turn: u8, round: u8, current_turn_color: Color, blue_pieces: Vec<PieceType>, yellow_pieces: Vec<PieceType>, red_pieces: Vec<PieceType>, green_pieces: Vec<PieceType>) -> Self {
@@ -35,7 +36,7 @@ impl GameState {
             turn,
             round,
             current_turn_color,
-            points: [0, 0, 0, 0],
+            points: std::array::from_fn(|_| Cell::new(Some(0))),
             last_move: [None, None, None, None],
             pieces: [blue_pieces, yellow_pieces, red_pieces, green_pieces],
         }
@@ -73,28 +74,19 @@ impl GameState {
     fn update_gamestate(&mut self, m: &Move, turn: u8) {
         // Remove used piece from the corresponding color's available pieces
         match m {
-            Move::Set(set_move) if set_move.color == Blue => {
-                self.pieces[0].retain(|&p| p != set_move.piece);
-                self.last_move[0] = Some(*m);
-                self.points[0] = self.calculate_points_for_color(Color::Blue);
-            },
-            Move::Set(set_move) if set_move.color == Yellow => {
-                self.pieces[1].retain(|&p| p != set_move.piece);
-                self.last_move[1] = Some(*m);
-                self.points[1] = self.calculate_points_for_color(Color::Yellow);
-            },
-            Move::Set(set_move) if set_move.color == Red => {
-                self.pieces[2].retain(|&p| p != set_move.piece);
-                self.last_move[2] = Some(*m);
-                self.points[2] = self.calculate_points_for_color(Color::Red);
-            },
-            Move::Set(set_move) if set_move.color == Green => {
-                self.pieces[3].retain(|&p| p != set_move.piece);
-                self.last_move[3] = Some(*m);
-                self.points[3] = self.calculate_points_for_color(Color::Green);
+            // Index slicing is save here because color can only be a number from 0 to 3
+            // and the 3 arrays have a length of 4
+            #[allow(clippy::indexing_slicing)]
+            Move::Set(set_move) => {
+                let index = self.pieces[set_move.color as usize].iter()
+                    .position(|x| *x == set_move.piece);
+                if let Some(index) = index {
+                    self.pieces[set_move.color as usize].swap_remove(index);
+                }
+                self.last_move[set_move.color as usize] = Some(*m);
+                self.points[set_move.color as usize].set(None);
             },
             Move::Skip(_) => {},
-            Move::Set(_) => unreachable!(),
         }
 
         self.turn = turn;
@@ -146,24 +138,22 @@ impl GameState {
         total_points
     }
 
+    #[allow(clippy::indexing_slicing)]
     /// Returns the accumulated score for a single color.
     pub fn get_points_for_color(&self, color: Color) -> u8 {
-        match color {
-            Color::Blue => self.points[0],
-            Color::Yellow => self.points[1],
-            Color::Red => self.points[2],
-            Color::Green => self.points[3],
+        if let Some(points) = self.points[color.as_index()].get() {
+            return points;
         }
+
+        let points = self.calculate_points_for_color(color);
+        self.points[color.as_index()].set(Some(points));
+        points
     }
 
+    #[allow(clippy::indexing_slicing)]
     /// Returns the last move recorded for the given color, if any.
     pub fn get_last_move(&self, color: Color) -> &Option<Move> {
-        match color {
-            Color::Blue => &self.last_move[0],
-            Color::Yellow => &self.last_move[1],
-            Color::Red => &self.last_move[2],
-            Color::Green => &self.last_move[3],
-        }
+        &self.last_move[color.as_index()]
     }
 
     /// Returns the color whose turn it is.
@@ -224,25 +214,23 @@ impl GameState {
     /// Replaces the entire board state.
     pub fn set_board(&mut self, board: Board) {
         self.board = board;
+        for score in &self.points {
+            score.set(None);
+        }
     }
 
+    // Index slicing is save here because color can only be a number from 0 to 3 and the array has a length of 4
+    #[allow(clippy::indexing_slicing)]
     /// Returns the remaining piece types for the given color.
     pub fn get_color_pieces(&self, color: Color) -> &[PieceType] {
-        match color {
-            Color::Blue => &self.pieces[0],
-            Color::Yellow => &self.pieces[1],
-            Color::Red => &self.pieces[2],
-            Color::Green => &self.pieces[3],
-        }
+        &self.pieces[color.as_index()]
     }
 
+    // Index slicing is save here because color can only be a number from 0 to 3 and the array has a length of 4
+    #[allow(clippy::indexing_slicing)]
     /// Replaces the remaining pieces of the given color.
     pub fn set_color_pieces(&mut self, color: Color, pieces: Vec<PieceType>) {
-        match color {
-            Color::Blue => self.pieces[0] = pieces,
-            Color::Yellow => self.pieces[1] = pieces,
-            Color::Red => self.pieces[2] = pieces,
-            Color::Green => self.pieces[3] = pieces,
-        }
+        self.pieces[color.as_index()] = pieces;
+        self.points[color.as_index()].set(None);
     }
 }

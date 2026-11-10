@@ -38,5 +38,5 @@ expect_used = "allow"
 expect_fun_call = "allow"
 
 [[bench]]
-name = "piece"
+name = "gamestate"
 harness = false
