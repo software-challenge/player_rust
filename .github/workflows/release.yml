@@ -7,9 +7,14 @@ on:
         description: "Version to release (season.breaking.fixes, for example 27.0.6)"
         required: true
         type: string
+      changelog_updated:
+        description: "Was the changelog updated?"
+        required: true
+        default: false
+        type: boolean
       dry_run:
         description: "Validate the release without committing or publishing"
-        required: false
+        required: true
         default: false
         type: boolean
 
@@ -35,6 +40,7 @@ jobs:
       id-token: write
     env:
       RELEASE_VERSION: ${{ inputs.version }}
+      CHANGELOG_UPDATED: ${{ inputs.changelog_updated }}
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
       - name: Require the main branch
@@ -47,6 +53,14 @@ jobs:
       - uses: actions/checkout@v5
         with:
           ref: main
+
+      - name: Require changelog confirmation
+        if: ${{ !inputs.dry_run }}
+        run: |
+          if [ "$CHANGELOG_UPDATED" != "true" ]; then
+            echo "::error::Please confirm that the changelog was updated before publishing."
+            exit 1
+          fi
 
       - name: Check that the version is valid and unused
         run: |
