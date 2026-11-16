@@ -158,6 +158,11 @@ jobs:
         uses: rust-lang/crates-io-auth-action@v1
         id: auth
 
+      - name: Create release branch
+        if: ${{ !inputs.dry_run }}
+        run: |
+          git switch -C "release/$RELEASE_VERSION"
+
       - name: Commit version update
         if: ${{ !inputs.dry_run }}
         run: |
@@ -166,7 +171,7 @@ jobs:
           git add Cargo.toml Cargo.lock
           if ! git diff --cached --quiet; then
             git commit -m "chore: release socha $RELEASE_VERSION"
-            git push origin HEAD:refs/heads/main
+            git push --set-upstream origin "release/$RELEASE_VERSION"
           fi
           echo "RELEASE_COMMIT=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
 
@@ -183,3 +188,16 @@ jobs:
             --target "$RELEASE_COMMIT" \
             --title "v$RELEASE_VERSION" \
             --notes-file release-notes.md
+
+      - name: Open PR to main
+        if: ${{ !inputs.dry_run }}
+        run: |
+          gh pr create \
+            --base main \
+            --head "release/$RELEASE_VERSION" \
+            --title "Release v$RELEASE_VERSION" \
+            --body "## Summary
+
+            - Bump the package version to v$RELEASE_VERSION
+            - Publish the crate and GitHub release for this version
+            - Merge the release branch back into main"
