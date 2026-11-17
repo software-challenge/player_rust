@@ -84,6 +84,60 @@ jobs:
       - name: Check if README and CONTRIBUTING version and edition markers match Cargo.toml
         run: python3 .github/scripts/check_version_and_edition.py
 
+  release-metadata:
+    name: Release metadata
+    if: ${{ github.event_name == 'pull_request' && github.base_ref == 'main' }}
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Check version bump and changelog entry
+        run: |
+          set -euo pipefail
+          git fetch origin main --depth=1
+
+          python3 - <<'PY'
+          import re
+          import subprocess
+          from pathlib import Path
+
+          def parse_version(cargo_text: str) -> str:
+              match = re.search(r'(?ms)^\[package\]\s*\n(.*?)(?=^\[|\Z)', cargo_text)
+              if match is None:
+                  raise SystemExit('Could not find the [package] block in Cargo.toml.')
+
+              version_match = re.search(r'(?m)^version\s*=\s*"([^"]+)"', match.group(1))
+              if version_match is None:
+                  raise SystemExit('Could not parse the package version from Cargo.toml.')
+
+              return version_match.group(1)
+
+          current_version = parse_version(Path('Cargo.toml').read_text(encoding='utf-8'))
+          base_version = parse_version(
+              subprocess.run(
+                  ['git', 'show', 'origin/main:Cargo.toml'],
+                  check=True,
+                  capture_output=True,
+                  text=True,
+              ).stdout,
+          )
+
+          if current_version == base_version:
+              raise SystemExit(
+                  f'Cargo.toml version was not updated for the PR to main: {current_version} matches {base_version}.'
+              )
+
+          changelog = Path('CHANGELOG.md').read_text(encoding='utf-8')
+          if not re.search(rf'(?m)^## \[{re.escape(current_version)}\]', changelog):
+              raise SystemExit(
+                  f'CHANGELOG.md does not contain an entry for version {current_version}.'
+              )
+
+          print(f'Version and changelog checks passed for {current_version}.')
+          PY
+
   quality:
     name: Code quality
     runs-on: ubuntu-24.04
@@ -140,8 +194,36 @@ jobs:
         env:
           RUSTDOCFLAGS: -D warnings
 
+  backend-assets:
+    name: Backend assets check
+    runs-on: ubuntu-24.04
+    outputs:
+      backend_available: ${{ steps.backend.outputs.backend_available }}
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Download latest backend test assets
+        id: backend
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: bash .github/scripts/download_backend_assets.sh
+
+      - name: Upload backend assets
+        if: ${{ steps.backend.outputs.backend_available == 'true' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-assets
+          path: ${{ runner.temp }}/backend
+          if-no-files-found: error
+
+      - name: Warning - backend assets unavailable for example integration tests
+        if: ${{ steps.backend.outputs.backend_available != 'true' }}
+        run: echo "::warning::Example integration tests were not run because the backend assets could not be downloaded or were incomplete."
+
   example-integration:
     name: Example integration test
+    needs: backend-assets
+    if: ${{ needs.backend-assets.outputs.backend_available == 'true' }}
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     steps:
@@ -158,12 +240,14 @@ jobs:
           distribution: temurin
           java-version: "21"
 
-      - name: Download latest backend test assets
-        id: backend
-        run: bash .github/scripts/download_backend_assets.sh
+      - name: Download backend test assets artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: backend-assets
+          path: ${{ runner.temp }}/backend
 
       - name: Run all examples against the test server
         env:
-          SERVER_DIR: ${{ steps.backend.outputs.server_dir }}
-          RANDOM_PLAYER_JAR: ${{ steps.backend.outputs.random_player_jar }}
+          SERVER_DIR: ${{ runner.temp }}/backend/server
+          RANDOM_PLAYER_JAR: ${{ runner.temp }}/backend/randomplayer.jar
         run: bash .github/scripts/test_examples.sh

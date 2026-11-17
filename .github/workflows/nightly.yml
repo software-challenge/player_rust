@@ -1,0 +1,255 @@
+name: Nightly
+
+on:
+  schedule:
+    - cron: "0 4 * * *"
+  workflow_dispatch:
+    inputs:
+      force:
+        description: "Force a nightly publish even when no code changes are detected."
+        required: false
+        default: false
+        type: boolean
+
+permissions:
+  contents: read
+
+concurrency:
+  group: nightly
+  cancel-in-progress: false
+
+jobs:
+  ci:
+    name: CI
+    uses: ./.github/workflows/ci.yml
+
+  nightly:
+    name: Nightly release
+    needs: ci
+    runs-on: ubuntu-24.04
+    environment: Release
+    permissions:
+      contents: write
+      id-token: write
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - name: Check out main
+        uses: actions/checkout@v5
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Detect whether there is anything new since the last real or nightly release
+        id: detect
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch --tags --force
+
+          changed=false
+          for tag in $(git tag --list 'v*' --list 'nightly-*' --sort=-creatordate); do
+            if ! git diff --quiet "$tag..HEAD"; then
+              changed=true
+              break
+            fi
+          done
+
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ inputs.force }}" = "true" ]; then
+            changed=true
+          fi
+
+          echo "publish=$changed" >> "$GITHUB_OUTPUT"
+          echo "date=$(date -u +%Y%m%d)" >> "$GITHUB_OUTPUT"
+
+      - name: Skip nightly publish when nothing changed
+        if: ${{ steps.detect.outputs.publish != 'true' }}
+        run: echo "No changes since the last real or nightly release; skipping nightly publication."
+
+      - name: Determine nightly version
+        if: ${{ steps.detect.outputs.publish == 'true' }}
+        id: version
+        env:
+          NIGHTLY_DATE: ${{ steps.detect.outputs.date }}
+        run: |
+          set -euo pipefail
+          version=$(python3 - <<'PY'
+          import os
+          import re
+          import subprocess
+          from pathlib import Path
+
+          text = Path('Cargo.toml').read_text(encoding='utf-8')
+          match = re.search(r'(?ms)^\[package\]\s*\n(.*?)(?=^\[|\Z)', text)
+          if match is None:
+              raise SystemExit('Could not find the [package] block in Cargo.toml.')
+
+          version_match = re.search(r'(?m)^version\s*=\s*"([^"]+)"', match.group(1))
+          if version_match is None:
+              raise SystemExit('Could not find the package version in Cargo.toml.')
+
+          base = version_match.group(1)
+          if not re.fullmatch(r'[0-9]+\.[0-9]+\.[0-9]+', base):
+              raise SystemExit(f'Unexpected package version format: {base}')
+
+          tag_output = subprocess.run(
+              ['git', 'tag', '--list', 'v*', '--sort=-version:refname'],
+              check=True,
+              capture_output=True,
+              text=True,
+          ).stdout
+
+          latest_full_release = None
+          for tag in tag_output.splitlines():
+              if re.fullmatch(r'v[0-9]+\.[0-9]+\.[0-9]+', tag):
+                  latest_full_release = tag[1:]
+                  break
+
+          if latest_full_release is not None and latest_full_release == base:
+              raise SystemExit(
+                  f'Cargo.toml version {base} matches the newest full release {latest_full_release}. '
+                  'Nightly publication is not allowed until the version is bumped.'
+              )
+
+          print(f'{base}-nightly.{os.environ["NIGHTLY_DATE"]}')
+          PY
+          )
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "release_name=nightly-$NIGHTLY_DATE" >> "$GITHUB_OUTPUT"
+
+      - name: Require changelog entry for base version
+        if: ${{ steps.detect.outputs.publish == 'true' }}
+        env:
+          NIGHTLY_VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          python3 - <<'PY'
+          import os
+          import re
+          from pathlib import Path
+
+          nightly_version = os.environ['NIGHTLY_VERSION']
+          base_version = nightly_version.split('-nightly.')[0]
+
+          changelog = Path('CHANGELOG.md').read_text(encoding='utf-8')
+          section = re.search(rf'(?ms)^## \[{re.escape(base_version)}\]\n(.*?)(?=^## \[|\Z)', changelog)
+          if section is None:
+              raise SystemExit(
+                  f'CHANGELOG.md does not contain an entry for base version {base_version} '
+                  f'(nightly version {nightly_version}).'
+              )
+
+          Path('release-notes.md').write_text(section.group(0), encoding='utf-8')
+          PY
+
+      - name: Validate nightly version
+        if: ${{ steps.detect.outputs.publish == 'true' }}
+        env:
+          NIGHTLY_VERSION: ${{ steps.version.outputs.version }}
+          NIGHTLY_RELEASE_NAME: ${{ steps.version.outputs.release_name }}
+        run: |
+          python3 - <<'PY'
+          import os
+          import re
+          import urllib.error
+          import urllib.request
+
+          version = os.environ['NIGHTLY_VERSION']
+          release_name = os.environ['NIGHTLY_RELEASE_NAME']
+          if not re.fullmatch(r'[0-9]+\.[0-9]+\.[0-9]+-nightly\.[0-9]{8}', version):
+              raise SystemExit(f'Nightly version must be a semver prerelease in the form x.y.z-nightly.YYYYMMDD: {version}')
+
+          crate_url = f'https://crates.io/api/v1/crates/socha/{version}'
+          request = urllib.request.Request(crate_url, headers={'User-Agent': 'player_rust-nightly'})
+          try:
+              urllib.request.urlopen(request, timeout=20)
+          except urllib.error.HTTPError as error:
+              if error.code != 404:
+                  raise SystemExit(f'Could not check crates.io (HTTP {error.code}).')
+          except Exception as error:
+              raise SystemExit(f'Could not check crates.io: {error}')
+          else:
+              raise SystemExit(f'socha {version} is already published on crates.io.')
+
+          tag_url = f"https://api.github.com/repos/{os.environ['GITHUB_REPOSITORY']}/git/ref/tags/{release_name}"
+          token = os.environ['GH_TOKEN']
+          request = urllib.request.Request(
+              tag_url,
+              headers={
+                  'Accept': 'application/vnd.github+json',
+                  'Authorization': f'Bearer {token}',
+                  'X-GitHub-Api-Version': '2022-11-28',
+              },
+          )
+          try:
+              urllib.request.urlopen(request, timeout=20)
+          except urllib.error.HTTPError as error:
+              if error.code != 404:
+                  raise SystemExit(f'Could not check GitHub tag (HTTP {error.code}).')
+          except Exception as error:
+              raise SystemExit(f'Could not check GitHub tag: {error}')
+          else:
+              raise SystemExit(f'GitHub tag {release_name} already exists.')
+          PY
+
+      - name: Update package version for nightly publish
+        if: ${{ steps.detect.outputs.publish == 'true' }}
+        env:
+          NIGHTLY_VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          python3 - <<'PY'
+          import os
+          import re
+          from pathlib import Path
+
+          path = Path('Cargo.toml')
+          manifest = path.read_text(encoding='utf-8')
+          match = re.search(r'(?ms)^\[package\]\s*\n(.*?)(?=^\[|\Z)', manifest)
+          if match is None:
+              raise SystemExit('Could not find the [package] block in Cargo.toml.')
+
+          package = match.group(1)
+          updated, count = re.subn(
+              r'(?m)^version\s*=\s*"[^"]+"\s*$',
+              f'version = "{os.environ["NIGHTLY_VERSION"]}"',
+              package,
+              count=1,
+          )
+          if count != 1:
+              raise SystemExit('Could not find the package version in Cargo.toml.')
+
+          path.write_text(manifest[:match.start(1)] + updated + manifest[match.end(1):], encoding='utf-8')
+          PY
+
+      - name: Install Rust
+        if: ${{ steps.detect.outputs.publish == 'true' }}
+        uses: actions-rust-lang/setup-rust-toolchain@v2
+        with:
+          toolchain: stable
+
+      - name: Update lockfile for nightly version
+        if: ${{ steps.detect.outputs.publish == 'true' }}
+        run: cargo check --workspace
+
+      - name: Verify nightly package
+        if: ${{ steps.detect.outputs.publish == 'true' }}
+        run: cargo publish --dry-run --locked --allow-dirty
+
+      - name: Authenticate with crates.io
+        if: ${{ steps.detect.outputs.publish == 'true' }}
+        uses: rust-lang/crates-io-auth-action@v1
+        id: auth
+
+      - name: Publish nightly crate
+        if: ${{ steps.detect.outputs.publish == 'true' }}
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ steps.auth.outputs.token }}
+        run: cargo publish --locked --allow-dirty
+
+      - name: Create nightly GitHub release
+        if: ${{ steps.detect.outputs.publish == 'true' }}
+        run: |
+          gh release create "nightly-${{ steps.detect.outputs.date }}" \
+            --target "$GITHUB_SHA" \
+            --title "nightly-${{ steps.detect.outputs.date }}" \
+            --prerelease \
+            --notes-file release-notes.md

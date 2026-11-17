@@ -1,5 +1,30 @@
 # Changelog
 
+## [27.2.1]
+
+# Changes
+- Refactored code
+- Performance increases
+   - Piece #55
+      - piece_to_coordinate about 45% faster in best case 28% in worst case
+      - piece_type_all_variants filtered 55% faster unfiltered 40% faster
+   - Gamestate #57
+      - apply_move about 35% faster
+      - update_gamestate about 54% faster
+         - Team points are now only on demand and are cached for the current state so still no duplicate calculations for the same gamestate
+      - Removing a piece (part of update_gamestate) about 26% to 13% faster
+- CI
+   - Nighthly releases
+   - Mark CI integration test as skipped if download of backend failed
+   - Now require to update the version number and changelog in PRs to main
+   - Release workflow now works with the branch protection of main
+   - Release workflow does not take the new version number as input anymore
+   - Potentially fixed the backend download issue
+
+# Fixes
+- #35
+- #58 
+
 ## [27.2.0]
 
 # Changes
