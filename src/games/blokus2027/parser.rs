@@ -1,4 +1,9 @@
+#[cfg(test)]
+#[path = "tests/parser.rs"]
+mod tests;
+
 use std::{
+    fmt::Write as _,
     io, 
     str::FromStr
 };
@@ -9,19 +14,44 @@ use quick_xml::{
 };
 
 use crate::{
-    common::team::Team,
-    connection::parser::{
-        message::Message, 
-        parser_strategy::ParserStrategy
-    }, games::blokus2027::{
-        board::Board, color::Color, gamestate::GameState, r#move::Move, piece::{ALL_PIECE_TYPES, PieceType}, rotation::Rotation,
+    common::team::Team, 
+    connection::parser::parser_strategy::{MementoReturn, ParserStrategy}, 
+    games::blokus2027::{
+        board::Board, 
+        color::Color, 
+        gamestate::GameState, 
+        r#move::{Move, SetMove}, 
+        piece::{ALL_PIECE_TYPES, PieceType}, 
+        rotation::Rotation,
     }
 };
 
 pub struct Blokus2027;
 
 impl ParserStrategy for Blokus2027 {
-    fn parse_memento(xml: &str) -> Result<Box<Message>, Box<dyn std::error::Error>> {
+    fn move_to_xml(&self, room_id: &str, r#move: &Move) -> String {
+        let mut move_xml = String::new();
+        let _ = write!(move_xml, "<room roomId=\"{}\">", room_id);
+
+        match r#move {
+            Move::Set(sm) => {
+                let _ = write!(move_xml, "<data class=\"sc.plugin2027.SetMove\"><piece color=\"{}\" kind=\"{}\" rotation=\"{}\" isFlipped=\"{}\"><position x=\"{}\" y=\"{}\"/></piece></data></room>",
+                    sm.color,
+                    sm.piece,
+                    sm.rotation,
+                    sm.is_flipped,
+                    sm.x,
+                    sm.y);
+            },
+            Move::Skip(c) => {
+                let _ = write!(move_xml, "<data class=\"sc.plugin2027.SkipMove\"><color>{}</color></data></room>", c);
+            }
+        }
+
+        move_xml
+    }
+
+    fn parse_memento(xml: &str) -> Result<MementoReturn, Box<dyn std::error::Error>> {
         let mut starting_piece: Option<PieceType> = None;
         let mut start_team: Option<Team> = None;
         let mut turn: u8 = 0;
@@ -52,7 +82,7 @@ impl ParserStrategy for Blokus2027 {
 
                     if turn != 0 {
                         let last_move = parse_last_move(&mut reader)?; 
-                        return Ok(Box::from(Message::MementoLastMove(Some(turn), Some(last_move))));
+                        return Ok(MementoReturn::LastMove(turn, last_move));
                     } else {
                         //let board = _parse_game_board(&mut reader)?;
                         //let pieces = _parse_pieces(&mut reader)?;
@@ -75,7 +105,7 @@ impl ParserStrategy for Blokus2027 {
                            COLOR_ORDER_TWO[(turn % 4) as usize]
                         };      
 
-                        return Ok(Box::from(Message::MementoInitial(Some(GameState::new(starting_piece, is_statrting_team_one, Board::new(), turn, round, current_turn_color, ALL_PIECE_TYPES.to_vec(), ALL_PIECE_TYPES.to_vec(), ALL_PIECE_TYPES.to_vec(), ALL_PIECE_TYPES.to_vec())))));
+                        return Ok(MementoReturn::GameState(Box::new(GameState::new(starting_piece, is_statrting_team_one, Board::new(), turn, round, current_turn_color, ALL_PIECE_TYPES.to_vec(), ALL_PIECE_TYPES.to_vec(), ALL_PIECE_TYPES.to_vec(), ALL_PIECE_TYPES.to_vec()))));
                     }
                 },
                 Event::Start(e) if e.name().0 == "lastMove" => {
@@ -119,7 +149,7 @@ fn parse_skip_move(reader: &mut Reader<&[u8]>) -> Result<Move, Box<dyn std::erro
             Event::Start(c) if c.name().0 == "color" =>  next_text_is_color = true,
             Event::Text(text) if next_text_is_color => {
                 let color = Color::try_from(text.as_ref()).expect(format!("Server returned invalid color: {}", text.as_ref()).as_str());
-                return Ok(Move::new(color, PieceType::Domino, 0, 0, false, Rotation::None, true));
+                return Ok(Move::Skip(color));
             }
             Event::Eof => {
                 return Err(Box::from(io::Error::new(io::ErrorKind::UnexpectedEof,"Turn is not 0 but no lastMove received")));
@@ -187,7 +217,7 @@ fn parse_set_move(reader: &mut Reader<&[u8]>) -> Result<Move, Box<dyn std::error
                         io::ErrorKind::NotFound,
                         "Received no piece data. Unable to form Move"
                     ))?;
-                    return Ok(Move::new(piece.color, piece.kind, x, y, piece.is_flipped, piece.rotation, false));
+                    return Ok(Move::Set(SetMove::new(piece.color, piece.kind, x, y, piece.is_flipped, piece.rotation)));
                 } else {
                     return Err(Box::from(io::Error::new(
                         io::ErrorKind::NotFound,
@@ -241,12 +271,9 @@ fn _parse_game_board(reader: &mut Reader<&[u8]>) -> Result<Board, Box<dyn std::e
 // blue, yellow, red, green
 #[allow(clippy::type_complexity)]
 fn _parse_pieces(reader: &mut Reader<&[u8]>) -> Result<(Vec<PieceType>, Vec<PieceType>, Vec<PieceType>, Vec<PieceType>), Box<dyn std::error::Error>> {
-    let mut blue_pieces =  Vec::new();
-    let mut yellow_pieces =  Vec::new();
-    let mut red_pieces =  Vec::new();
-    let mut green_pieces =  Vec::new();
+    let mut pieces = [Vec::new(), Vec::new(), Vec::new(), Vec::new()];
 
-    let mut current_colore = Color::Blue;
+    let mut current_color = Color::Blue;
     let mut exit_counter = 0;
     loop {
         match reader.read_event()? {
@@ -254,24 +281,20 @@ fn _parse_pieces(reader: &mut Reader<&[u8]>) -> Result<(Vec<PieceType>, Vec<Piec
                 let piece = PieceType::from_str(t.as_ref()).map_err(|_| 
                         io::Error::new(io::ErrorKind::InvalidData,format!("Cannot create PieceType from: {:?}", t)
                 ))?;
-                match current_colore {
-                    Color::Blue => blue_pieces.push(piece),
-                    Color::Yellow => yellow_pieces.push(piece),
-                    Color::Red => red_pieces.push(piece),
-                    Color::Green => green_pieces.push(piece),
-                };
+                #[allow(clippy::indexing_slicing)]
+                pieces[current_color.as_index()].push(piece);
             }
             Event::Start(b) if b.name().0 == "blueShapes" => {
-                current_colore = Color::Blue;
+                current_color = Color::Blue;
             },
             Event::Start(y) if y.name().0 == "yellowShapes" => {
-                current_colore = Color::Yellow;
+                current_color = Color::Yellow;
             },
              Event::Start(r) if r.name().0 == "redShapes" => {
-                current_colore = Color::Red;
+                current_color = Color::Red;
             },
             Event::Start(g) if g.name().0 == "greenShapes" => {
-                current_colore = Color::Green;
+                current_color = Color::Green;
             },
             Event::End(e) if e.name().0 != "shape" => {
                 exit_counter += 1;
@@ -283,372 +306,5 @@ fn _parse_pieces(reader: &mut Reader<&[u8]>) -> Result<(Vec<PieceType>, Vec<Piec
             _ => {}
         }
     }
-    Ok((blue_pieces, yellow_pieces, red_pieces, green_pieces))
-}
-
-#[cfg(test)]
-mod tests {
-    use crate::connection::parser::message::Message;
-use crate::connection::parser::parser_strategy::ParserStrategy;
-use crate::games::blokus2027::piece::ALL_PIECE_TYPES;
-use crate::games::blokus2027::piece::PieceType::PentoW;
-use crate::games::blokus2027::rotation::Rotation::None;
-use crate::games::blokus2027::{
-        board::Board,
-        color::Color,
-        gamestate::GameState,
-        piece::PieceType,
-        r#move::Move,
-        rotation::Rotation,
-    };
-
-    use super::Blokus2027;
-
-    #[test]
-    fn parse_memento_initial() {
-        let xml = br#"
-        PieceType<room roomId="ffcd302c-e191-4257-9104-00177dc490ca">
-          <data class="memento">
-            <state class="state" startTeam="ONE" turn="0" startPiece="PENTO_W" round="1">
-              <board/>
-              <lastMoveMono/>
-              <blueShapes>
-                <shape>MONO</shape>
-                <shape>DOMINO</shape>
-                <shape>TRIO_L</shape>
-                <shape>TRIO_I</shape>
-                <shape>TETRO_O</shape>
-                <shape>TETRO_T</shape>
-                <shape>TETRO_I</shape>
-                <shape>TETRO_L</shape>
-                <shape>TETRO_Z</shape>
-                <shape>PENTO_L</shape>
-                <shape>PENTO_T</shape>
-                <shape>PENTO_V</shape>
-                <shape>PENTO_S</shape>
-                <shape>PENTO_Z</shape>
-                <shape>PENTO_I</shape>
-                <shape>PENTO_P</shape>
-                <shape>PENTO_W</shape>
-                <shape>PENTO_U</shape>
-                <shape>PENTO_R</shape>
-                <shape>PENTO_X</shape>
-                <shape>PENTO_Y</shape>
-              </blueShapes>
-              <yellowShapes>
-                <shape>MONO</shape>
-                <shape>DOMINO</shape>
-                <shape>TRIO_L</shape>
-                <shape>TRIO_I</shape>
-                <shape>TETRO_O</shape>
-                <shape>TETRO_T</shape>
-                <shape>TETRO_I</shape>
-                <shape>TETRO_L</shape>
-                <shape>TETRO_Z</shape>
-                <shape>PENTO_L</shape>
-                <shape>PENTO_T</shape>
-                <shape>PENTO_V</shape>
-                <shape>PENTO_S</shape>
-                <shape>PENTO_Z</shape>
-                <shape>PENTO_I</shape>
-                <shape>PENTO_P</shape>
-                <shape>PENTO_W</shape>
-                <shape>PENTO_U</shape>
-                <shape>PENTO_R</shape>
-                <shape>PENTO_X</shape>
-                <shape>PENTO_Y</shape>
-              </yellowShapes>
-              <redShapes>
-                <shape>MONO</shape>
-                <shape>DOMINO</shape>
-                <shape>TRIO_L</shape>
-                <shape>TRIO_I</shape>
-                <shape>TETRO_O</shape>
-                <shape>TETRO_T</shape>
-                <shape>TETRO_I</shape>
-                <shape>TETRO_L</shape>
-                <shape>TETRO_Z</shape>
-                <shape>PENTO_L</shape>
-                <shape>PENTO_T</shape>
-                <shape>PENTO_V</shape>
-                <shape>PENTO_S</shape>
-                <shape>PENTO_Z</shape>
-                <shape>PENTO_I</shape>
-                <shape>PENTO_P</shape>
-                <shape>PENTO_W</shape>
-                <shape>PENTO_U</shape>
-                <shape>PENTO_R</shape>
-                <shape>PENTO_X</shape>
-                <shape>PENTO_Y</shape>
-              </redShapes>
-              <greenShapes>
-                <shape>MONO</shape>
-                <shape>DOMINO</shape>
-                <shape>TRIO_L</shape>
-                <shape>TRIO_I</shape>
-                <shape>TETRO_O</shape>
-                <shape>TETRO_T</shape>
-                <shape>TETRO_I</shape>
-                <shape>TETRO_L</shape>
-                <shape>TETRO_Z</shape>
-                <shape>PENTO_L</shape>
-                <shape>PENTO_T</shape>
-                <shape>PENTO_V</shape>
-                <shape>PENTO_S</shape>
-                <shape>PENTO_Z</shape>
-                <shape>PENTO_I</shape>
-                <shape>PENTO_P</shape>
-                <shape>PENTO_W</shape>
-                <shape>PENTO_U</shape>
-                <shape>PENTO_R</shape>
-                <shape>PENTO_X</shape>
-                <shape>PENTO_Y</shape>
-              </greenShapes>
-              <validColors>
-                <color>BLUE</color>
-                <color>YELLOW</color>
-                <color>RED</color>
-                <color>GREEN</color>
-              </validColors>
-            </state>
-          </data>
-        </room>"#;
-
-        let gamestate = Blokus2027::parse_memento(core::str::from_utf8(xml).unwrap()).unwrap();
-
-        println!("{:?}", gamestate);
-
-        let gamestate_target = Message::MementoInitial(Some(GameState::new(PieceType::PentoW, true, Board::new(), 0, 1, Color::Blue, ALL_PIECE_TYPES.to_vec(), ALL_PIECE_TYPES.to_vec(), ALL_PIECE_TYPES.to_vec(), ALL_PIECE_TYPES.to_vec())));
-
-        println!("{:?}", gamestate_target);
-
-        assert!(*gamestate == gamestate_target, "Gamestates are not the same")
-    }
-
-        #[test]
-    fn parse_memento_last_move() {
-        let xml = br#"
-            <room roomId="ffcd302c-e191-4257-9104-00177dc490ca">
-              <data class="memento">
-                <state class="state" startTeam="ONE" turn="1" startPiece="PENTO_W" round="1">
-                  <lastMove class="sc.plugin2027.SetMove">
-                    <piece color="BLUE" kind="PENTO_W" rotation="NONE" isFlipped="true">
-                      <position x="0" y="16"/>
-                    </piece>
-                  </lastMove>
-                  <board>
-                    <field x="2" y="16" content="BLUE"/>
-                    <field x="1" y="17" content="BLUE"/>
-                    <field x="2" y="17" content="BLUE"/>
-                    <field x="0" y="18" content="BLUE"/>
-                    <field x="1" y="18" content="BLUE"/>
-                  </board>
-                  <lastMoveMono/>
-                  <blueShapes>
-                    <shape>MONO</shape>
-                    <shape>DOMINO</shape>
-                    <shape>TRIO_L</shape>
-                    <shape>TRIO_I</shape>
-                    <shape>TETRO_O</shape>
-                    <shape>TETRO_T</shape>
-                    <shape>TETRO_I</shape>
-                    <shape>TETRO_L</shape>
-                    <shape>TETRO_Z</shape>
-                    <shape>PENTO_L</shape>
-                    <shape>PENTO_T</shape>
-                    <shape>PENTO_V</shape>
-                    <shape>PENTO_S</shape>
-                    <shape>PENTO_Z</shape>
-                    <shape>PENTO_I</shape>
-                    <shape>PENTO_P</shape>
-                    <shape>PENTO_U</shape>
-                    <shape>PENTO_R</shape>
-                    <shape>PENTO_X</shape>
-                    <shape>PENTO_Y</shape>
-                  </blueShapes>
-                  <yellowShapes>
-                    <shape>MONO</shape>
-                    <shape>DOMINO</shape>
-                    <shape>TRIO_L</shape>
-                    <shape>TRIO_I</shape>
-                    <shape>TETRO_O</shape>
-                    <shape>TETRO_T</shape>
-                    <shape>TETRO_I</shape>
-                    <shape>TETRO_L</shape>
-                    <shape>TETRO_Z</shape>
-                    <shape>PENTO_L</shape>
-                    <shape>PENTO_T</shape>
-                    <shape>PENTO_V</shape>
-                    <shape>PENTO_S</shape>
-                    <shape>PENTO_Z</shape>
-                    <shape>PENTO_I</shape>
-                    <shape>PENTO_P</shape>
-                    <shape>PENTO_W</shape>
-                    <shape>PENTO_U</shape>
-                    <shape>PENTO_R</shape>
-                    <shape>PENTO_X</shape>
-                    <shape>PENTO_Y</shape>
-                  </yellowShapes>
-                  <redShapes>
-                    <shape>MONO</shape>
-                    <shape>DOMINO</shape>
-                    <shape>TRIO_L</shape>
-                    <shape>TRIO_I</shape>
-                    <shape>TETRO_O</shape>
-                    <shape>TETRO_T</shape>
-                    <shape>TETRO_I</shape>
-                    <shape>TETRO_L</shape>
-                    <shape>TETRO_Z</shape>
-                    <shape>PENTO_L</shape>
-                    <shape>PENTO_T</shape>
-                    <shape>PENTO_V</shape>
-                    <shape>PENTO_S</shape>
-                    <shape>PENTO_Z</shape>
-                    <shape>PENTO_I</shape>
-                    <shape>PENTO_P</shape>
-                    <shape>PENTO_W</shape>
-                    <shape>PENTO_U</shape>
-                    <shape>PENTO_R</shape>
-                    <shape>PENTO_X</shape>
-                    <shape>PENTO_Y</shape>
-                  </redShapes>
-                  <greenShapes>
-                    <shape>MONO</shape>
-                    <shape>DOMINO</shape>
-                    <shape>TRIO_L</shape>
-                    <shape>TRIO_I</shape>
-                    <shape>TETRO_O</shape>
-                    <shape>TETRO_T</shape>
-                    <shape>TETRO_I</shape>
-                    <shape>TETRO_L</shape>
-                    <shape>TETRO_Z</shape>
-                    <shape>PENTO_L</shape>
-                    <shape>PENTO_T</shape>
-                    <shape>PENTO_V</shape>
-                    <shape>PENTO_S</shape>
-                    <shape>PENTO_Z</shape>
-                    <shape>PENTO_I</shape>
-                    <shape>PENTO_P</shape>
-                    <shape>PENTO_W</shape>
-                    <shape>PENTO_U</shape>
-                    <shape>PENTO_R</shape>
-                    <shape>PENTO_X</shape>
-                    <shape>PENTO_Y</shape>
-                  </greenShapes>
-                  <validColors>
-                    <color>BLUE</color>
-                    <color>YELLOW</color>
-                    <color>RED</color>
-                    <color>GREEN</color>
-                  </validColors>
-                </state>
-              </data>
-            </room>"#;
-
-        let last_move = Blokus2027::parse_memento(core::str::from_utf8(xml).unwrap()).unwrap();
-
-        println!("{:?}", last_move);
-
-        let last_movetarget = Message::MementoLastMove(Some(1), Some(Move::new(Color::Blue, PentoW, 0, 16, true, None, false)));
-
-        println!("{:?}", last_movetarget);
-
-        assert!(*last_move == last_movetarget, "Last moves are not the same")
-    }
-
-    #[test]
-    fn parse_memento_skip_move() {
-        let xml = r#"
-            <state turn="2">
-              <lastMove class="sc.plugin2027.SkipMove">
-                <color>GREEN</color>
-              </lastMove>
-            </state>"#;
-
-        let message = Blokus2027::parse_memento(xml).expect("skip move should parse");
-        let expected = Message::MementoLastMove(
-            Some(2),
-            Some(Move::new(
-                Color::Green,
-                PieceType::Domino,
-                0,
-                0,
-                false,
-                None,
-                true,
-            )),
-        );
-
-        assert_eq!(*message, expected);
-    }
-
-    #[test]
-    fn parse_memento_set_move_with_other_values() {
-        let xml = r#"
-            <state turn="3">
-              <lastMove class="sc.plugin2027.SetMove">
-                <piece color="YELLOW" kind="TRIO_L" rotation="RIGHT" isFlipped="false">
-                  <position x="3" y="5"/>
-                </piece>
-              </lastMove>
-            </state>"#;
-
-        let message = Blokus2027::parse_memento(xml).expect("set move should parse");
-        let expected = Message::MementoLastMove(
-            Some(3),
-            Some(Move::new(
-                Color::Yellow,
-                PieceType::TrioL,
-                3,
-                5,
-                false,
-                Rotation::Right,
-                false,
-            )),
-        );
-
-        assert_eq!(*message, expected);
-    }
-
-    #[test]
-    fn parse_memento_rejects_xml_without_state() {
-        let error = Blokus2027::parse_memento("<room/>")
-            .expect_err("XML without a state should be rejected");
-
-        assert!(error.to_string().contains("No valid memento"));
-    }
-
-    #[test]
-    fn parse_memento_rejects_initial_state_without_starting_piece() {
-        let xml = r#"<state startTeam="ONE" turn="0" round="1"></state>"#;
-
-        let error = Blokus2027::parse_memento(xml)
-            .expect_err("initial state without a starting piece should be rejected");
-
-        assert!(error.to_string().contains("No starting piece"));
-    }
-
-    #[test]
-    fn parse_memento_rejects_last_move_without_move_data() {
-        let xml = r#"<state turn="1"></state>"#;
-
-        let error = Blokus2027::parse_memento(xml)
-            .expect_err("last move without move data should be rejected");
-
-        assert!(error.to_string().contains("No lastMove received"));
-    }
-
-    #[test]
-    fn parse_memento_rejects_set_move_with_invalid_rotation() {
-        let xml = r#"
-            <state turn="1">
-              <lastMove class="sc.plugin2027.SetMove">
-                <piece color="BLUE" kind="PENTO_W" rotation="INVALID" isFlipped="true">
-                  <position x="0" y="16"/>
-                </piece>
-              </lastMove>
-            </state>"#;
-
-        assert!(Blokus2027::parse_memento(xml).is_err());
-    }
+    Ok((pieces[0].clone(), pieces[1].clone(), pieces[2].clone(), pieces[3].clone()))
 }

@@ -1,10 +1,14 @@
-use crate::{connection::{
-                handler::ConnectionHandler, 
-                parser::message::Message
-            }, games::active::{
-                gamestate::GameState, r#move::Move, parser::Blokus2027
-            }
-        };
+use crate::{
+    connection::{
+        handler::ConnectionHandler,
+        parser::message::Message,
+    },
+    games::active::{
+        gamestate::GameState,
+        r#move::Move,
+        Parser,
+    },
+};
 
 /// A player implementation that handles the game flow.
 ///
@@ -13,7 +17,7 @@ use crate::{connection::{
 /// the game ends with `on_game_over`.
 pub trait Client {
     /// Called when the server asks the player to submit a move.
-    fn on_move_request(&mut self) -> Option<Move>;
+    fn on_move_request(&mut self) -> Move;
 
     /// Called after the final result message is received.
     fn on_game_over(&mut self);
@@ -27,7 +31,7 @@ pub trait Client {
 /// This helper configures the network connection and dispatches server messages
 /// to the `Client` trait methods until the match ends.
 pub fn start_client_from_commandline_args<C: Client>(mut client: C) -> Result<(), Box<dyn std::error::Error>> {
-    let mut connection = ConnectionHandler::new_from_commandline_args(Blokus2027)?;
+    let mut connection = ConnectionHandler::new_from_commandline_args(Parser)?;
 
     let mut local_game_state: Option<GameState> = None;
 
@@ -35,34 +39,20 @@ pub fn start_client_from_commandline_args<C: Client>(mut client: C) -> Result<()
         let message = connection.get_new_message()?;
         match *message {
             Message::MementoInitial(game_state) => {
-                if let Some(game_state) = game_state {
-                    local_game_state = Some(game_state.clone());
-                    client.on_game_state_updated(game_state);
-                } else {
-                    eprintln!("Received Memento message without game state!");
-                }
+                local_game_state = Some(*game_state.clone());
+                client.on_game_state_updated(*game_state);
             },
             Message::MementoLastMove(turn, last_move) => {
-                if let Some(last_move) = last_move {
-                    if let Some(game_state) = &mut local_game_state {
-                        #[cfg(feature = "debug-print")]
-                        println!("Applying last move: {} {} {} {} {}", last_move.piece, last_move.x, last_move.y, last_move.is_flipped, last_move.rotation);
-                        game_state.apply_move_unchecked(&last_move, turn.unwrap_or(0));
-                        client.on_game_state_updated(game_state.clone());
-                    } else {
-                        eprintln!("Received LastMove message without existing game state!");
-                    }
+                if let Some(game_state) = &mut local_game_state {
+                    game_state.apply_move_unchecked(&last_move, turn);
+                    client.on_game_state_updated(game_state.clone());
                 } else {
-                    eprintln!("Received LastMove message without last move data!");
+                    eprintln!("Received LastMove message without existing game state!");
                 }
             },
             Message::MoveRequest => {
                 let m = client.on_move_request();
-                if let Some(mv) = m {
-                    connection.send_move(&mv)?;
-                } else {
-                    eprintln!("Client did not provide a move in response to MoveRequest!");
-                }
+                connection.send_move(&m)?;
             },
             Message::Result(_) => {
                 client.on_game_over();

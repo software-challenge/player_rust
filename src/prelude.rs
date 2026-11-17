@@ -9,6 +9,6 @@ pub use crate::games::blokus2027::{
     gamerulelogic,
     gamestate::GameState,
     piece::*,
-    r#move::Move,
+    r#move::*,
     rotation::Rotation,
 };

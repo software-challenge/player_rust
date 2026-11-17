@@ -10,20 +10,36 @@ use crate::games::blokus2027::{
 /// The placement origin is the top-left corner of the piece's transformed local
 /// coordinate system.
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]
-pub struct Move {
+pub enum Move {
+    Set(SetMove),
+    Skip(Color)
+}
+
+impl Move {
+    pub fn new_set(color: Color, piece: PieceType, x: usize, y: usize, is_flipped: bool, rotation: Rotation) -> Move {
+        Move::Set(SetMove::new(color, piece, x, y, is_flipped, rotation))
+    }
+
+    pub fn new_skip(color: Color) -> Move {
+        Move::Skip(color)
+    }
+}
+
+
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]
+pub struct SetMove {
     pub color: Color,
     pub piece: PieceType,
     pub x: usize,
     pub y: usize,
     pub is_flipped: bool,
     pub rotation: Rotation,
-    pub skip: bool,
 }
 
-impl Move {
+impl SetMove {
     /// Creates a new move instance.
-    pub fn new(color: Color, piece: PieceType, x: usize, y: usize, is_flipped: bool, rotation: Rotation, skip: bool) -> Self {
-        Self { color, piece, x, y, is_flipped, rotation, skip }
+    pub fn new(color: Color, piece: PieceType, x: usize, y: usize, is_flipped: bool, rotation: Rotation) -> Self {
+        Self { color, piece, x, y, is_flipped, rotation}
     }
 }
 

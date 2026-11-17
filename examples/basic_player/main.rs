@@ -5,9 +5,9 @@ struct Player {
 }
 
 impl Client for Player {
-    fn on_move_request(&mut self) -> Option<Move> {
+    fn on_move_request(&mut self) -> Move {
         println!("Received a move request!");
-      gamerulelogic::get_possible_moves(&self.game_state.as_mut().unwrap()).first().cloned()
+        gamerulelogic::get_possible_moves(&self.game_state.as_mut().unwrap()).first().cloned().unwrap()
     }
 
     fn on_game_over(&mut self) {

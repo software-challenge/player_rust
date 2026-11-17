@@ -4,15 +4,131 @@ mod tests;
 
 use std::{fmt, str::FromStr};
 
-use crate::games::blokus2027::{
-    coordinate::{
-        Coordinate, 
-        flip_coordinates, 
-        rotate_coordinates, 
-        normalize_coordinates
-    },
-    rotation::Rotation,
+use crate::games::blokus2027::{coordinate::Coordinate, rotation::Rotation};
+
+#[cfg(test)]
+use crate::games::blokus2027::coordinate::{
+    flip_coordinates, normalize_coordinates, rotate_coordinates,
 };
+
+const ROTATION_NUM: usize = 4; // Amount of different rotations
+const MAX_VARIANT_COORDS: usize = 5; // Maximum amount of coordinates a piece has
+const PIECE_VARIANT_COUNT: usize = 2 * ROTATION_NUM * ALL_PIECE_TYPES.len();
+
+/// The untransformed base coordinates of each piece type (indexed by
+/// `PieceType as usize`), padded with dummy coordinates to
+/// `MAX_VARIANT_COORDS`.
+///
+/// This is the single source of the piece shapes: both the compile-time variant
+/// table and [`PieceType::base_coordinates`] are derived from it.
+static PIECE_BASES: [([Coordinate; MAX_VARIANT_COORDS], usize); ALL_PIECE_TYPES.len()] = build_piece_bases();
+
+/// All `PIECE_VARIANT_COUNT` piece variants (2 flips × 4 rotations × 21 piece
+/// types), normalized to the origin and computed at compile time.
+///
+/// Each entry holds the coordinates (padded to `MAX_VARIANT_COORDS`) and their
+/// actual length. The index follows the order of `piece_orientation_to_index`.
+static PIECE_VARIANTS: [([Coordinate; MAX_VARIANT_COORDS], usize); PIECE_VARIANT_COUNT] = build_piece_variants();
+
+#[allow(clippy::indexing_slicing)]
+const fn build_piece_variants() -> [([Coordinate; MAX_VARIANT_COORDS], usize); PIECE_VARIANT_COUNT] {
+    const FLIPS: [bool; 2] = [false, true];
+    const ROTATIONS: [Rotation; ROTATION_NUM] = [Rotation::None, Rotation::Right, Rotation::Mirror, Rotation::Left];
+
+    let mut variants = [([Coordinate::new(0, 0); MAX_VARIANT_COORDS], 0usize); PIECE_VARIANT_COUNT];
+
+    // Important: Do not change the order of is_flipped, rotation, piece_type.
+    // This must match the enum discriminant ordering used by PieceType as usize.
+    // (While loops: `for` over `Range` is not const-stable.)
+    let mut flip_idx = 0;
+    while flip_idx < 2 {
+        let mut rotation_idx = 0;
+        while rotation_idx < ROTATIONS.len() {
+            let mut piece_idx = 0;
+            while piece_idx < ALL_PIECE_TYPES.len() {
+                let (mut coords, len) = PIECE_BASES[piece_idx];
+                let mut i = 0;
+
+                while i < len {
+                    coords[i] = coords[i].rotate(&ROTATIONS[rotation_idx]);
+                    i += 1;
+                }
+
+                if FLIPS[flip_idx] {
+                    let mut i = 0;
+                    while i < len {
+                        coords[i] = coords[i].flip_on_vertical();
+                        i += 1;
+                    }
+                }
+
+                let index = ((flip_idx * ROTATION_NUM) + rotation_idx) * ALL_PIECE_TYPES.len() + piece_idx;
+                variants[index] = (normalize_variant(coords, len), len);
+                piece_idx += 1;
+            }
+            rotation_idx += 1;
+        }
+        flip_idx += 1;
+    }
+
+    variants
+}
+
+/// Shifts the coordinates so the smallest x/y values become `(0, 0)`.
+#[allow(clippy::indexing_slicing)]
+const fn normalize_variant(mut coords: [Coordinate; MAX_VARIANT_COORDS], len: usize) -> [Coordinate; MAX_VARIANT_COORDS] {
+    let (mut min_x, mut min_y) = (coords[0].x, coords[0].y);
+    let mut i = 1;
+    while i < len {
+        // Plain comparison: `Ord::min` is not const-stable.
+        if coords[i].x < min_x { min_x = coords[i].x; }
+        if coords[i].y < min_y { min_y = coords[i].y; }
+        i += 1;
+    }
+    let mut i = 0;
+    while i < len {
+        coords[i].x -= min_x;
+        coords[i].y -= min_y;
+        i += 1;
+    }
+    coords
+}
+
+/// Generates all piece variants at runtime.
+///
+/// Kept for tests only: it verifies that the compile-time `PIECE_VARIANTS`
+/// table matches the runtime transformations entry by entry.
+#[cfg(test)]
+fn generate_piece_variants() -> Vec<Vec<Coordinate>> {
+    let mut variants: Vec<Vec<Coordinate>> = Vec::with_capacity(PIECE_VARIANT_COUNT);
+
+    // Important: Do not change the order of is_flipped, rotation, piece_type.
+    // This must match the enum discriminant ordering used by PieceType as usize.
+    for is_flipped in [false, true] {
+        for rotation in [Rotation::None, Rotation::Right, Rotation::Mirror, Rotation::Left] {
+            for piece_type in ALL_PIECE_TYPES {
+                let base_coordinates = piece_type.base_coordinates();
+                let mut transformed_coordinates: Vec<Coordinate> = base_coordinates.to_vec();
+
+                rotate_coordinates(&mut transformed_coordinates, &rotation);
+                if is_flipped {
+                    flip_coordinates(&mut transformed_coordinates);
+                }
+                normalize_coordinates(&mut transformed_coordinates);
+
+                variants.push(transformed_coordinates);
+            }
+        }
+    }
+
+    variants
+}
+
+// Maps piece variant to the corresponding memory position.
+// The piece index must follow the generation order: flip, rotation, then piece type.
+fn piece_orientation_to_index(is_flipped: bool, rotation: Rotation, piece_type: PieceType) -> usize {
+    ((is_flipped as usize) * ROTATION_NUM + (rotation as usize)) * ALL_PIECE_TYPES.len() + (piece_type as usize)
+}
 
 /// A concrete piece instance with a type, a rotation, and a mirror state.
 ///
@@ -39,17 +155,12 @@ impl Piece {
     ///
     /// The coordinates are rotated and optionally mirrored and then shifted so the
     /// smallest x/y values become `(0, 0)`.
+    #[allow(clippy::indexing_slicing)] // Indexing is safe: the index is derived from
+    // `piece_orientation_to_index` and always within the table.
     pub fn get_coordinates(&self) -> Vec<Coordinate> {
-        let base_coordinates = self.piece_type.base_coordinates();
-        let mut transformed_coordinates: Vec<Coordinate> = base_coordinates.to_vec();
-
-        rotate_coordinates(&mut transformed_coordinates, &self.rotation);
-        if self.is_flipped { 
-            flip_coordinates(&mut transformed_coordinates);
-        }
-        normalize_coordinates(&mut transformed_coordinates);
-
-        transformed_coordinates
+        let index = piece_orientation_to_index(*self.is_flipped(), self.rotation, self.piece_type);
+        let (coords, len) = PIECE_VARIANTS[index];
+        coords[..len].to_vec()
     }
 
     pub fn get_piece_type(&self) -> &PieceType {
@@ -81,6 +192,7 @@ impl Piece {
 ///
 /// Each variant describes a shape and can be transformed into all legal
 /// rotations and mirrored states using [`PieceType::all_variants`].
+#[repr(usize)]
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]
 pub enum PieceType {
     Mono,
@@ -106,6 +218,7 @@ pub enum PieceType {
     PentoY,
 }
 
+/// A array containing all piece types
 pub const ALL_PIECE_TYPES: [PieceType; 21] = [
     PieceType::Mono,
     PieceType::Domino,
@@ -130,6 +243,53 @@ pub const ALL_PIECE_TYPES: [PieceType; 21] = [
     PieceType::PentoY,
 ];
 
+const fn build_piece_bases() -> [([Coordinate; MAX_VARIANT_COORDS], usize); ALL_PIECE_TYPES.len()] {
+    [
+        // Mono
+        ([Coordinate::new(0, 0), Coordinate::new(0, 0), Coordinate::new(0, 0), Coordinate::new(0, 0), Coordinate::new(0, 0)], 1),
+        // Domino
+        ([Coordinate::new(0, 0), Coordinate::new(1, 0), Coordinate::new(0, 0), Coordinate::new(0, 0), Coordinate::new(0, 0)], 2),
+        // TrioL
+        ([Coordinate::new(0, 0), Coordinate::new(0, 1), Coordinate::new(1, 1), Coordinate::new(0, 0), Coordinate::new(0, 0)], 3),
+        // TrioI
+        ([Coordinate::new(0, 0), Coordinate::new(0, 1), Coordinate::new(0, 2), Coordinate::new(0, 0), Coordinate::new(0, 0)], 3),
+        // TetroO
+        ([Coordinate::new(0, 0), Coordinate::new(1, 0), Coordinate::new(0, 1), Coordinate::new(1, 1), Coordinate::new(0, 0)], 4),
+        // TetroT
+        ([Coordinate::new(0, 0), Coordinate::new(1, 0), Coordinate::new(2, 0), Coordinate::new(1, 1), Coordinate::new(0, 0)], 4),
+        // TetroI
+        ([Coordinate::new(0, 0), Coordinate::new(0, 1), Coordinate::new(0, 2), Coordinate::new(0, 3), Coordinate::new(0, 0)], 4),
+        // TetroL
+        ([Coordinate::new(0, 0), Coordinate::new(0, 1), Coordinate::new(0, 2), Coordinate::new(1, 2), Coordinate::new(0, 0)], 4),
+        // TetroZ
+        ([Coordinate::new(0, 0), Coordinate::new(1, 0), Coordinate::new(1, 1), Coordinate::new(2, 1), Coordinate::new(0, 0)], 4),
+        // PentoL
+        ([Coordinate::new(0, 0), Coordinate::new(0, 1), Coordinate::new(0, 2), Coordinate::new(0, 3), Coordinate::new(1, 3)], 5),
+        // PentoT
+        ([Coordinate::new(0, 0), Coordinate::new(1, 0), Coordinate::new(2, 0), Coordinate::new(1, 1), Coordinate::new(1, 2)], 5),
+        // PentoV
+        ([Coordinate::new(0, 0), Coordinate::new(0, 1), Coordinate::new(0, 2), Coordinate::new(1, 2), Coordinate::new(2, 2)], 5),
+        // PentoS
+        ([Coordinate::new(1, 0), Coordinate::new(2, 0), Coordinate::new(3, 0), Coordinate::new(0, 1), Coordinate::new(1, 1)], 5),
+        // PentoZ
+        ([Coordinate::new(0, 0), Coordinate::new(1, 0), Coordinate::new(1, 1), Coordinate::new(1, 2), Coordinate::new(2, 2)], 5),
+        // PentoI
+        ([Coordinate::new(0, 0), Coordinate::new(0, 1), Coordinate::new(0, 2), Coordinate::new(0, 3), Coordinate::new(0, 4)], 5),
+        // PentoP
+        ([Coordinate::new(0, 0), Coordinate::new(1, 0), Coordinate::new(0, 1), Coordinate::new(1, 1), Coordinate::new(0, 2)], 5),
+        // PentoW
+        ([Coordinate::new(0, 0), Coordinate::new(0, 1), Coordinate::new(1, 1), Coordinate::new(1, 2), Coordinate::new(2, 2)], 5),
+        // PentoU
+        ([Coordinate::new(0, 0), Coordinate::new(2, 0), Coordinate::new(0, 1), Coordinate::new(1, 1), Coordinate::new(2, 1)], 5),
+        // PentoR
+        ([Coordinate::new(2, 0), Coordinate::new(0, 1), Coordinate::new(1, 1), Coordinate::new(2, 1), Coordinate::new(1, 2)], 5),
+        // PentoX
+        ([Coordinate::new(1, 0), Coordinate::new(0, 1), Coordinate::new(1, 1), Coordinate::new(2, 1), Coordinate::new(1, 2)], 5),
+        // PentoY
+        ([Coordinate::new(1, 0), Coordinate::new(0, 1), Coordinate::new(1, 1), Coordinate::new(1, 2), Coordinate::new(1, 3)], 5),
+    ]
+}
+
 impl PieceType {
 
     /// Returns all orientation variants of the piece type.
@@ -138,18 +298,20 @@ impl PieceType {
     /// resulting `(rotation, is_flipped)` pair. When `filter` is `true`,
     /// geometrically identical orientations are deduplicated.
     pub fn all_variants(&self, filter: bool) -> Vec<(Vec<Coordinate>, (Rotation, bool))> {
-        let mut variants: Vec<(Vec<Coordinate>, (Rotation, bool))> = Vec::new();
-        let base_coordinates = self.base_coordinates();
+        let mut variants: Vec<(Vec<Coordinate>, (Rotation, bool))> =
+            Vec::with_capacity(2 * ROTATION_NUM);
 
         for &flip in &[false, true] {
-            for &rotation in &[Rotation::None, Rotation::Right, Rotation::Mirror, Rotation::Left] {
-                let mut transformed_coordinates: Vec<Coordinate> = base_coordinates.to_vec();
-
-                rotate_coordinates(&mut transformed_coordinates, &rotation);
-                if flip { 
-                    flip_coordinates(&mut transformed_coordinates);
-                }
-                normalize_coordinates(&mut transformed_coordinates);
+            #[allow(clippy::indexing_slicing)] // The loop values and piece discriminant map within the variant table, and len is bounded by MAX_VARIANT_COORDS.
+            for &rotation in &[
+                Rotation::None,
+                Rotation::Right,
+                Rotation::Mirror,
+                Rotation::Left,
+            ] {
+                let index = piece_orientation_to_index(flip, rotation, *self);
+                let (coordinates, len) = PIECE_VARIANTS[index];
+                let transformed_coordinates = coordinates[..len].to_vec();
 
                 if filter {
                     // Check if the transformed coordinates already exist in the variants vector
@@ -158,7 +320,7 @@ impl PieceType {
                     }
                 }   
 
-                variants.push((transformed_coordinates, (rotation, flip)))
+                variants.push((transformed_coordinates, (rotation, flip)));
             }
         }
         variants
@@ -168,93 +330,10 @@ impl PieceType {
     ///
     /// These base coordinates start at `(0, 0)` and grow only toward positive x/y
     /// values; they do not include any rotation or flipping.
+    #[allow(clippy::indexing_slicing)]
     pub fn base_coordinates(&self) -> &'static [Coordinate] {
-        match self {
-            PieceType::Mono => {
-                const COORDS: &[Coordinate] = &[Coordinate::new(0, 0)];
-                COORDS
-            }
-            PieceType::Domino => {
-                const COORDS: &[Coordinate] = &[Coordinate::new(0, 0), Coordinate::new(1, 0)];
-                COORDS
-            }
-            PieceType::TrioL => {
-                const COORDS: &[Coordinate] = &[Coordinate::new(0, 0), Coordinate::new(0, 1), Coordinate::new(1, 1)];
-                COORDS
-            }
-            PieceType::TrioI => {
-                const COORDS: &[Coordinate] = &[Coordinate::new(0, 0), Coordinate::new(0, 1), Coordinate::new(0, 2)];
-                COORDS
-            }
-            PieceType::TetroO => {
-                const COORDS: &[Coordinate] = &[Coordinate::new(0, 0), Coordinate::new(1, 0), Coordinate::new(0, 1), Coordinate::new(1, 1)];
-                COORDS
-            }
-            PieceType::TetroT => {
-                const COORDS: &[Coordinate] = &[Coordinate::new(0, 0), Coordinate::new(1, 0), Coordinate::new(2, 0), Coordinate::new(1, 1)];
-                COORDS
-            }
-            PieceType::TetroI => {
-                const COORDS: &[Coordinate] = &[Coordinate::new(0, 0), Coordinate::new(0, 1), Coordinate::new(0, 2), Coordinate::new(0, 3)];
-                COORDS
-            }
-            PieceType::TetroL => {
-                const COORDS: &[Coordinate] = &[Coordinate::new(0, 0), Coordinate::new(0, 1), Coordinate::new(0, 2), Coordinate::new(1, 2)];
-                COORDS
-            }
-            PieceType::TetroZ => {
-                const COORDS: &[Coordinate] = &[Coordinate::new(0, 0), Coordinate::new(1, 0), Coordinate::new(1, 1), Coordinate::new(2, 1)];
-                COORDS
-            }
-            PieceType::PentoL => {
-                const COORDS: &[Coordinate] = &[Coordinate::new(0, 0), Coordinate::new(0, 1), Coordinate::new(0, 2), Coordinate::new(0, 3), Coordinate::new(1, 3)];
-                COORDS
-            }
-            PieceType::PentoT => {
-                const COORDS: &[Coordinate] = &[Coordinate::new(0, 0), Coordinate::new(1, 0), Coordinate::new(2, 0), Coordinate::new(1, 1), Coordinate::new(1, 2)];
-                COORDS
-            }
-            PieceType::PentoV => {
-                const COORDS: &[Coordinate] = &[Coordinate::new(0, 0), Coordinate::new(0, 1), Coordinate::new(0, 2), Coordinate::new(1, 2), Coordinate::new(2, 2)];
-                COORDS
-            }
-            PieceType::PentoS => {
-                const COORDS: &[Coordinate] = &[Coordinate::new(1, 0), Coordinate::new(2, 0), Coordinate::new(3, 0), Coordinate::new(0, 1), Coordinate::new(1, 1)];
-                COORDS
-            }
-            PieceType::PentoZ => {
-                const COORDS: &[Coordinate] = &[Coordinate::new(0, 0), Coordinate::new(1, 0), Coordinate::new(1, 1), Coordinate::new(1, 2), Coordinate::new(2, 2)];
-                COORDS
-            }
-            PieceType::PentoI => {
-                const COORDS: &[Coordinate] = &[Coordinate::new(0, 0), Coordinate::new(0, 1), Coordinate::new(0, 2), Coordinate::new(0, 3), Coordinate::new(0, 4)];
-                COORDS
-            }
-            PieceType::PentoP => {
-                const COORDS: &[Coordinate] = &[Coordinate::new(0, 0), Coordinate::new(1, 0), Coordinate::new(0, 1), Coordinate::new(1, 1), Coordinate::new(0, 2)];
-                COORDS
-            }
-            PieceType::PentoW => {
-                const COORDS: &[Coordinate] = &[Coordinate::new(0, 0), Coordinate::new(0, 1), Coordinate::new(1, 1), Coordinate::new(1, 2), Coordinate::new(2, 2)];
-                COORDS
-            }
-            PieceType::PentoU => {
-                const COORDS: &[Coordinate] = &[Coordinate::new(0, 0), Coordinate::new(2, 0), Coordinate::new(0, 1), Coordinate::new(1, 1), Coordinate::new(2, 1)];
-                COORDS
-            }
-            PieceType::PentoR => {
-                const COORDS: &[Coordinate] = &[Coordinate::new(2, 0), Coordinate::new(0, 1), Coordinate::new(1, 1), Coordinate::new(2, 1), Coordinate::new(1, 2)];
-                COORDS
-            }
-            PieceType::PentoX => {
-                const COORDS: &[Coordinate] = &[Coordinate::new(1, 0), Coordinate::new(0, 1), Coordinate::new(1, 1), Coordinate::new(2, 1), Coordinate::new(1, 2)];
-                COORDS
-            }
-            PieceType::PentoY => {
-                const COORDS: &[Coordinate] = &[Coordinate::new(1, 0), Coordinate::new(0, 1), Coordinate::new(1, 1), Coordinate::new(1, 2), Coordinate::new(1, 3)];
-                COORDS
-            }
-        }
+        let len = PIECE_BASES[*self as usize].1;
+        &PIECE_BASES[*self as usize].0[..len]
     }
 }
 
