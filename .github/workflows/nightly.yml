@@ -117,6 +117,30 @@ jobs:
           echo "version=$version" >> "$GITHUB_OUTPUT"
           echo "release_name=nightly-$NIGHTLY_DATE" >> "$GITHUB_OUTPUT"
 
+      - name: Require changelog entry for base version
+        if: ${{ steps.detect.outputs.publish == 'true' }}
+        env:
+          NIGHTLY_VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          python3 - <<'PY'
+          import os
+          import re
+          from pathlib import Path
+
+          nightly_version = os.environ['NIGHTLY_VERSION']
+          base_version = nightly_version.split('-nightly.')[0]
+
+          changelog = Path('CHANGELOG.md').read_text(encoding='utf-8')
+          section = re.search(rf'(?ms)^## \[{re.escape(base_version)}\]\n(.*?)(?=^## \[|\Z)', changelog)
+          if section is None:
+              raise SystemExit(
+                  f'CHANGELOG.md does not contain an entry for base version {base_version} '
+                  f'(nightly version {nightly_version}).'
+              )
+
+          Path('release-notes.md').write_text(section.group(0), encoding='utf-8')
+          PY
+
       - name: Validate nightly version
         if: ${{ steps.detect.outputs.publish == 'true' }}
         env:
@@ -227,5 +251,4 @@ jobs:
           gh release create "nightly-${{ steps.detect.outputs.date }}" \
             --target "$GITHUB_SHA" \
             --title "nightly-${{ steps.detect.outputs.date }}" \
-            --generate-notes \
-            --notes "Nightly build for ${{ steps.version.outputs.version }}"
+            --notes-file release-notes.md
