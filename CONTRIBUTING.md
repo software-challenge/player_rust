@@ -25,7 +25,6 @@ src/
 ├── lib.rs            # deklariert die Module, sonst nichts
 ├── client.rs         # das Client-Trait + die Spielschleife (spielunabhängig)
 ├── prelude.rs        # re-exportiert die öffentliche API für einfachen Import
-├── result.rs         # das Resultat
 │
 ├── connection/       # alles rund um die Kommunikation mit dem Server
 │   ├── mod.rs
@@ -110,38 +109,67 @@ cargo test --workspace --verbose
 
 Zum entwickeln dieser Bibliothek wird nur Rust und Cargo (wird automatisch mit installiert) benötigt.
 Es wird mindestens die Rust-Version <!-- rust-version -->1.88<!-- /rust-version --> benötigt, alle Versionen darüber, die zur <!-- edition -->2024<!-- /edition --> Edition gehören, sollten auch funktionieren.
-Ob die Rust-Version aureicht wird durch den [MSRV CI Job](#ci) bei jeder Pull Request und jeden Commit auf main überprüft.
+Ob die Rust-Version ausreicht wird durch den [MSRV CI Job](#ci) bei jeder Pull Request und jeden Commit auf main überprüft.
 
-## CI
+## Workflows
 
-Die CI validiert den Code mit folgenden Schritten:
+Die Versionen von Ubuntu und Java sind fest gesetzt, damit neue Versionen nicht unvorhergesehen bestehende Workflows beschädigen.
+Das heißt aber auch: Es sollte regelmäßig geprüft werden, ob diese Versionen aktualisiert werden müssen.
+
+### CI
+
+Die CI prüft den Code mit den folgenden Schritten:
 - Sie führt die Tests mit den Standard-Features aus.
 - Sie prüft mit [MSRV](https://crates.io/crates/cargo-msrv), ob die angegebene minimale Rust-Version korrekt ist.
-  - Falls nicht, wird automatisch die tatsächlich erforderliche Mindestversion ermittelt. Diese ist dem fehlgeschlagenen Workflow zu entnehmen.
-- Sie führt [Clippy](https://doc.rust-lang.org/clippy/) aus, ein Werkzeug zur statischen Analyse von Rust-Code. Es weist unter anderem auf häufige Fehler und Verbesserungsmöglichkeiten hin. In der CI werden Warnungen als Fehler behandelt.
-- Sie lässt alle examples gegen den Java Random Player spielen
-- Sie prüft, ob die in der README und CONTRIBUTING angegebene minimale Rust-Version, die Rust-Edition und der Beispielcode mit den Angaben in `Cargo.toml` und den Beispielen übereinstimmen.
-- Sie überprüft bei Pull Requests auf main ob der Changelog und die Version in der cargo.toml angepasst wurde
+  - Wenn nicht, wird die tatsächlich erforderliche Mindestversion automatisch ermittelt. Diese ist dem fehlgeschlagenen Workflow zu entnehmen.
+- Sie führt [Clippy](https://doc.rust-lang.org/clippy/) aus, eine Code Analyse für Rust. In der CI werden Warnungen wie Fehler behandelt.
+- Sie lässt alle Beispiele gegen den Java Random Player spielen.
+- Sie prüft, ob die in `README.md` und `CONTRIBUTING.md` angegebene minimale Rust-Version, die Rust-Edition und die Beispielcodes zu den Angaben in `Cargo.toml` und den Beispielen passen.
+- Sie prüft bei Pull Requests auf `main`, ob das Changelog und die Version in `Cargo.toml` angepasst wurden.
+
+#### Example Integration Test
+
+Dieser Task lässt alle Examples der Rust-Bibliothek gegen den Java Random Player spielen, um zu prüfen, ob sie funktionieren und ob mögliche Fehler erkannt werden, die von den normalen Tests nicht gefunden werden.
+
+Dieser Task hatte in der Vergangenheit beim Herunterladen des [Java-Servers und Random Players](https://github.com/software-challenge/backend/releases) öfter Probleme.
+Das wurde verbessert und in Download und eigentliche Ausführung aufgeteilt, damit besser angezeigt werden kann, wo genau ein Fehler aufgetreten ist.
+
+Wenn beim Download ein 4xx-HTTP-Status auftritt, wird der Download-Task als fehlgeschlagen markiert und der Example Integration Test übersprungen. Wenn ein anderer Status als ein 2xx-HTTP-Status auftritt, wird der Example Integration Test ebenfalls übersprungen.
 
 ## Veröffentlichen
 
-Eine neue Version wird über den Workflow "Release" in den GitHub Actions veröffentlicht.
+Eine neue Version wird über den Workflow "Release" in GitHub Actions veröffentlicht.
+Dabei läuft die CI durch. Außerdem wird geprüft, ob die Versionsnummer in `Cargo.toml` aktualisiert wurde und ob ein passender Eintrag im Changelog vorhanden ist.
 
-### Schritte
+## Nightly-Veröffentlichung
 
-1. Die neue Version muss im Release-Workflow angegeben werden.
-2. Der Workflow aktualisiert automatisch die Cargo-Dateien.
-3. Verschiedene Tests werden ausgeführt, um sicherzustellen, dass die neue Version korrekt funktioniert.
-4. In ``CHANGELOG.md`` muss ein Eintrag für die neue Version vorhanden sein, der die Änderungen der Version beschreibt. Fehlt dieser Eintrag, kann die Veröffentlichung nicht erfolgen.
-5. Wenn alle Voraussetzungen erfüllt sind, pusht der Workflow die aktualisierten Cargo-Dateien in den ``main``-Branch und veröffentlicht die neue Version auf Crates.io und GitHub.
+Wenn es Änderungen auf `main` gibt, die noch nicht in einer vollständigen Release-Version oder einer Nightly-Version enthalten sind, wird automatisch um 4 Uhr eine Nightly-Version veröffentlicht.
 
-### Versionierung
+## Contributing
+
+Wir arbeiten mit Feature-Branches.
+
+Wenn etwas verändert oder ergänzt werden soll, wird ein neuer Branch angelegt, der sich an die Namenskonvention der [Commits](#commits) anlehnt.
+
+Ein Feature-Branch sollte möglichst nur Änderungen enthalten, die sich aus dem Namen des Branches ableiten lassen. Für kleine Änderungen kann es sinnvoll sein, diese zusammen mit anderen Änderungen im selben Branch zu machen, damit nicht unnötig viel Aufwand entsteht.
+
+In einem Feature-Branch muss die Versionsnummer in `Cargo.toml` nach den Regeln der [Versionierung](#versionierung) angepasst werden. Zusätzlich muss ein Eintrag für diese Version im `Changelog.md` erstellt werden.
+
+Das sorgt dafür, dass manuelle Veröffentlichungen und Nightly-Releases sauber funktionieren.
+
+Für Feature-Branches wird automatisch ein Draft-PR erstellt. In diesem PR steht eine Checkliste, die geprüft werden sollte, auch wenn kein automatischer Draft-PR verwendet wird:
+- [ ] Versionsnummer in `Cargo.toml` aktualisiert?
+- [ ] Changelog-Eintrag für die Änderungen vorhanden?
+- [ ] Versionsnummer früherer PRs für das nächste Release aktualisiert?
+- [ ] Zusammenfassung, was der PR verändert?
+
+## Versionierung
 
 Das Versionsformat lautet:
 
-saison.breaking-changes.fixes-features-and-co
+`saison.breaking-changes.fixes-features-and-co`
 
 Beispiel für `27.1.2`:
 - `27`: Saison 2026/27
-- `1`: Es wurde eine Änderung an der Schüler-API vorgenommen
-- `2`: Nach dieser Änderung wurden zwei Versionen mit normalen Änderungen veröffentlicht
+- `1`: Es wurde eine Änderung an der Schüler-API vorgenommen.
+- `2`: Nach dieser Änderung wurden zwei Versionen mit normalen Änderungen veröffentlicht.

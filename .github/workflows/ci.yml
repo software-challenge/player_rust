@@ -96,7 +96,7 @@ jobs:
       - name: Check version bump and changelog entry
         run: |
           set -euo pipefail
-          git fetch origin main --depth=1
+          git fetch --tags --force
 
           python3 - <<'PY'
           import re
@@ -115,18 +115,23 @@ jobs:
               return version_match.group(1)
 
           current_version = parse_version(Path('Cargo.toml').read_text(encoding='utf-8'))
-          base_version = parse_version(
-              subprocess.run(
-                  ['git', 'show', 'origin/main:Cargo.toml'],
-                  check=True,
-                  capture_output=True,
-                  text=True,
-              ).stdout,
-          )
+          tag_output = subprocess.run(
+              ['git', 'tag', '--list', 'v*', '--sort=-version:refname'],
+              check=True,
+              capture_output=True,
+              text=True,
+          ).stdout
 
-          if current_version == base_version:
+          latest_full_release = None
+          for tag in tag_output.splitlines():
+              if re.fullmatch(r'v[0-9]+\.[0-9]+\.[0-9]+', tag):
+                  latest_full_release = tag[1:]
+                  break
+
+          if latest_full_release is not None and current_version == latest_full_release:
               raise SystemExit(
-                  f'Cargo.toml version was not updated for the PR to main: {current_version} matches {base_version}.'
+                  f'Cargo.toml version was not updated compared to the latest full release: '
+                  f'{current_version} matches {latest_full_release}.'
               )
 
           changelog = Path('CHANGELOG.md').read_text(encoding='utf-8')
@@ -135,7 +140,10 @@ jobs:
                   f'CHANGELOG.md does not contain an entry for version {current_version}.'
               )
 
-          print(f'Version and changelog checks passed for {current_version}.')
+          if latest_full_release is None:
+              print(f'Version and changelog checks passed for {current_version} with no prior full release tags.')
+          else:
+              print(f'Version and changelog checks passed for {current_version}; previous full release was {latest_full_release}.')
           PY
 
   quality:
@@ -195,7 +203,7 @@ jobs:
           RUSTDOCFLAGS: -D warnings
 
   backend-assets:
-    name: Backend assets check
+    name: Backend assets download
     runs-on: ubuntu-24.04
     outputs:
       backend_available: ${{ steps.backend.outputs.backend_available }}
