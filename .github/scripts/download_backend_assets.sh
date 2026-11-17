@@ -5,7 +5,7 @@ warn_and_skip() {
   echo "::warning::Failed to download the backend test assets. Example integration tests will not run."
   echo "server_dir=" >> "$GITHUB_OUTPUT"
   echo "random_player_jar=" >> "$GITHUB_OUTPUT"
-  exit 1
+  exit 0
 }
 
 if ! release="$(curl --fail --silent --show-error --retry 3 \
@@ -41,7 +41,7 @@ if [[ -z "$server_jar" ]]; then
   echo "::warning::The latest backend server archive did not contain server.jar. Example integration tests will not run."
   echo "server_dir=" >> "$GITHUB_OUTPUT"
   echo "random_player_jar=" >> "$GITHUB_OUTPUT"
-  exit 1
+  exit 0
 fi
 
 echo "server_dir=$(dirname "$server_jar")" >> "$GITHUB_OUTPUT"
