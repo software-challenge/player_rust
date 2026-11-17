@@ -112,7 +112,12 @@ Zum entwickeln dieser Bibliothek wird nur Rust und Cargo (wird automatisch mit i
 Es wird mindestens die Rust-Version <!-- rust-version -->1.88<!-- /rust-version --> benötigt, alle Versionen darüber, die zur <!-- edition -->2024<!-- /edition --> Edition gehören, sollten auch funktionieren.
 Ob die Rust-Version aureicht wird durch den [MSRV CI Job](#ci) bei jeder Pull Request und jeden Commit auf main überprüft.
 
-## CI
+## Workflows
+
+Die Ubuntu und Java Version sind gelocked, damit nicht durch Änderungen in neueren Versionen plötzlich die Workflows kaputt gehen.
+Das heißt aber auch, dass ab und zu überprüft werden sollte, ob die Versionen aktualisiert werden sollten.
+
+#### CI
 
 Die CI validiert den Code mit folgenden Schritten:
 - Sie führt die Tests mit den Standard-Features aus.
@@ -123,19 +128,42 @@ Die CI validiert den Code mit folgenden Schritten:
 - Sie prüft, ob die in der README und CONTRIBUTING angegebene minimale Rust-Version, die Rust-Edition und der Beispielcode mit den Angaben in `Cargo.toml` und den Beispielen übereinstimmen.
 - Sie überprüft bei Pull Requests auf main ob der Changelog und die Version in der cargo.toml angepasst wurde
 
+
+#### Example Integration Test
+
+Diser Task lässt alle examples von der Rust Bibliothek gegen den Java Random Player spielen um zu testen ob die examples funktionieren und potentielle Fehler die nicht von den tests gecatched wurden zu catchen.
+
+Diese Task hat in der Vergangenheit beim Downloaden des [Java Servers und Random Players](https://github.com/software-challenge/backend/releases) öfters Probleme gehabt.
+Das sollte behoben sein und wurde aufgeteilt in den Download und das eigentliche Ausführen.
+Falls beim download ein 4xx HTTP Fehler auftritt wird der download Task als failed angezeigt und der Example Integration Test geskipped, falls ein anderer nicht 2xx HTTP Code zurück kommt wird der Example Integration Test geskipped. 
+
 ## Veröffentlichen
 
 Eine neue Version wird über den Workflow "Release" in den GitHub Actions veröffentlicht.
+Es läuft einmal die CI durch, es wird überprüft ob die Versionsnummer in der `Cargo.toml` tatsächlich aktualisiert wrude und ob ein entsprechender Eintrag im Changelog ist.
 
-### Schritte
+## Nightly Release
 
-1. Die neue Version muss im Release-Workflow angegeben werden.
-2. Der Workflow aktualisiert automatisch die Cargo-Dateien.
-3. Verschiedene Tests werden ausgeführt, um sicherzustellen, dass die neue Version korrekt funktioniert.
-4. In ``CHANGELOG.md`` muss ein Eintrag für die neue Version vorhanden sein, der die Änderungen der Version beschreibt. Fehlt dieser Eintrag, kann die Veröffentlichung nicht erfolgen.
-5. Wenn alle Voraussetzungen erfüllt sind, pusht der Workflow die aktualisierten Cargo-Dateien in den ``main``-Branch und veröffentlicht die neue Version auf Crates.io und GitHub.
+Wenn es Änderungen auf main gibt, die noch nicht in einem vollen Release oder einem nightly Release sind, wird automatisch um 4 Uhr eine nightly Version veröffentlicht.
 
-### Versionierung
+## Contributing
+
+Wir arbeiten mit Feature-Branches, heißt:
+Wenn etwas verändert oder implementiert werden soll, wird ein neuer Branch gemacht, der sich an die Namenskonvention der [Commits](#commits) orientiert.
+Ein Feature Branch sollte theoretisch nur das verändern, was aus dem Namen des Branches abgeleitet werden kann, für kleinere Änderungen kann es aber sinnvoll sein diese in einem anderem Branch mit zu machen, wenn man eh schon in einem Branch arbeitet, weil das sonst unnötig viel Arbeit erzeugt. 
+
+In einem Feature Branch muss die Versions Nummer in der `cargo.toml` nach Vorgaben der [Versionierung](#versionierung) angepasst werden.
+Außerdem muss ein Eintrag für die Version im `Changelog.md` erstellt werden.
+
+Das ist damit manuelles Veröffentlichen und die Nightly Releases ordentlich funktionieren.
+
+Für Feature Branches wird automatisch eine Draft PR erstellt in der folgende Checkliste steht, die überprüft werden sollte (auch bei wenn nicht der automatisch erstellte Draft PR benutzt wird):
+- [ ] Update version number in cargo.toml?
+- [ ] Changelog entry for the changes
+- [ ] Update version number of prior PRs for the next release?
+- [ ] Summary about what the PR changes
+
+## Versionierung
 
 Das Versionsformat lautet:
 
