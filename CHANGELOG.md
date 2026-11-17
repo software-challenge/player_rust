@@ -4,6 +4,7 @@
 
 # Changes
 - Refactored code
+- Update Contributing
 - Performance increases
    - Piece #55
       - piece_to_coordinate about 45% faster in best case 28% in worst case
