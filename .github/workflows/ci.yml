@@ -224,6 +224,6 @@ jobs:
           RANDOM_PLAYER_JAR: ${{ steps.backend.outputs.random_player_jar }}
         run: bash .github/scripts/test_examples.sh
 
-      - name: Warning: backend assets unavailable for example integration tests
+      - name: Warning - backend assets unavailable for example integration tests
         if: ${{ steps.backend.outcome != 'success' || steps.backend.outputs.server_dir == '' || steps.backend.outputs.random_player_jar == '' }}
         run: echo "::warning::Example integration tests were not run because the backend assets could not be downloaded or were incomplete."
