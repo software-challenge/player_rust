@@ -319,9 +319,5 @@ pub fn is_valid_move(gamestate: &GameState, m: &Move) -> bool {
     }
 
     // Only enforce corner contact once the team has at least one tile on the board.
-    if !get_colored_fields(gamestate.get_board(), &m.color).is_empty() && !has_corner_contact {
-        return false;
-    }
-
-    true
+    !(!get_colored_fields(gamestate.get_board(), &sm.color).is_empty() && !has_corner_contact)
 }
