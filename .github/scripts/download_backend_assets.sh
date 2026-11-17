@@ -9,7 +9,21 @@ warn_and_skip() {
   exit 0
 }
 
-if ! release="$(curl --fail --silent --show-error --retry 3 \
+token="${GH_TOKEN:-${GITHUB_TOKEN:-}}"
+api_headers=(
+  -H "Accept: application/vnd.github+json"
+  -H "X-GitHub-Api-Version: 2022-11-28"
+)
+if [[ -n "$token" ]]; then
+  api_headers+=( -H "Authorization: Bearer $token" )
+fi
+
+download_args=(--fail --location --silent --show-error --retry 3)
+if [[ -n "$token" ]]; then
+  download_args+=( -H "Authorization: Bearer $token" )
+fi
+
+if ! release="$(curl --fail --silent --show-error --retry 3 "${api_headers[@]}" \
   https://api.github.com/repos/software-challenge/backend/releases/latest 2>/dev/null)"; then
   warn_and_skip
 fi
@@ -25,11 +39,11 @@ fi
 backend_dir="$RUNNER_TEMP/backend"
 mkdir -p "$backend_dir/server"
 
-if ! curl --fail --location --silent --show-error --retry 3 "$server_url" --output "$backend_dir/server.zip"; then
+if ! curl "${download_args[@]}" "$server_url" --output "$backend_dir/server.zip"; then
   warn_and_skip
 fi
 
-if ! curl --fail --location --silent --show-error --retry 3 "$random_player_url" --output "$backend_dir/randomplayer.jar"; then
+if ! curl "${download_args[@]}" "$random_player_url" --output "$backend_dir/randomplayer.jar"; then
   warn_and_skip
 fi
 
