@@ -3,6 +3,7 @@ set -uo pipefail
 
 warn_and_skip() {
   echo "::warning::Failed to download the backend test assets. Example integration tests will not run."
+  echo "backend_available=false" >> "$GITHUB_OUTPUT"
   echo "server_dir=" >> "$GITHUB_OUTPUT"
   echo "random_player_jar=" >> "$GITHUB_OUTPUT"
   exit 0
@@ -39,10 +40,12 @@ fi
 server_jar="$(find "$backend_dir/server" -type f -name server.jar -print -quit)"
 if [[ -z "$server_jar" ]]; then
   echo "::warning::The latest backend server archive did not contain server.jar. Example integration tests will not run."
+  echo "backend_available=false" >> "$GITHUB_OUTPUT"
   echo "server_dir=" >> "$GITHUB_OUTPUT"
   echo "random_player_jar=" >> "$GITHUB_OUTPUT"
   exit 0
 fi
 
+echo "backend_available=true" >> "$GITHUB_OUTPUT"
 echo "server_dir=$(dirname "$server_jar")" >> "$GITHUB_OUTPUT"
 echo "random_player_jar=$backend_dir/randomplayer.jar" >> "$GITHUB_OUTPUT"

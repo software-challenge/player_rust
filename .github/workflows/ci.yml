@@ -194,8 +194,24 @@ jobs:
         env:
           RUSTDOCFLAGS: -D warnings
 
+  backend-assets:
+    name: Backend assets check
+    runs-on: ubuntu-24.04
+    outputs:
+      backend_available: ${{ steps.backend.outputs.backend_available }}
+      server_dir: ${{ steps.backend.outputs.server_dir }}
+      random_player_jar: ${{ steps.backend.outputs.random_player_jar }}
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Download latest backend test assets
+        id: backend
+        run: bash .github/scripts/download_backend_assets.sh
+
   example-integration:
     name: Example integration test
+    needs: backend-assets
+    if: ${{ needs.backend-assets.outputs.backend_available == 'true' }}
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     steps:
@@ -212,17 +228,8 @@ jobs:
           distribution: temurin
           java-version: "21"
 
-      - name: Download latest backend test assets
-        id: backend
-        run: bash .github/scripts/download_backend_assets.sh
-
       - name: Run all examples against the test server
-        if: ${{ steps.backend.outputs.server_dir != '' && steps.backend.outputs.random_player_jar != '' }}
         env:
-          SERVER_DIR: ${{ steps.backend.outputs.server_dir }}
-          RANDOM_PLAYER_JAR: ${{ steps.backend.outputs.random_player_jar }}
+          SERVER_DIR: ${{ needs.backend-assets.outputs.server_dir }}
+          RANDOM_PLAYER_JAR: ${{ needs.backend-assets.outputs.random_player_jar }}
         run: bash .github/scripts/test_examples.sh
-
-      - name: Warning - backend assets unavailable for example integration tests
-        if: ${{ steps.backend.outputs.server_dir == '' || steps.backend.outputs.random_player_jar == '' }}
-        run: echo "::warning::Example integration tests were not run because the backend assets could not be downloaded or were incomplete."
