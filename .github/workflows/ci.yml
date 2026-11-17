@@ -195,7 +195,7 @@ jobs:
           RUSTDOCFLAGS: -D warnings
 
   backend-assets:
-    name: Backend assets check
+    name: Backend assets download
     runs-on: ubuntu-24.04
     outputs:
       backend_available: ${{ steps.backend.outputs.backend_available }}
