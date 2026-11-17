@@ -199,14 +199,24 @@ jobs:
     runs-on: ubuntu-24.04
     outputs:
       backend_available: ${{ steps.backend.outputs.backend_available }}
-      server_dir: ${{ steps.backend.outputs.server_dir }}
-      random_player_jar: ${{ steps.backend.outputs.random_player_jar }}
     steps:
       - uses: actions/checkout@v5
 
       - name: Download latest backend test assets
         id: backend
         run: bash .github/scripts/download_backend_assets.sh
+
+      - name: Upload backend assets
+        if: ${{ steps.backend.outputs.backend_available == 'true' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-assets
+          path: ${{ runner.temp }}/backend
+          if-no-files-found: error
+
+      - name: Warning - backend assets unavailable for example integration tests
+        if: ${{ steps.backend.outputs.backend_available != 'true' }}
+        run: echo "::warning::Example integration tests were not run because the backend assets could not be downloaded or were incomplete."
 
   example-integration:
     name: Example integration test
@@ -228,8 +238,14 @@ jobs:
           distribution: temurin
           java-version: "21"
 
+      - name: Download backend test assets artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: backend-assets
+          path: ${{ runner.temp }}/backend
+
       - name: Run all examples against the test server
         env:
-          SERVER_DIR: ${{ needs.backend-assets.outputs.server_dir }}
-          RANDOM_PLAYER_JAR: ${{ needs.backend-assets.outputs.random_player_jar }}
+          SERVER_DIR: ${{ runner.temp }}/backend/server
+          RANDOM_PLAYER_JAR: ${{ runner.temp }}/backend/randomplayer.jar
         run: bash .github/scripts/test_examples.sh
