@@ -57,4 +57,4 @@ jobs:
             --head "$HEAD_BRANCH" \
             --draft \
             --title "$HEAD_BRANCH" \
-            --body "Automaticly created draft PR. Please add a description and further information if necessary."
+            --body $'- [ ] Update version number in cargo.toml?\n- [ ] Changelog entry for the changes\n- [ ] Update version number of prior PRs for the next release?\n- [ ] Summary about what the PR changes'
