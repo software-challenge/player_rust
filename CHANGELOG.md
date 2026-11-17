@@ -19,6 +19,7 @@
    - Now require to update the version number and changelog in PRs to main
    - Release workflow now works with the branch protection of main
    - Release workflow does not take the new version number as input anymore
+   - Potentially fixed the backend download issue
 
 # Fixes
 - #35
