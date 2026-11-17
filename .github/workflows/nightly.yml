@@ -251,4 +251,5 @@ jobs:
           gh release create "nightly-${{ steps.detect.outputs.date }}" \
             --target "$GITHUB_SHA" \
             --title "nightly-${{ steps.detect.outputs.date }}" \
+            --prerelease \
             --notes-file release-notes.md
