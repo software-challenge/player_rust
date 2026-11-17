@@ -25,7 +25,6 @@ src/
 ├── lib.rs            # deklariert die Module, sonst nichts
 ├── client.rs         # das Client-Trait + die Spielschleife (spielunabhängig)
 ├── prelude.rs        # re-exportiert die öffentliche API für einfachen Import
-├── result.rs         # das Resultat
 │
 ├── connection/       # alles rund um die Kommunikation mit dem Server
 │   ├── mod.rs
@@ -110,66 +109,67 @@ cargo test --workspace --verbose
 
 Zum entwickeln dieser Bibliothek wird nur Rust und Cargo (wird automatisch mit installiert) benötigt.
 Es wird mindestens die Rust-Version <!-- rust-version -->1.88<!-- /rust-version --> benötigt, alle Versionen darüber, die zur <!-- edition -->2024<!-- /edition --> Edition gehören, sollten auch funktionieren.
-Ob die Rust-Version aureicht wird durch den [MSRV CI Job](#ci) bei jeder Pull Request und jeden Commit auf main überprüft.
+Ob die Rust-Version ausreicht wird durch den [MSRV CI Job](#ci) bei jeder Pull Request und jeden Commit auf main überprüft.
 
 ## Workflows
 
-Die Ubuntu und Java Version sind gelocked, damit nicht durch Änderungen in neueren Versionen plötzlich die Workflows kaputt gehen.
-Das heißt aber auch, dass ab und zu überprüft werden sollte, ob die Versionen aktualisiert werden sollten.
+Die Versionen von Ubuntu und Java sind fest gesetzt, damit neue Versionen nicht unvorhergesehen bestehende Workflows beschädigen.
+Das heißt aber auch: Es sollte regelmäßig geprüft werden, ob diese Versionen aktualisiert werden müssen.
 
-#### CI
+### CI
 
-Die CI validiert den Code mit folgenden Schritten:
+Die CI prüft den Code mit den folgenden Schritten:
 - Sie führt die Tests mit den Standard-Features aus.
 - Sie prüft mit [MSRV](https://crates.io/crates/cargo-msrv), ob die angegebene minimale Rust-Version korrekt ist.
-  - Falls nicht, wird automatisch die tatsächlich erforderliche Mindestversion ermittelt. Diese ist dem fehlgeschlagenen Workflow zu entnehmen.
-- Sie führt [Clippy](https://doc.rust-lang.org/clippy/) aus, ein Werkzeug zur statischen Analyse von Rust-Code. Es weist unter anderem auf häufige Fehler und Verbesserungsmöglichkeiten hin. In der CI werden Warnungen als Fehler behandelt.
-- Sie lässt alle examples gegen den Java Random Player spielen
-- Sie prüft, ob die in der README und CONTRIBUTING angegebene minimale Rust-Version, die Rust-Edition und der Beispielcode mit den Angaben in `Cargo.toml` und den Beispielen übereinstimmen.
-- Sie überprüft bei Pull Requests auf main ob der Changelog und die Version in der cargo.toml angepasst wurde
-
+  - Wenn nicht, wird die tatsächlich erforderliche Mindestversion automatisch ermittelt. Diese ist dem fehlgeschlagenen Workflow zu entnehmen.
+- Sie führt [Clippy](https://doc.rust-lang.org/clippy/) aus, eine Code Analyse für Rust. In der CI werden Warnungen wie Fehler behandelt.
+- Sie lässt alle Beispiele gegen den Java Random Player spielen.
+- Sie prüft, ob die in `README.md` und `CONTRIBUTING.md` angegebene minimale Rust-Version, die Rust-Edition und die Beispielcodes zu den Angaben in `Cargo.toml` und den Beispielen passen.
+- Sie prüft bei Pull Requests auf `main`, ob das Changelog und die Version in `Cargo.toml` angepasst wurden.
 
 #### Example Integration Test
 
-Diser Task lässt alle examples von der Rust Bibliothek gegen den Java Random Player spielen um zu testen ob die examples funktionieren und potentielle Fehler die nicht von den tests gecatched wurden zu catchen.
+Dieser Task lässt alle Examples der Rust-Bibliothek gegen den Java Random Player spielen, um zu prüfen, ob sie funktionieren und ob mögliche Fehler erkannt werden, die von den normalen Tests nicht gefunden werden.
 
-Diese Task hat in der Vergangenheit beim Downloaden des [Java Servers und Random Players](https://github.com/software-challenge/backend/releases) öfters Probleme gehabt.
-Das sollte behoben sein und wurde aufgeteilt in den Download und das eigentliche Ausführen.
-Falls beim download ein 4xx HTTP Fehler auftritt wird der download Task als failed angezeigt und der Example Integration Test geskipped, falls ein anderer nicht 2xx HTTP Code zurück kommt wird der Example Integration Test geskipped. 
+Dieser Task hatte in der Vergangenheit beim Herunterladen des [Java-Servers und Random Players](https://github.com/software-challenge/backend/releases) öfter Probleme.
+Das wurde verbessert und in Download und eigentliche Ausführung aufgeteilt, damit besser angezeigt werden kann, wo genau ein Fehler aufgetreten ist.
+
+Wenn beim Download ein 4xx-HTTP-Status auftritt, wird der Download-Task als fehlgeschlagen markiert und der Example Integration Test übersprungen. Wenn ein anderer Status als ein 2xx-HTTP-Status auftritt, wird der Example Integration Test ebenfalls übersprungen.
 
 ## Veröffentlichen
 
-Eine neue Version wird über den Workflow "Release" in den GitHub Actions veröffentlicht.
-Es läuft einmal die CI durch, es wird überprüft ob die Versionsnummer in der `Cargo.toml` tatsächlich aktualisiert wrude und ob ein entsprechender Eintrag im Changelog ist.
+Eine neue Version wird über den Workflow "Release" in GitHub Actions veröffentlicht.
+Dabei läuft die CI durch. Außerdem wird geprüft, ob die Versionsnummer in `Cargo.toml` aktualisiert wurde und ob ein passender Eintrag im Changelog vorhanden ist.
 
-## Nightly Release
+## Nightly-Veröffentlichung
 
-Wenn es Änderungen auf main gibt, die noch nicht in einem vollen Release oder einem nightly Release sind, wird automatisch um 4 Uhr eine nightly Version veröffentlicht.
+Wenn es Änderungen auf `main` gibt, die noch nicht in einer vollständigen Release-Version oder einer Nightly-Version enthalten sind, wird automatisch um 4 Uhr eine Nightly-Version veröffentlicht.
 
 ## Contributing
 
-Wir arbeiten mit Feature-Branches, heißt:
-Wenn etwas verändert oder implementiert werden soll, wird ein neuer Branch gemacht, der sich an die Namenskonvention der [Commits](#commits) orientiert.
-Ein Feature Branch sollte theoretisch nur das verändern, was aus dem Namen des Branches abgeleitet werden kann, für kleinere Änderungen kann es aber sinnvoll sein diese in einem anderem Branch mit zu machen, wenn man eh schon in einem Branch arbeitet, weil das sonst unnötig viel Arbeit erzeugt. 
+Wir arbeiten mit Feature-Branches.
 
-In einem Feature Branch muss die Versions Nummer in der `cargo.toml` nach Vorgaben der [Versionierung](#versionierung) angepasst werden.
-Außerdem muss ein Eintrag für die Version im `Changelog.md` erstellt werden.
+Wenn etwas verändert oder ergänzt werden soll, wird ein neuer Branch angelegt, der sich an die Namenskonvention der [Commits](#commits) anlehnt.
 
-Das ist damit manuelles Veröffentlichen und die Nightly Releases ordentlich funktionieren.
+Ein Feature-Branch sollte möglichst nur Änderungen enthalten, die sich aus dem Namen des Branches ableiten lassen. Für kleine Änderungen kann es sinnvoll sein, diese zusammen mit anderen Änderungen im selben Branch zu machen, damit nicht unnötig viel Aufwand entsteht.
 
-Für Feature Branches wird automatisch eine Draft PR erstellt in der folgende Checkliste steht, die überprüft werden sollte (auch bei wenn nicht der automatisch erstellte Draft PR benutzt wird):
-- [ ] Update version number in cargo.toml?
-- [ ] Changelog entry for the changes
-- [ ] Update version number of prior PRs for the next release?
-- [ ] Summary about what the PR changes
+In einem Feature-Branch muss die Versionsnummer in `Cargo.toml` nach den Regeln der [Versionierung](#versionierung) angepasst werden. Zusätzlich muss ein Eintrag für diese Version im `Changelog.md` erstellt werden.
+
+Das sorgt dafür, dass manuelle Veröffentlichungen und Nightly-Releases sauber funktionieren.
+
+Für Feature-Branches wird automatisch ein Draft-PR erstellt. In diesem PR steht eine Checkliste, die geprüft werden sollte, auch wenn kein automatischer Draft-PR verwendet wird:
+- [ ] Versionsnummer in `Cargo.toml` aktualisiert?
+- [ ] Changelog-Eintrag für die Änderungen vorhanden?
+- [ ] Versionsnummer früherer PRs für das nächste Release aktualisiert?
+- [ ] Zusammenfassung, was der PR verändert?
 
 ## Versionierung
 
 Das Versionsformat lautet:
 
-saison.breaking-changes.fixes-features-and-co
+`saison.breaking-changes.fixes-features-and-co`
 
 Beispiel für `27.1.2`:
 - `27`: Saison 2026/27
-- `1`: Es wurde eine Änderung an der Schüler-API vorgenommen
-- `2`: Nach dieser Änderung wurden zwei Versionen mit normalen Änderungen veröffentlicht
+- `1`: Es wurde eine Änderung an der Schüler-API vorgenommen.
+- `2`: Nach dieser Änderung wurden zwei Versionen mit normalen Änderungen veröffentlicht.
