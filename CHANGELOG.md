@@ -14,13 +14,15 @@
       - update_gamestate about 54% faster
          - Team points are now only on demand and are cached for the current state so still no duplicate calculations for the same gamestate
       - Removing a piece (part of update_gamestate) about 26% to 13% faster
-- CI
+- Workflows
    - Nighthly releases
    - Mark CI integration test as skipped if download of backend failed
    - Now require to update the version number and changelog in PRs to main
    - Release workflow now works with the branch protection of main
    - Release workflow does not take the new version number as input anymore
    - Potentially fixed the backend download issue
+   - Require CHANGELOG changes compared to main for pull requests
+   - Cleaned up workflows
 
 # Fixes
 - #35

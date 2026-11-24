@@ -21,17 +21,14 @@ jobs:
     name: CI
     uses: ./.github/workflows/ci.yml
 
-  release:
-    name: Check and publish
+  validate:
+    name: Validate release metadata
     needs: ci
     runs-on: ubuntu-24.04
-    environment: Release
-    permissions:
-      contents: write
-      id-token: write
+    outputs:
+      release_version: ${{ steps.metadata.outputs.release_version }}
     env:
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      DRY_RUN: ${{ inputs.dry_run }}
     steps:
       - name: Require the main branch
         run: |
@@ -45,129 +42,20 @@ jobs:
           ref: main
           fetch-depth: 0
 
-      - name: Read release version from Cargo.toml
-        id: version
+      - name: Check release metadata and unused targets
+        id: metadata
         run: |
           set -euo pipefail
-          release_version=$(python3 - <<'PY'
-          import re
-          import subprocess
-          from pathlib import Path
+          release_version=$(python3 .github/scripts/check_release_metadata.py release --check-unused)
+          echo "release_version=$release_version" >> "$GITHUB_OUTPUT"
 
-          text = Path('Cargo.toml').read_text(encoding='utf-8')
-          match = re.search(r'(?ms)^\[package\]\s*\n(.*?)(?=^\[|\Z)', text)
-          if match is None:
-              raise SystemExit('Could not find the [package] block in Cargo.toml.')
-
-          version_match = re.search(r'(?m)^version\s*=\s*"([^"]+)"', match.group(1))
-          if version_match is None:
-              raise SystemExit('Could not find the package version in Cargo.toml.')
-
-          version = version_match.group(1)
-          if not re.fullmatch(r'[0-9]+\.[0-9]+\.[0-9]+', version):
-              raise SystemExit(f'Unexpected version format in Cargo.toml: {version}')
-
-          tags = subprocess.run(
-              ['git', 'tag', '--list', 'v*', '--sort=-version:refname'],
-              check=True,
-              capture_output=True,
-              text=True,
-          ).stdout.splitlines()
-
-          latest_full_release = None
-          for tag in tags:
-              if re.fullmatch(r'v[0-9]+\.[0-9]+\.[0-9]+', tag):
-                  latest_full_release = tag[1:]
-                  break
-
-          if latest_full_release is not None:
-              def parse(v: str):
-                  return tuple(map(int, v.split('.')))
-              if parse(version) <= parse(latest_full_release):
-                  raise SystemExit(
-                      f'Cargo.toml version {version} is not newer than the newest full release {latest_full_release}.'
-                  )
-
-          print(version)
-          PY
-          )
-          echo "version=$release_version" >> "$GITHUB_OUTPUT"
-          echo "RELEASE_VERSION=$release_version" >> "$GITHUB_ENV"
-
-      - name: Check changelog entry for release version
-        run: |
-          python3 .github/scripts/create_release_notes.py "$RELEASE_VERSION"
-
-      - name: Check that the version is valid and unused
-        run: |
-          python3 - <<'PY'
-          import os
-          import re
-          import urllib.error
-          import urllib.request
-
-          version = os.environ["RELEASE_VERSION"]
-          if not re.fullmatch(r"[0-9]+\.[0-9]+\.[0-9]+", version):
-              raise SystemExit("Version must contain exactly three numeric parts, such as 27.0.6.")
-
-          crate_url = f"https://crates.io/api/v1/crates/socha/{version}"
-          request = urllib.request.Request(crate_url, headers={"User-Agent": "player_rust-release"})
-          try:
-              urllib.request.urlopen(request, timeout=20)
-          except urllib.error.HTTPError as error:
-              if error.code != 404:
-                  raise SystemExit(f"Could not check crates.io (HTTP {error.code}).")
-          except Exception as error:
-              raise SystemExit(f"Could not check crates.io: {error}")
-          else:
-              raise SystemExit(f"socha {version} is already published on crates.io.")
-
-          repository = os.environ["GITHUB_REPOSITORY"]
-          tag_url = f"https://api.github.com/repos/{repository}/git/ref/tags/v{version}"
-          token = os.environ["GH_TOKEN"]
-          request = urllib.request.Request(
-              tag_url,
-              headers={
-                  "Accept": "application/vnd.github+json",
-                  "Authorization": f"Bearer {token}",
-                  "X-GitHub-Api-Version": "2022-11-28",
-              },
-          )
-          try:
-              urllib.request.urlopen(request, timeout=20)
-          except urllib.error.HTTPError as error:
-              if error.code != 404:
-                  raise SystemExit(f"Could not check GitHub tag (HTTP {error.code}).")
-          except Exception as error:
-              raise SystemExit(f"Could not check GitHub tag: {error}")
-          else:
-              raise SystemExit(f"GitHub tag v{version} already exists.")
-          PY
-
-      - name: Install Rust
-        uses: actions-rust-lang/setup-rust-toolchain@v2
-        with:
-          toolchain: stable
-
-      - name: Verify package
-        if: ${{ !inputs.dry_run }}
-        run: cargo publish --dry-run --locked --allow-dirty
-
-      - name: Authenticate with crates.io
-        if: ${{ !inputs.dry_run }}
-        uses: rust-lang/crates-io-auth-action@v1
-        id: auth
-
-      - name: Publish crate
-        if: ${{ !inputs.dry_run }}
-        env:
-          CARGO_REGISTRY_TOKEN: ${{ steps.auth.outputs.token }}
-        run: cargo publish --locked --allow-dirty
-
-      - name: Create GitHub release
-        if: ${{ !inputs.dry_run }}
-        run: |
-          gh release create "v$RELEASE_VERSION" \
-            --target "$GITHUB_SHA" \
-            --title "v$RELEASE_VERSION" \
-            --notes-file release-notes.md
+  publish:
+    name: Publish release
+    needs: validate
+    uses: ./.github/workflows/publish.yml
+    with:
+      package_version: ${{ needs.validate.outputs.release_version }}
+      release_name: v${{ needs.validate.outputs.release_version }}
+      release_title: v${{ needs.validate.outputs.release_version }}
+      prerelease: false
+      dry_run: ${{ inputs.dry_run }}

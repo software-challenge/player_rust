@@ -94,57 +94,7 @@ jobs:
           fetch-depth: 0
 
       - name: Check version bump and changelog entry
-        run: |
-          set -euo pipefail
-          git fetch --tags --force
-
-          python3 - <<'PY'
-          import re
-          import subprocess
-          from pathlib import Path
-
-          def parse_version(cargo_text: str) -> str:
-              match = re.search(r'(?ms)^\[package\]\s*\n(.*?)(?=^\[|\Z)', cargo_text)
-              if match is None:
-                  raise SystemExit('Could not find the [package] block in Cargo.toml.')
-
-              version_match = re.search(r'(?m)^version\s*=\s*"([^"]+)"', match.group(1))
-              if version_match is None:
-                  raise SystemExit('Could not parse the package version from Cargo.toml.')
-
-              return version_match.group(1)
-
-          current_version = parse_version(Path('Cargo.toml').read_text(encoding='utf-8'))
-          tag_output = subprocess.run(
-              ['git', 'tag', '--list', 'v*', '--sort=-version:refname'],
-              check=True,
-              capture_output=True,
-              text=True,
-          ).stdout
-
-          latest_full_release = None
-          for tag in tag_output.splitlines():
-              if re.fullmatch(r'v[0-9]+\.[0-9]+\.[0-9]+', tag):
-                  latest_full_release = tag[1:]
-                  break
-
-          if latest_full_release is not None and current_version == latest_full_release:
-              raise SystemExit(
-                  f'Cargo.toml version was not updated compared to the latest full release: '
-                  f'{current_version} matches {latest_full_release}.'
-              )
-
-          changelog = Path('CHANGELOG.md').read_text(encoding='utf-8')
-          if not re.search(rf'(?m)^## \[{re.escape(current_version)}\]', changelog):
-              raise SystemExit(
-                  f'CHANGELOG.md does not contain an entry for version {current_version}.'
-              )
-
-          if latest_full_release is None:
-              print(f'Version and changelog checks passed for {current_version} with no prior full release tags.')
-          else:
-              print(f'Version and changelog checks passed for {current_version}; previous full release was {latest_full_release}.')
-          PY
+        run: python3 .github/scripts/check_release_metadata.py pull-request
 
   quality:
     name: Code quality
