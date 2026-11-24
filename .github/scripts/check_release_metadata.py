@@ -107,6 +107,41 @@ def require_bumped(version: str, latest: str | None) -> None:
         raise SystemExit(f"Cargo.toml version {version} is not newer than the newest full release {latest}.")
 
 
+def require_changelog_changed() -> None:
+    base_name = os.environ.get("GITHUB_BASE_REF", "main")
+    candidates = (
+        f"refs/remotes/origin/{base_name}",
+        f"origin/{base_name}",
+        base_name,
+    )
+
+    base = next(
+        (
+            candidate
+            for candidate in candidates
+            if subprocess.run(
+                ["git", "rev-parse", "--verify", "--quiet", candidate],
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+            ).returncode == 0
+        ),
+        None,
+    )
+    if base is None:
+        raise SystemExit(f"Could not find the pull request base branch {base_name!r}.")
+
+    result = subprocess.run(
+        ["git", "diff", "--quiet", base, "HEAD", "--", "CHANGELOG.md"],
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.PIPE,
+        text=True,
+    )
+    if result.returncode == 0:
+        raise SystemExit(f"CHANGELOG.md has no changes compared to {base_name}.")
+    if result.returncode != 1:
+        raise SystemExit(result.stderr.strip() or "Could not compare CHANGELOG.md with the pull request base branch.")
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("mode", choices=("pull-request", "release", "nightly"))
@@ -147,6 +182,7 @@ def main() -> int:
             check_crate_unused(version, "release")
             check_github_tag_unused(f"v{version}")
     else:
+        require_changelog_changed()
         print(f"Version and changelog checks passed for {version}; previous full release was {latest or 'none'}.")
     return 0
 
