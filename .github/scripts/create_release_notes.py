@@ -8,16 +8,17 @@ CHANGELOG_PATH = ROOT / "CHANGELOG.md"
 
 
 def main() -> int:
-    if len(sys.argv) != 2:
-        print("Usage: create_release_notes.py VERSION", file=sys.stderr)
+    if len(sys.argv) not in (2, 3):
+        print("Usage: create_release_notes.py CHANGELOG_VERSION [CRATE_VERSION]", file=sys.stderr)
         return 2
 
-    version = sys.argv[1]
+    changelog_version = sys.argv[1]
+    crate_version = sys.argv[2] if len(sys.argv) == 3 else changelog_version
     changelog = CHANGELOG_PATH.read_text(encoding="utf-8")
     sections = list(re.finditer(r"(?m)^## \[([^\]]+)\]\s*$", changelog))
-    matches = [section for section in sections if section.group(1) == version]
+    matches = [section for section in sections if section.group(1) == changelog_version]
     if len(matches) != 1:
-        print(f"Expected exactly one CHANGELOG.md section for version {version}.", file=sys.stderr)
+        print(f"Expected exactly one CHANGELOG.md section for version {changelog_version}.", file=sys.stderr)
         return 1
 
     section = matches[0]
@@ -28,10 +29,10 @@ def main() -> int:
         if line.strip() and not line.lstrip().startswith("#")
     ]
     if not entries:
-        print(f"CHANGELOG.md section for version {version} has no release notes.", file=sys.stderr)
+        print(f"CHANGELOG.md section for version {changelog_version} has no release notes.", file=sys.stderr)
         return 1
 
-    release_notes = f"[Crate](https://crates.io/crates/socha/{version})\n\n{notes}\n"
+    release_notes = f"[Crate](https://crates.io/crates/socha/{crate_version})\n\n{notes}\n"
     (ROOT / "release-notes.md").write_text(release_notes, encoding="utf-8")
     return 0
 
