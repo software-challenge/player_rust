@@ -80,6 +80,9 @@ jobs:
     needs: prepare
     if: ${{ needs.prepare.outputs.publish == 'true' }}
     uses: ./.github/workflows/publish.yml
+    permissions:
+      contents: write
+      id-token: write
     with:
       package_version: ${{ needs.prepare.outputs.package_version }}
       release_name: nightly-${{ needs.prepare.outputs.date }}

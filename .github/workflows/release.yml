@@ -53,6 +53,9 @@ jobs:
     name: Publish release
     needs: validate
     uses: ./.github/workflows/publish.yml
+    permissions:
+      contents: write
+      id-token: write
     with:
       package_version: ${{ needs.validate.outputs.release_version }}
       release_name: v${{ needs.validate.outputs.release_version }}
