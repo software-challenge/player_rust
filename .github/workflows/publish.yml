@@ -38,6 +38,14 @@ jobs:
           ref: main
           fetch-depth: 0
 
+      - name: Generate release notes
+        env:
+          PACKAGE_VERSION: ${{ inputs.package_version }}
+        run: |
+          set -euo pipefail
+          changelog_version="${PACKAGE_VERSION%%-nightly.*}"
+          python3 .github/scripts/create_release_notes.py "$changelog_version" "$PACKAGE_VERSION"
+
       - name: Set package version
         env:
           PACKAGE_VERSION: ${{ inputs.package_version }}
